@@ -6,6 +6,7 @@ then
 fi
 set -xe
 
+root=root.x86_64
 bootstrap_date=$(date +'%Y.%m.01')
 bootstrap=archlinux-bootstrap-$bootstrap_date-x86_64.tar.gz
 
@@ -17,26 +18,26 @@ tar xf $bootstrap
 
 function run_root() {
     local cmd="$@"
-    chroot root.x86_64 /bin/bash -c "$cmd"
+    chroot $root /bin/bash -c "$cmd"
 }
 
 function run_normal() {
     local cmd="$@"
     chroot --userspec=$SUDO_UID:$SUDO_GID \
-        root.x86_64 \
+        $root \
         /bin/bash -c "cd /home/build && $cmd"
 }
 
-echo 'Server = http://lug.mtu.edu/archlinux/$repo/os/$arch' >> root.x86_64/etc/pacman.d/mirrorlist
-echo 'nameserver 8.8.8.8' >> root.x86_64/etc/resolv.conf
+echo 'Server = http://lug.mtu.edu/archlinux/$repo/os/$arch' >> $root/etc/pacman.d/mirrorlist
+echo 'nameserver 8.8.8.8' >> $root/etc/resolv.conf
 
-mount root.x86_64 root.x86_64 --bind
-mount --bind /proc root.x86_64/proc
-mount --bind /sys root.x86_64/sys
-mount --bind /dev root.x86_64/dev
-mount --bind /dev/pts root.x86_64/dev/pts
-mount --bind /dev/shm root.x86_64/dev/shm
-mount --bind /run root.x86_64/run
+mount $root $root --bind
+mount --bind /proc $root/proc
+mount --bind /sys $root/sys
+mount --bind /dev $root/dev
+mount --bind /dev/pts $root/dev/pts
+mount --bind /dev/shm $root/dev/shm
+mount --bind /run $root/run
 
 run_root pacman -Syy
 run_root pacman-key --init
@@ -48,13 +49,12 @@ run_root pacman -Syu --force --noconfirm \
     linux \
     mkinitcpio \
     systemd-sysvcompat \
-    dhcpcd \
-    rsync
+    dhcpcd
 
-sed -i 's/#en_US.UTF-8/en_US.UTF-8/' root.x86_64/etc/locale.gen
+sed -i 's/#en_US.UTF-8/en_US.UTF-8/' $root/etc/locale.gen
 run_root locale-gen
 
-cat <<EOF > root.x86_64/usr/lib/initcpio/hooks/fix-mount
+cat <<EOF > $root/usr/lib/initcpio/hooks/fix-mount
 #!/bin/bash
 custom_mount_handler() {
     msg ":: mounting '\$root' on real root"
@@ -70,7 +70,7 @@ run_earlyhook() {
 }
 EOF
 
-cat <<EOF > root.x86_64/usr/lib/initcpio/install/fix-mount
+cat <<EOF > $root/usr/lib/initcpio/install/fix-mount
 #!/bin/bash
 build() {
     add_runscript
@@ -83,7 +83,7 @@ HELPEOF
 }
 EOF
 
-cp mkinitcpio.conf root.x86_64/etc/
+cp mkinitcpio.conf $root/etc/
 
 run_root mkinitcpio -p linux
 run_root systemctl enable dhcpcd
@@ -91,9 +91,9 @@ run_root systemctl enable dhcpcd
 run_root groupadd sudo
 run_root useradd -mG sudo build
 run_root passwd -d build
-echo '%sudo ALL=(ALL) NOPASSWD: ALL' >> root.x86_64/etc/sudoers
+echo '%sudo ALL=(ALL) NOPASSWD: ALL' >> $root/etc/sudoers
 
-sed -i 's/#PermitEmptyPasswords no/PermitEmptyPasswords yes/' root.x86_64/etc/ssh/sshd_config
+sed -i 's/#PermitEmptyPasswords no/PermitEmptyPasswords yes/' $root/etc/ssh/sshd_config
 run_root systemctl enable sshd
 
 run_normal curl -O https://aur.archlinux.org/cgit/aur.git/snapshot/cower.tar.gz
@@ -107,4 +107,4 @@ run_normal 'cd pacaur && makepkg -si --noconfirm --skippgpcheck'
 run_normal rm -r pacaur pacaur.tar.gz
 
 pkill gpg-agent
-umount -R root.x86_64
+umount -R $root

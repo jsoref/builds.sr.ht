@@ -22,6 +22,12 @@ function boot() {
         -append "root=qroot rw rootfstype=9p rootflags=trans=virtio,version=9p2000.L console=ttyS0"
 }
 
+function install() {
+    port=$1
+    shift 1
+    guest_ssh -p $port build@localhost EDITOR=true pacaur --noconfirm --noedit -S "$@"
+}
+
 function cleanup() {
     umount "$1"/overlay
     rm -rf "$1"/{work,persist,overlay}
@@ -41,7 +47,9 @@ function sanity_check() {
     # Does networking work?
     guest_ssh -p 8022 build@localhost curl http://example.org
     # Does git work?
-    guest_ssh -p 8022 build@localhost git help
+    guest_ssh -p 8022 build@localhost git --version
+    # Does pacaur work?
+    install 8022 brightnessctl
     # Shut down
     guest_ssh -p 8022 build@localhost sudo systemctl poweroff || true
     wait $qemu
