@@ -47,7 +47,8 @@ run_root pacman -Syu --force --noconfirm \
     linux \
     mkinitcpio \
     systemd-sysvcompat \
-    dhcpcd
+    dhcpcd \
+    rsync
 
 sed -i 's/#en_US.UTF-8/en_US.UTF-8/' root.x86_64/etc/locale.gen
 run_root locale-gen

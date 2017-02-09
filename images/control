@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+set -ex
+
+if [ $EUID != 0 ]
+then
+    echo "This command requires root."
+    exit 1
+fi
+
+self=$(readlink -f $0)
+self=$(dirname "$self")
+
+base=$1
+cmd=$2
+shift 2
+
+case "$base" in
+    archlinux)
+        ;;
+    *)
+        echo "Unknown base image $base"
+        exit 1
+        ;;
+esac
+. $self/$base/functions
+
+ssh_opts="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+
+function guest_ssh() {
+    ssh $ssh_opts "$@"
+}
+
+case "$cmd" in
+    prepare)
+        prepare "$@"
+        ;;
+    boot)
+        boot "$@"
+        ;;
+    cleanup)
+        cleanup "$@"
+        ;;
+    sanity-check)
+        sanity_check "$@"
+        ;;
+    *)
+        echo "Unknown command $cmd"
+        ;;
+esac

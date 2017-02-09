@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+function prepare() {
+    mkdir -p "$1"/{work,persist,overlay}
+    mount -t overlay overlay \
+        -olowerdir="$self/$base"/root.x86_64/,upperdir="$1/persist",workdir="$1/work" \
+        "$1/overlay"
+}
+
+function boot() {
+    path=$1
+    port=$2
+    qemu-system-x86_64 \
+        -m 2048 \
+        -net nic,model=virtio -net user,hostfwd=tcp::$port-:22 \
+        -cpu host \
+        -enable-kvm \
+        -nographic \
+        -fsdev "local,id=root,path=$path/overlay,security_model=passthrough" \
+        -device "virtio-9p-pci,fsdev=root,mount_tag=qroot" \
+        -kernel "$self/$base"/root.x86_64/boot/vmlinuz-linux \
+        -initrd "$self/$base"/root.x86_64/boot/initramfs-linux.img \
+        -append "root=qroot rw rootfstype=9p rootflags=trans=virtio,version=9p2000.L console=ttyS0"
+}
+
+function cleanup() {
+    umount "$1"/overlay
+    rm -rf "$1"/{work,persist,overlay}
+}
+
+function sanity_check() {
+    dir=$(mktemp --tmpdir -d archlinux.sanity.XXXXXX)
+    prepare "$dir"
+    boot "$dir" 8022 &
+    qemu=$!
+    sleep 5
+    # This script is set -e so any failure will cause the sanity check to exit non-zero
+    # Does sudo work?
+    guest_ssh -p 8022 build@localhost sudo ls -a
+    # Does pacman work?
+    guest_ssh -p 8022 build@localhost sudo pacman -Syu
+    # Does networking work?
+    guest_ssh -p 8022 build@localhost curl http://example.org
+    # Does git work?
+    guest_ssh -p 8022 build@localhost git help
+    # Does rsync work?
+    rsync --rsh="ssh -p 8022 $ssh_opts" /proc/config.gz build@localhost:~/
+    # Shut down
+    guest_ssh -p 8022 build@localhost sudo systemctl poweroff || true
+    wait $qemu
+    cleanup "$dir"
+    rm -r "$dir"
+}
