@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+if [ $EUID != 0 ]
+then
+    echo "Must be run as root"
+    exit 1
+fi
+
+cmd=$1
+root=$2
+
+function mount_overlay() {
+    mkdir -p "$root"/{work,persist,overlay}
+    mount -t overlay overlay \
+        -olowerdir=root.x86_64/,upperdir="$root/persist",workdir="$root/work" \
+        "$root/overlay"
+}
+
+function boot() {
+    qemu-system-x86_64 \
+        -m 2048 \
+        -net nic,model=virtio -net user,hostfwd=tcp::8022-:22 \
+        -cpu host \
+        -enable-kvm \
+        -nographic \
+        -fsdev "local,id=root,path=$root/overlay,security_model=passthrough" \
+        -device "virtio-9p-pci,fsdev=root,mount_tag=qroot" \
+        -kernel root.x86_64/boot/vmlinuz-linux \
+        -initrd root.x86_64/boot/initramfs-linux.img \
+        -append "root=qroot rw rootfstype=9p rootflags=trans=virtio,version=9p2000.L console=ttyS0"
+}
+
+function cleanup() {
+    umount "$root"/overlay
+    rm -rf "$root"/{work,persist,overlay}
+}
+
+case "$cmd" in
+    prepare)
+        mount_overlay
+        ;;
+    boot)
+        boot
+        ;;
+    cleanup)
+        cleanup
+        ;;
+esac
