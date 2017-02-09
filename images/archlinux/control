@@ -7,6 +7,7 @@ fi
 
 cmd=$1
 root=$2
+port=$3
 
 function mount_overlay() {
     mkdir -p "$root"/{work,persist,overlay}
@@ -18,7 +19,7 @@ function mount_overlay() {
 function boot() {
     qemu-system-x86_64 \
         -m 2048 \
-        -net nic,model=virtio -net user,hostfwd=tcp::8022-:22 \
+        -net nic,model=virtio -net user,hostfwd=tcp::$port-:22 \
         -cpu host \
         -enable-kvm \
         -nographic \

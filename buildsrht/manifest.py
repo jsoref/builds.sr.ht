@@ -1,7 +1,6 @@
 from srht.config import cfg
 import subprocess
 import pgpy
-import yaml
 
 _pgp_key, _ = pgpy.PGPKey.from_file(cfg("builds.sr.ht", "pgp-private-key"))
 
@@ -28,9 +27,12 @@ class Task():
         else:
             self.encrypted = False
 
+    def __repr__(self):
+        return "<Task {}>".format(self.name)
+
 class Manifest():
-    def __init__(self, text):
-        yml = yaml.load(text)
+    def __init__(self, yml):
+        self.yaml = yml
         container = yml.get("container")
         if not container:
             raise Exception("Missing container section in manifest")
@@ -59,3 +61,6 @@ class Manifest():
         if not tasks or not isinstance(tasks, list):
             raise Exception("Attempted to create manifest with no tasks")
         self.tasks = [Task(t) for t in tasks]
+
+    def __repr__(self):
+        return "<Manifest {}, {} tasks>".format(self.base, len(self.tasks))
