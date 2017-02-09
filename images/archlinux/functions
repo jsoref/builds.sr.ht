@@ -42,8 +42,6 @@ function sanity_check() {
     guest_ssh -p 8022 build@localhost curl http://example.org
     # Does git work?
     guest_ssh -p 8022 build@localhost git help
-    # Does rsync work?
-    rsync --rsh="ssh -p 8022 $ssh_opts" /proc/config.gz build@localhost:~/
     # Shut down
     guest_ssh -p 8022 build@localhost sudo systemctl poweroff || true
     wait $qemu
