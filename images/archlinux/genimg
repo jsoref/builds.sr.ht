@@ -6,11 +6,12 @@ then
 fi
 set -xe
 
-bootstrap=archlinux-bootstrap-2017.02.01-x86_64.tar.gz
+bootstrap_date=$(date +'%Y.%m.01')
+bootstrap=archlinux-bootstrap-$bootstrap_date-x86_64.tar.gz
 
 if [ ! -f $bootstrap ]
 then
-    wget -c http://mirrors.kernel.org/archlinux/iso/2017.02.01/archlinux-bootstrap-2017.02.01-x86_64.tar.gz
+    wget -c http://mirrors.kernel.org/archlinux/iso/$bootstrap_date/$bootstrap
 fi
 tar xf $bootstrap
 
