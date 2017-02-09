@@ -9,7 +9,7 @@ cmd=$2
 shift 2
 
 case "$base" in
-    archlinux)
+    archlinux|debian/jessie)
         ;;
     *)
         echo "Unknown base image $base"

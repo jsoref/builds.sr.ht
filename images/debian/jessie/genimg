@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+if [ $EUID != 0 ]
+then
+    echo "Must be run as root"
+    exit 1
+fi
+set -xe
+
+root=root
+
+debootstrap --arch=amd64 jessie $root
+
+function run_root() {
+    local cmd="$@"
+    chroot $root /usr/bin/env \
+        PATH=/sbin:/usr/sbin:/bin:/usr/bin \
+        LANG=C.UTF-8 \
+        bash -c "$cmd"
+}
+
+function run_normal() {
+    local cmd="$@"
+    chroot --userspec=$SUDO_UID:$SUDO_GID \
+        $root /usr/bin/env \
+        PATH=/sbin:/usr/sbin:/bin:/usr/bin \
+        LANG=C.UTF-8 \
+        bash -c "cd /home/build && $cmd"
+}
+
+echo 'nameserver 8.8.8.8' >> $root/etc/resolv.conf
+
+mount $root $root --bind
+mount --bind /proc $root/proc
+mount --bind /sys $root/sys
+mount --bind /dev $root/dev
+mount --bind /dev/pts $root/dev/pts
+mount --bind /dev/shm $root/dev/shm
+mount --bind /run $root/run
+
+cat <<EOF > $root/etc/network/interfaces
+auto lo
+iface lo inet loopback
+auto eth0
+iface eth0 inet dhcp
+EOF
+
+echo debuild > $root/etc/hostname
+
+cat <<EOF > $root/etc/hosts
+127.0.0.1 localhost
+127.0.0.1 debuild
+EOF
+
+run_root apt-key update
+run_root apt-get update
+run_root apt-get -y install locales
+run_root apt-get -y install linux-image-amd64
+run_root apt-get -y install build-essential git ssh sudo
+
+run_root useradd -mG sudo build
+run_root passwd -d build
+echo '%sudo ALL=(ALL) NOPASSWD: ALL' >> $root/etc/sudoers
+
+sed -i 's/PermitEmptyPasswords no/PermitEmptyPasswords yes/' $root/etc/ssh/sshd_config
+echo ssh >> $root/etc/securetty
+run_root systemctl enable ssh
+
+printf "%s\n" 9p 9pnet 9pnet_virtio virtio virtio_ring virtio_pci >> $root/etc/initramfs-tools/modules
+run_root update-initramfs -u
+
+umount -R $root

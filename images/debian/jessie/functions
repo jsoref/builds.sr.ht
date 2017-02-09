@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+function prepare() {
+    mkdir -p "$1"/{work,persist,overlay}
+    mount -t overlay overlay \
+        -olowerdir="$self/$base"/root/,upperdir="$1/persist",workdir="$1/work" \
+        "$1/overlay"
+}
+
+function boot() {
+    path=$1
+    port=$2
+    qemu-system-x86_64 \
+        -m 2048 \
+        -net nic,model=virtio -net user,hostfwd=tcp::$port-:22 \
+        -cpu host \
+        -enable-kvm \
+        -nographic \
+        -fsdev "local,id=root,path=$path/overlay,security_model=passthrough" \
+        -device "virtio-9p-pci,fsdev=root,mount_tag=qroot" \
+        -kernel "$self/$base"/root/boot/vmlinuz-* \
+        -initrd "$self/$base"/root/boot/initrd.img-* \
+        -append "root=qroot rw rootfstype=9p rootflags=trans=virtio,version=9p2000.L console=ttyS0 loglevel=3"
+}
+
+function install() {
+    port=$1
+    shift 1
+    guest_ssh -p $port build@localhost EDITOR=true sudo apt-get install -y "$@"
+}
+
+function cleanup() {
+    umount "$1"/overlay
+    rm -rf "$1"/{work,persist,overlay}
+}
+
+function sanity_check() {
+    dir=$(mktemp --tmpdir -d jessie.sanity.XXXXXX)
+    prepare "$dir"
+    boot "$dir" 8023 &
+    qemu=$!
+    sleep 5
+    # This script is set -e so any failure will cause the sanity check to exit non-zero
+    # Does sudo work?
+    guest_ssh -p 8023 build@localhost sudo ls -a
+    # Does apt work?
+    guest_ssh -p 8023 build@localhost sudo apt-get update
+    # Does apt-get install work?
+    install 8023 curl
+    # Does networking work?
+    guest_ssh -p 8023 build@localhost curl http://example.org
+    # Does git work?
+    guest_ssh -p 8023 build@localhost git --version
+    # Shut down
+    guest_ssh -p 8023 build@localhost sudo systemctl poweroff || true
+    wait $qemu
+    cleanup "$dir"
+    rm -r "$dir"
+}
