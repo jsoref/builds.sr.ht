@@ -116,8 +116,7 @@ def run_build(build_id):
                 with open(os.path.join(logs, ".packages.log"), "wb") as f:
                     r = run_or_die("sudo", os.path.join(images, "control"),
                         manifest.image, "install", port, *manifest.packages,
-                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-                    f.write(r.stdout)
+                        stdout=f, stderr=subprocess.STDOUT)
 
             print("Cloning repositories")
             for repo in manifest.repos:
@@ -130,9 +129,7 @@ def run_build(build_id):
                 print("Running " + task.name)
                 with open(os.path.join(logs, task.name + ".log"), "wb") as f:
                     r = ssh(port, "./.tasks/" + task.name,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT)
-                    f.write(r.stdout)
+                            stdout=f, stderr=subprocess.STDOUT)
                 if r.returncode != 0:
                     raise Exception("Task failed: {}".format(task.name))
 

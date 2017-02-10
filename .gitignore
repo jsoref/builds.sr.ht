@@ -11,3 +11,4 @@ static/
 pip-selfcheck.json
 .sass-cache/
 .pgp
+logs
