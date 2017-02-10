@@ -52,7 +52,7 @@ class Manifest():
                 raise Exception("Expected repos to be a string array")
         if env:
             if not isinstance(env, dict):
-                raise Exception("Expected environment to be a string array")
+                raise Exception("Expected environment to be a dictionary")
         self.image = image
         self.packages = packages
         self.repos = repos

@@ -40,6 +40,18 @@ def run_or_die(*args, **kwargs):
         raise Exception("{} exited with {}".format(" ".join(args), r.returncode))
     return r
 
+def write_env(env, path):
+    with open(path, "w") as f:
+        for key in env:
+            val = env[key]
+            if isinstance(val, str):
+                f.write("{}={}\n".format(key, val))
+            elif isinstance(val, list):
+                f.write("{}=({})\n".format(key,
+                    " ".join(['"{}"'.format(v) for v in val])))
+            else:
+                print("Warning: unsupported env variable type")
+
 @runner.task
 def build(yml):
     manifest = Manifest(yml)
@@ -58,10 +70,15 @@ def build(yml):
                 path = os.path.join(home, ".tasks", task.name)
                 with open(path, "w") as f:
                     f.write("#!/usr/bin/env bash\n")
+                    if len(manifest.environment) > 0:
+                        f.write(". ~/.buildenv\n")
                     if not task.encrypted:
-                        f.write("set -x\n")
+                        f.write("set -x\nset -e\n")
                     f.write(task.script)
                 os.chmod(path, 0o755)
+
+            if len(manifest.environment) > 0:
+                write_env(manifest.environment, os.path.join(home, ".buildenv"))
 
             port = str(get_next_port())
             print("Booting image and waiting for it to settle")
