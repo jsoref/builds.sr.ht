@@ -76,6 +76,11 @@ def build(yml):
             if result.returncode != 0 or result.stdout != b"hello world\n":
                 raise Exception("Sanity check failed, aborting build")
 
+            print("Installing packages")
+            if any(manifest.packages):
+                run_or_die("sudo", os.path.join(images, "control"),
+                    manifest.image, "install", port, *manifest.packages)
+
             print("Cloning repositories")
             for repo in manifest.repos:
                 result = ssh(port, "git", "clone", repo)
