@@ -37,7 +37,7 @@ def run_or_die(*args, **kwargs):
     print(" ".join(args))
     r = subprocess.run(args, **kwargs)
     if r.returncode != 0:
-        raise Exception("{} exited with {}", " ".join(args), r.returncode)
+        raise Exception("{} exited with {}".format(" ".join(args), r.returncode))
     return r
 
 @runner.task
@@ -50,7 +50,7 @@ def build(yml):
         try:
             run_or_die("sudo", os.path.join(images, "control"),
                 manifest.image, "prepare", buildroot)
-            root = os.path.join(buildroot, "persist")
+            root = os.path.join(buildroot, "temp", "root")
             home = os.path.join(root, "home", "build")
 
             os.makedirs(os.path.join(home, ".tasks"))
@@ -58,6 +58,8 @@ def build(yml):
                 path = os.path.join(home, ".tasks", task.name)
                 with open(path, "w") as f:
                     f.write("#!/usr/bin/env bash\n")
+                    if not task.encrypted:
+                        f.write("set -x\n")
                     f.write(task.script)
                 os.chmod(path, 0o755)
 
@@ -78,18 +80,31 @@ def build(yml):
 
             print("Installing packages")
             if any(manifest.packages):
-                run_or_die("sudo", os.path.join(images, "control"),
-                    manifest.image, "install", port, *manifest.packages)
+                r = run_or_die("sudo", os.path.join(images, "control"),
+                    manifest.image, "install", port, *manifest.packages,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                # TODO: Save output to db
 
             print("Cloning repositories")
             for repo in manifest.repos:
-                result = ssh(port, "git", "clone", repo)
+                result = ssh(port, "git", "clone", "--recursive", repo)
                 if result.returncode != 0:
                     raise Exception("git clone failed for {}".format(repo))
 
-            tree = subprocess.run([ "tree", os.path.join(buildroot, "persist") ],
-                    stdout=subprocess.PIPE)
-            print(tree.stdout.decode())
+            print("Running tasks")
+            for task in manifest.tasks:
+                print("Running " + task.name)
+                r = ssh(port, "./.tasks/" + task.name,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE)
+                with open("/tmp/task." + task.name, "wb") as f:
+                    f.write(r.stdout)
+                    f.write(r.stderr)
+                if r.returncode != 0:
+                    raise Exception("Task failed: {}".format(task.name))
+                # TODO: log output better
+
+            print("Build complete.")
         except Exception as ex:
             print(ex)
             raise ex

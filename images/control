@@ -39,7 +39,7 @@ function qemu_pid() {
 
 function prepare() {
     mkdir -p "$1"/{temp,overlay}
-    mount -t tmpfs tmpfs -o size=512M "$1"/temp
+    mount -t tmpfs tmpfs -o size=1G "$1"/temp
     mkdir -p "$1"/temp/{root,work}
     chmod -R 777 "$1"/temp
     mount -t overlay overlay \

@@ -1,6 +1,7 @@
 from srht.config import cfg
 import subprocess
 import pgpy
+import re
 
 _pgp_key, _ = pgpy.PGPKey.from_file(cfg("builds.sr.ht", "pgp-private-key"))
 
@@ -26,6 +27,8 @@ class Task():
             self.encrypted = True
         else:
             self.encrypted = False
+        if not re.match(r"^[a-z0-9_]+$", self.name):
+            raise Exception("Task name '{}' is invalid (must be all lowercase letters, numbers, and underscores)")
 
     def __repr__(self):
         return "<Task {}>".format(self.name)
@@ -58,6 +61,9 @@ class Manifest():
         if not tasks or not isinstance(tasks, list):
             raise Exception("Attempted to create manifest with no tasks")
         self.tasks = [Task(t) for t in tasks]
+        for task in self.tasks:
+            if len([t for t in self.tasks if t.name == task.name]) != 1:
+                raise Exception("Duplicate task '{}'", task.name)
 
     def __repr__(self):
         return "<Manifest {}, {} tasks>".format(self.image, len(self.tasks))
