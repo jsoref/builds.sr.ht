@@ -1,52 +1,13 @@
 #!/usr/bin/env bash
-function prepare() {
-    mkdir -p "$1"/{work,persist,overlay}
-    mount -t overlay overlay \
-        -olowerdir="$self/$base"/root/,upperdir="$1/persist",workdir="$1/work" \
-        "$1/overlay"
-    chmod 777 "$1"/persist
-}
-
-function boot() {
-    path=$1
-    port=$2
-    qemu-system-x86_64 \
-        -m 2048 \
-        -net nic,model=virtio -net user,hostfwd=tcp::$port-:22 \
-        -cpu host \
-        -enable-kvm \
-        -nographic \
-        -fsdev "local,id=root,path=$path/overlay,security_model=passthrough" \
-        -device "virtio-9p-pci,fsdev=root,mount_tag=qroot" \
-        -kernel "$self/$base"/root/boot/vmlinuz-* \
-        -initrd "$self/$base"/root/boot/initrd.img-* \
-        -append "root=qroot rw rootfstype=9p rootflags=trans=virtio,version=9p2000.L console=ttyS0 loglevel=3"
-}
+guest_kernel=/boot/vmlinuz-*
+guest_initrd=/boot/initrd.img-*
+poweroff_cmd="sudo systemctl poweroff"
+cmdline="loglevel=3"
 
 function install() {
     port=$1
     shift 1
-    guest_ssh -p $port build@localhost EDITOR=true sudo apt-get install -y "$@"
-}
-
-function cleanup() {
-    root=$1
-    port=$2
-    # Power off
-    if [ $# == 2 ]
-    then
-        pid=$(qemu_pid)
-        if [ "$pid" != "" ]
-        then
-            guest_ssh -p $port build@localhost sudo systemctl poweroff || true
-            sleep 2
-            kill $pid && sleep 2 || true
-            kill -9 $pid && sleep 2 || true
-        fi
-    fi
-    # Clean up
-    umount "$root"/overlay || true
-    rm -rf "$root"/{work,persist,overlay}
+    guest_ssh -p $port build@localhost sudo apt-get install -y "$@"
 }
 
 function sanity_check() {

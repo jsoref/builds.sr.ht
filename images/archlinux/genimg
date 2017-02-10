@@ -108,3 +108,4 @@ run_normal rm -r pacaur pacaur.tar.gz
 
 pkill gpg-agent
 umount -R $root
+mv $root root
