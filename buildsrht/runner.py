@@ -82,7 +82,7 @@ def build(yml):
             if any(manifest.packages):
                 r = run_or_die("sudo", os.path.join(images, "control"),
                     manifest.image, "install", port, *manifest.packages,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 # TODO: Save output to db
 
             print("Cloning repositories")
@@ -96,10 +96,9 @@ def build(yml):
                 print("Running " + task.name)
                 r = ssh(port, "./.tasks/" + task.name,
                         stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE)
+                        stderr=subprocess.STDOUT)
                 with open("/tmp/task." + task.name, "wb") as f:
                     f.write(r.stdout)
-                    f.write(r.stderr)
                 if r.returncode != 0:
                     raise Exception("Task failed: {}".format(task.name))
                 # TODO: log output better
