@@ -57,6 +57,8 @@ run_root apt-get -y install locales
 run_root apt-get -y install linux-image-amd64
 run_root apt-get -y install build-essential git ssh sudo
 
+run_root systemctl enable systemd-timesyncd.service
+
 run_root useradd -mG sudo build
 run_root passwd -d build
 echo '%sudo ALL=(ALL) NOPASSWD: ALL' >> $root/etc/sudoers
