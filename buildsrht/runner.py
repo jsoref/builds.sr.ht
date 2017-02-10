@@ -83,7 +83,8 @@ def build(yml):
                 r = run_or_die("sudo", os.path.join(images, "control"),
                     manifest.image, "install", port, *manifest.packages,
                     stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-                # TODO: Save output to db
+                with open("/tmp/packages.log", "wb") as f:
+                    f.write(r.stdout) # TODO: Save output to db
 
             print("Cloning repositories")
             for repo in manifest.repos:
@@ -98,10 +99,9 @@ def build(yml):
                         stdout=subprocess.PIPE,
                         stderr=subprocess.STDOUT)
                 with open("/tmp/task." + task.name, "wb") as f:
-                    f.write(r.stdout)
+                    f.write(r.stdout) # TODO: Save output to db
                 if r.returncode != 0:
                     raise Exception("Task failed: {}".format(task.name))
-                # TODO: log output better
 
             print("Build complete.")
         except Exception as ex:
