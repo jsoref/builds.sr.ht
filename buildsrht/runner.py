@@ -2,18 +2,28 @@ from srht.config import cfg, load_config, loaded
 if not loaded():
     load_config("builds")
 
+from srht.database import DbSession, db
+if not hasattr(db, "session"):
+    db = DbSession(cfg("sr.ht", "connection-string"))
+    from buildsrht.types import Build
+    db.init()
+from buildsrht.types import Build
+
 from celery import Celery
 from buildsrht.manifest import Manifest
 from tempfile import TemporaryDirectory
 from redis import Redis
+import hashlib
 import subprocess
 import random
 import time
+import yaml
 import os
 
 redis = Redis() # local redis
 runner = Celery('builds', broker=cfg("builds.sr.ht", "redis"))
 images = cfg("builds.sr.ht", "images")
+buildlogs = cfg("builds.sr.ht", "buildlogs")
 
 def get_next_port():
     port = redis.incr("builds.sr.ht.ssh-port")
@@ -53,8 +63,14 @@ def write_env(env, path):
                 print("Warning: unsupported env variable type")
 
 @runner.task
-def build(yml):
-    manifest = Manifest(yml)
+def run_build(build_id):
+    build = Build.query.filter(Build.id == build_id).first()
+    if not build:
+        print("Error - no build by that ID")
+        return
+    manifest = Manifest(build.manifest)
+    logs = os.path.join(buildlogs, str(build.job_id), str(build.id))
+    os.makedirs(logs)
     with TemporaryDirectory(prefix="sr.ht.build.") as buildroot:
         root = TemporaryDirectory(prefix="sr.ht.").name
         print("Running build in ", buildroot)
@@ -70,14 +86,14 @@ def build(yml):
                 path = os.path.join(home, ".tasks", task.name)
                 with open(path, "w") as f:
                     f.write("#!/usr/bin/env bash\n")
-                    if len(manifest.environment) > 0:
+                    if manifest.environment:
                         f.write(". ~/.buildenv\n")
                     if not task.encrypted:
                         f.write("set -x\nset -e\n")
                     f.write(task.script)
                 os.chmod(path, 0o755)
 
-            if len(manifest.environment) > 0:
+            if manifest.environment:
                 write_env(manifest.environment, os.path.join(home, ".buildenv"))
 
             port = str(get_next_port())
@@ -97,11 +113,11 @@ def build(yml):
 
             print("Installing packages")
             if any(manifest.packages):
-                r = run_or_die("sudo", os.path.join(images, "control"),
-                    manifest.image, "install", port, *manifest.packages,
-                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-                with open("/tmp/packages.log", "wb") as f:
-                    f.write(r.stdout) # TODO: Save output to db
+                with open(os.path.join(logs, ".packages.log"), "wb") as f:
+                    r = run_or_die("sudo", os.path.join(images, "control"),
+                        manifest.image, "install", port, *manifest.packages,
+                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                    f.write(r.stdout)
 
             print("Cloning repositories")
             for repo in manifest.repos:
@@ -112,11 +128,11 @@ def build(yml):
             print("Running tasks")
             for task in manifest.tasks:
                 print("Running " + task.name)
-                r = ssh(port, "./.tasks/" + task.name,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.STDOUT)
-                with open("/tmp/task." + task.name, "wb") as f:
-                    f.write(r.stdout) # TODO: Save output to db
+                with open(os.path.join(logs, task.name + ".log"), "wb") as f:
+                    r = ssh(port, "./.tasks/" + task.name,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT)
+                    f.write(r.stdout)
                 if r.returncode != 0:
                     raise Exception("Task failed: {}".format(task.name))
 

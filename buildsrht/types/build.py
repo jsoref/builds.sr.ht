@@ -1,6 +1,7 @@
 import sqlalchemy as sa
 import sqlalchemy_utils as sau
 from srht.database import Base
+from buildsrht.manifest import Manifest
 from .buildtask import BuildTask
 
 class Build(Base):

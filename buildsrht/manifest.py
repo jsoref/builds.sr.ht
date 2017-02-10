@@ -1,5 +1,6 @@
 from srht.config import cfg
 import subprocess
+import yaml
 import pgpy
 import re
 
@@ -35,11 +36,11 @@ class Task():
 
 class Manifest():
     def __init__(self, yml):
-        self.yaml = yml
-        image = yml.get("image")
-        packages = yml.get("packages")
-        repos = yml.get("repos")
-        env = yml.get("environment")
+        self.yaml = yaml.load(yml)
+        image = self.yaml.get("image")
+        packages = self.yaml.get("packages")
+        repos = self.yaml.get("repos")
+        env = self.yaml.get("environment")
         if not image:
             raise Exception("Missing image in manifest")
         if not isinstance(image, str):
@@ -57,7 +58,7 @@ class Manifest():
         self.packages = packages
         self.repos = repos
         self.environment = env
-        tasks = yml.get("tasks")
+        tasks = self.yaml.get("tasks")
         if not tasks or not isinstance(tasks, list):
             raise Exception("Attempted to create manifest with no tasks")
         self.tasks = [Task(t) for t in tasks]

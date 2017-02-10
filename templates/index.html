@@ -1,4 +1,8 @@
 {% extends "layout.html" %}
 {% block content %} 
 <h2>builds</h2>
+<form method="POST" action="/adhoc">
+  <textarea name="manifest" class="form-control"></textarea>
+  <button class="btn btn-primary" type="submit">Submit</button>
+</form>
 {% endblock %}
