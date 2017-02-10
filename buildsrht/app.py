@@ -1,5 +1,6 @@
 from flask import render_template, request
 from flask_login import LoginManager, current_user
+import urllib.parse
 import locale
 
 from srht.config import cfg, cfgi, load_config
@@ -26,6 +27,20 @@ try:
 except:
     pass
 
-@app.route("/")
-def index():
-    return "hello world"
+def oauth_url(return_to):
+    return "{}/oauth/authorize?client_id={}&scopes=profile&state={}".format(
+        cfg("network", "meta"),
+        cfg("meta.sr.ht", "oauth-client-id"),
+        urllib.parse.quote_plus(return_to))
+
+from buildsrht.blueprints.public import public
+from buildsrht.blueprints.auth import auth
+
+app.register_blueprint(public)
+app.register_blueprint(auth)
+
+@app.context_processor
+def inject():
+    return {
+        "oauth_url": oauth_url(request.full_path)
+    }
