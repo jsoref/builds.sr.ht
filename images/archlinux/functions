@@ -4,6 +4,7 @@ function prepare() {
     mount -t overlay overlay \
         -olowerdir="$self/$base"/root.x86_64/,upperdir="$1/persist",workdir="$1/work" \
         "$1/overlay"
+    chmod 777 "$1"/persist
 }
 
 function boot() {
@@ -29,8 +30,23 @@ function install() {
 }
 
 function cleanup() {
-    umount "$1"/overlay
-    rm -rf "$1"/{work,persist,overlay}
+    root=$1
+    port=$2
+    # Power off
+    if [ $# == 2 ]
+    then
+        pid=$(qemu_pid)
+        if [ "$pid" != "" ]
+        then
+            guest_ssh -p $port build@localhost sudo systemctl poweroff || true
+            sleep 2
+            kill $pid && sleep 2 || true
+            kill -9 $pid && sleep 2 || true
+        fi
+    fi
+    # Clean up
+    umount "$root"/overlay || true
+    rm -rf "$root"/{work,persist,overlay}
 }
 
 function sanity_check() {

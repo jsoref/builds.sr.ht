@@ -33,27 +33,24 @@ class Task():
 class Manifest():
     def __init__(self, yml):
         self.yaml = yml
-        container = yml.get("container")
-        if not container:
-            raise Exception("Missing container section in manifest")
-        base = container.get("base")
-        packages = container.get("packages")
-        repos = container.get("repos")
-        env = container.get("environment")
-        if not base:
-            raise Exception("Missing container.base in manifest")
-        if not isinstance(base, str):
-            raise Exception("Expected container.base to be a string")
+        image = yml.get("image")
+        packages = yml.get("packages")
+        repos = yml.get("repos")
+        env = yml.get("environment")
+        if not image:
+            raise Exception("Missing image in manifest")
+        if not isinstance(image, str):
+            raise Exception("Expected imagease to be a string")
         if packages:
             if not isinstance(packages, list) or not all([isinstance(p, str) for p in packages]):
-                raise Exception("Expected container.packages to be a string array")
+                raise Exception("Expected packages to be a string array")
         if repos:
             if not isinstance(repos, list) or not all([isinstance(r, str) for r in repos]):
-                raise Exception("Expected container.repos to be a string array")
+                raise Exception("Expected repos to be a string array")
         if env:
             if not isinstance(env, dict):
-                raise Exception("Expected container.environment to be a string array")
-        self.base = base
+                raise Exception("Expected environment to be a string array")
+        self.image = image
         self.packages = packages
         self.repos = repos
         self.environment = env
@@ -63,4 +60,4 @@ class Manifest():
         self.tasks = [Task(t) for t in tasks]
 
     def __repr__(self):
-        return "<Manifest {}, {} tasks>".format(self.base, len(self.tasks))
+        return "<Manifest {}, {} tasks>".format(self.image, len(self.tasks))

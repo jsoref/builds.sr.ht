@@ -32,6 +32,12 @@ function check_root() {
     fi
 }
 
+function qemu_pid() {
+    ps aux | awk '{ printf "%s ", $2; for(i=11;i<=NF;i++){printf "%s ", $i}; printf "\n" }' \
+        | grep -E "^[0-9]+ qemu-system-x86_64.*hostfwd=tcp::$port" \
+        | awk '{ print $1 }' | head -n 1
+}
+
 case "$cmd" in
     prepare)
         check_root
