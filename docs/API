@@ -1,0 +1,200 @@
+                                      API
+
+The build.sr.ht API allows you to insert jobs, monitor their progress, and
+access some information about the build system. Authentication to this API is
+brokered by meta.sr.ht. This API uses standard sr.ht error responses.
+
+                                 API ENDPOINTS
+
+POST /api/jobs
+    Scopes: jobs:write
+    Inserts a new job into the job queue.
+
+    {
+      "manifest": "string",         The build manifest
+      "note": "string",             Human-friendly description of this build
+                                      (optional)
+      "tags": [...],                Arbitrary list of strings that identify this
+                                      build and can be used to navigate the
+                                      dashboard (optional)
+      "access:read": [              List of users that have read access to this
+                                      job (optional). The user submitting the
+                                      build will be included regardless of this
+                                      value. The special username "*" indicates
+                                      public read access to this build.
+        "string"                    Username
+      ],
+      "access:write": [             List of users that have write access to this
+                                      job (optional). The user submitting the
+                                      build will be included regardless of this
+                                      value.
+        "string"                    Username
+      ],
+      "triggers": [...],            Post-build triggers (optional)
+      "execute": boolean,           True to start the build immediately
+                                      (optional - defaults to true)
+    }
+
+    Response:
+
+    {
+      "id": integer
+    }
+
+GET /api/jobs/:id
+    Scopes: jobs:read
+    Gets information about a job by its ID.
+
+    Response:
+
+    {
+      "id": integer,
+      "status": "job status enum",
+      "logs": {
+        "setup": "url",                 URL of captured stdout/stderr of setup
+                                          phase (packages, repos, etc)
+        "build": "url",                 URL of captured stdout/stderr of build
+                                          phase (task outputs)
+      },
+      "tasks": [
+        {
+          "name": "setup",
+          "status": "task status enum"
+        },
+        ...
+      ]
+    }
+
+    Job status enum:
+    - pending: waiting for user intervention to start
+    - queued: queued to start when a worker is available
+    - running: job is in-progress
+    - success: build completed without errors
+    - failed: build completed with errors
+
+    Task status enum:
+    - pending: waiting for earlier tasks to complete
+    - running: task is in-progress
+    - success: task completed without errors
+    - failed: task completed with errors
+
+GET /api/jobs/:id/manifest
+    Scopes: jobs:read
+    Returns the build manifest for this job.
+
+    Response:
+
+    {
+      "manifest": "string"
+    }
+
+POST /api/jobs/:id/start
+    Scopes: jobs:write
+    Starts a build that has been postponed with "execute": false. Requires write
+    access.
+
+    Response:
+
+    {
+    }
+
+POST /api/jobs/:id/cancel
+    Scopes: jobs:write
+    Cancels a build that has yet to start. Requires write access.
+
+    Response:
+
+    {
+    }
+
+POST /api/jobs/:id/duplicate
+    Scopes: jobs:write
+    Duplicates a job. Any JSON parameters passed into this endpoint will
+    overwrite the corresponding parameters of the original job.
+
+    {
+      (see description)
+    }
+
+    Response:
+
+    {
+      "id": integer               ID of new job
+    }
+
+POST /api/groups
+    Scopes: jobs:write
+    Creates a new job group.
+
+    {
+      "jobs": [...],              List of job IDs to group
+      "triggers": [...],          Post-build triggers (optional)
+    }
+
+    Response:
+
+    {
+      "id": "string"
+    }
+
+POST /api/groups/:id/start
+    Scopes: jobs:write
+    Starts all pending jobs in this build group (i.e. ones created with
+    "execute": false).
+
+    Response:
+
+    {
+    }
+
+                                 BUILD TRIGGERS
+
+Build triggers can be used to perform specific tasks at the completion of a job
+or group of jobs. They are described with JSON:
+
+    {
+      "condition": "string",     One of "success", "failure", "always".
+      "action": "string",        Name of the action to perform
+      ...
+    }
+
+Several actions are available, and each one extends the build trigger JSON with
+additional attributes.
+
+job:
+  Inserts another job. The "job" property should be filled out as if it were
+  being POSTed to /api/jobs.
+
+  {
+    "job": (see description)
+  }
+
+email:
+  Sends an email to one or more recipients. The subject line will be:
+    Build #[id] [failed|success]: [description]
+
+  {
+    "to": [...],                List of email addresses (strings)
+  }
+
+irc:
+  Sends a message to an IRC channel:
+    Build #[id] [failed|success]: [description]
+
+  {
+    "server": "string",         Address of IRC server
+    "port": integer,            Port to use (optional - defaults to 6667)
+    "ssl": boolean,             Optional (default: false)
+    "nick": "string",
+    "user": "string",           Optional
+    "pass": "string",           Optional
+    "realname": "string",       Optional
+    "channels": [...],          List of channels to send to
+  }
+
+webhook:
+  HTTP POSTs the response of GET /api/jobs/:id to a given address
+
+  {
+    "url": "string"
+  }

@@ -1,0 +1,63 @@
+                                   MANIFESTS
+
+A build manifest is a YAML file that describes how to perform a build. Here's an example:
+
+    image: archlinux
+    packages:
+      - cmake
+      - wlc-git
+      - xorg-server-xwayland
+      - xcb-util-image
+      - json-c
+      - pango
+      - cairo
+      - wayland
+      - gdk-pixbuf2
+      - asciidoc
+    repos:
+      - https://github.com/SirCmpwn/sway
+    tasks:
+      - setup: |
+          cd sway
+          mkdir build
+          cd build
+          cmake ..
+      - build: |
+          cd sway
+          cd build
+          make
+
+The minimum build manifest has an image and at least one task. The various
+properties available are described here:
+
+image: string
+    Which OS image to build in. List available images with /api/images.
+
+packages: list
+    A list of package names to install on the image. The details of this process
+    varies from image to image.
+
+repos: list (string)
+    A list of git repositories to clone into the home directory of the build
+    user in the build environment.
+
+tasks: list (string)
+    A list of scripts to execute in the build environment. These scripts are run
+    with the following preamble:
+
+        #!/usr/bin/env bash
+        . ~/.buildenv
+        set -x
+        set -e
+
+    ~/.buildenv contains environment variables specified by the `environment`
+    directive.
+
+    The text of each script may be encrypted with the build server's PGP key,
+    which is provided via /api/pgp-key. In this case, `set -x` is omitted from
+    the preamble, and the script will be decrypted before being sent to the
+    build environment.
+
+environment: dictionary (string: string OR string: list)
+    A list of key/value pairs for options to set in the build environment via
+    ~/.buildenv.
