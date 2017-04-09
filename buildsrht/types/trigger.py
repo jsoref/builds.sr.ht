@@ -27,6 +27,6 @@ class Trigger(Base):
             sau.ChoiceType(TriggerType, impl=sa.String()),
             nullable=False)
     job_id = sa.Column(sa.Integer, sa.ForeignKey('job.id'))
-    job = sa.orm.relationship('Job', sa.orm.backref('triggers'))
+    job = sa.orm.relationship('Job', backref=sa.orm.backref('triggers'))
     job_group_id = sa.Column(sa.Integer, sa.ForeignKey('job_group.id'))
     job_group = sa.orm.relationship('JobGroup', backref=sa.orm.backref('triggers'))
