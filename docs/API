@@ -129,6 +129,11 @@ POST /api/groups
     {
       "jobs": [...],              List of job IDs to group
       "triggers": [...],          Post-build triggers (optional)
+      "note": "string",           Human-friendly description of this build
+                                    (optional)
+      "tags": [...],              Arbitrary list of strings that identify this
+                                    build and can be used to navigate the
+                                    dashboard (optional)
     }
 
     Response:

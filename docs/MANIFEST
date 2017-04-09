@@ -58,6 +58,11 @@ tasks: list (string)
     the preamble, and the script will be decrypted before being sent to the
     build environment.
 
+triggers: list (trigger)
+    A list of triggers to execute post-build, which can be used to send emails
+    or do other post-build tasks. This uses the same structure as triggers in
+    the API, but as YAML rather than JSON.
+
 environment: dictionary (string: string OR string: list)
     A list of key/value pairs for options to set in the build environment via
     ~/.buildenv.

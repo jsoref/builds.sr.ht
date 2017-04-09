@@ -5,10 +5,10 @@ if not loaded():
 from srht.database import DbSession, db
 if not hasattr(db, "session"):
     db = DbSession(cfg("sr.ht", "connection-string"))
-    from buildsrht.types import Build
+    import buildsrht.types
     db.init()
-from buildsrht.types import Build
 
+from buildsrht.types import Job
 from celery import Celery
 from buildsrht.manifest import Manifest
 from tempfile import TemporaryDirectory
@@ -63,17 +63,19 @@ def write_env(env, path):
                 print("Warning: unsupported env variable type")
 
 @runner.task
-def run_build(build_id):
-    build = Build.query.filter(Build.id == build_id).first()
-    if not build:
-        print("Error - no build by that ID")
+def run_build(job_id):
+    job = Job.query.filter(Job.id == job_id).first()
+    if not job:
+        print("Error - no job by that ID")
         return
-    manifest = Manifest(build.manifest)
-    logs = os.path.join(buildlogs, str(build.job_id), str(build.id))
+    manifest = Manifest(job.manifest)
+    logs = os.path.join(buildlogs, str(job.id))
     os.makedirs(logs)
+    for task in manifest.tasks:
+        os.makedirs(os.path.join(logs, task.name))
     with TemporaryDirectory(prefix="sr.ht.build.") as buildroot:
         root = TemporaryDirectory(prefix="sr.ht.").name
-        print("Running build in ", buildroot)
+        print("Running job in ", buildroot)
         port = None
         try:
             run_or_die("sudo", os.path.join(images, "control"),
@@ -113,7 +115,7 @@ def run_build(build_id):
 
             print("Installing packages")
             if any(manifest.packages):
-                with open(os.path.join(logs, ".packages.log"), "wb") as f:
+                with open(os.path.join(logs, "log"), "wb") as f:
                     r = run_or_die("sudo", os.path.join(images, "control"),
                         manifest.image, "install", port, *manifest.packages,
                         stdout=f, stderr=subprocess.STDOUT)
@@ -127,7 +129,7 @@ def run_build(build_id):
             print("Running tasks")
             for task in manifest.tasks:
                 print("Running " + task.name)
-                with open(os.path.join(logs, task.name + ".log"), "wb") as f:
+                with open(os.path.join(logs, task, "log"), "wb") as f:
                     r = ssh(port, "./.tasks/" + task.name,
                             stdout=f, stderr=subprocess.STDOUT)
                 if r.returncode != 0:

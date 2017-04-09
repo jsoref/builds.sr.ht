@@ -1,4 +1,5 @@
 from .user import User
-from .job import Job
-from .buildtask import BuildTask
-from .build import Build
+from .job import Job, JobStatus
+from .task import Task, TaskStatus
+from .job_group import JobGroup
+from .trigger import Trigger, TriggerType, TriggerCondition
