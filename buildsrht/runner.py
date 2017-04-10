@@ -142,7 +142,7 @@ def run_build(job_id):
                 job_task = next(t for t in job.tasks if t.name == task.name)
                 job_task.status = TaskStatus.running
                 db.session.commit()
-                with open(os.path.join(logs, task, "log"), "wb") as f:
+                with open(os.path.join(logs, task.name, "log"), "wb") as f:
                     r = ssh(port, "./.tasks/" + task.name,
                             stdout=f, stderr=subprocess.STDOUT)
                 if r.returncode != 0:
