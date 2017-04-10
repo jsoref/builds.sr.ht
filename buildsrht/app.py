@@ -33,11 +33,13 @@ def oauth_url(return_to):
         cfg("meta.sr.ht", "oauth-client-id"),
         urllib.parse.quote_plus(return_to))
 
-from buildsrht.blueprints.public import public
+from buildsrht.blueprints.api import api
 from buildsrht.blueprints.auth import auth
+from buildsrht.blueprints.public import public
 
-app.register_blueprint(public)
+app.register_blueprint(api)
 app.register_blueprint(auth)
+app.register_blueprint(public)
 
 @app.context_processor
 def inject():
