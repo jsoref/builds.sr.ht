@@ -95,15 +95,6 @@ POST /api/jobs/:id/start
     {
     }
 
-POST /api/jobs/:id/cancel
-    Scopes: jobs:write
-    Cancels a build that has yet to start. Requires write access.
-
-    Response:
-
-    {
-    }
-
 POST /api/jobs/:id/duplicate
     Scopes: jobs:write
     Duplicates a job. Any JSON parameters passed into this endpoint will

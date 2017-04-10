@@ -1,10 +1,11 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, Response
 from flask_login import current_user
 from srht.database import db
 from srht.validation import Validation
 from buildsrht.decorators import oauth
 from buildsrht.runner import queue_build
-from buildsrht.types import Job, Task, Trigger, TriggerType, TriggerCondition
+from buildsrht.types import Job, JobStatus, Task
+from buildsrht.types import Trigger, TriggerType, TriggerCondition
 from buildsrht.manifest import Manifest
 import json
 
@@ -58,8 +59,10 @@ def jobs_POST(token):
 
 @api.route("/api/jobs/<job_id>")
 @oauth("jobs:read")
-def jobs_GET_by_id(token, job_id):
+def jobs_by_id_GET(token, job_id):
     job = Job.query.filter(Job.id == job_id).first()
+    if not job:
+        abort(404)
     # TODO: ACLs
     return {
         "id": job.id,
@@ -70,7 +73,38 @@ def jobs_GET_by_id(token, job_id):
                 "name": task.name,
                 "status": task.status.value,
                 "log": "http://{}/logs/{}/{}/log".format(
-                    job.runner, job.id, task.id)
+                    job.runner, job.id, task.name)
             } for task in job.tasks
         ]
     }
+
+@api.route("/api/jobs/<job_id>/manifest")
+@oauth("jobs:read")
+def jobs_by_id_manifest_GET(token, job_id):
+    job = Job.query.filter(Job.id == job_id).first()
+    if not job:
+        abort(404)
+    return Response(job.manifest, content_type="text/plain")
+
+@api.route("/api/jobs/<job_id>/start", methods=["POST"])
+@oauth("jobs:write")
+def jobs_by_id_start_POST(token, job_id):
+    job = Job.query.filter(Job.id == job_id).first()
+    if not job:
+        abort(404)
+    if job.owner_id != token.user_id:
+        abort(401) # TODO: ACLs
+    if job.status != JobStatus.pending:
+        reason_map = {
+            JobStatus.queued: "queued",
+            JobStatus.running: "running",
+            JobStatus.success: "complete",
+            JobStatus.failed: "complete",
+        }
+        return {
+            "errors": [
+                { "reason": "This job is already {}".format(reason_map.get(job.status)) }
+            ]
+        }, 400
+    queue_build(job)
+    return { }
