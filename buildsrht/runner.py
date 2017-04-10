@@ -2,11 +2,13 @@ from srht.config import cfg, load_config, loaded
 if not loaded():
     load_config("builds")
 
+runner_name = None
 from srht.database import DbSession, db
 if not hasattr(db, "session"):
     db = DbSession(cfg("sr.ht", "connection-string"))
     import buildsrht.types
     db.init()
+    runner_name = cfg("builds.sr.ht", "runner")
 
 from buildsrht.types import Job
 from celery import Celery
@@ -68,6 +70,8 @@ def run_build(job_id):
     if not job:
         print("Error - no job by that ID")
         return
+    job.runner = runner_name
+    db.session.commit()
     manifest = Manifest(job.manifest)
     logs = os.path.join(buildlogs, str(job.id))
     os.makedirs(logs)

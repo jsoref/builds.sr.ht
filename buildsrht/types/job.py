@@ -23,6 +23,7 @@ class Job(Base):
     job_group_id = sa.Column(sa.Integer, sa.ForeignKey('job_group.id'))
     job_group = sa.orm.relationship('JobGroup', backref=sa.orm.backref('jobs'))
     note = sa.Column(sa.Unicode(4096))
+    runner = sa.Column(sa.String)
     status = sa.Column(
             sau.ChoiceType(JobStatus, impl=sa.String()),
             nullable=False,
