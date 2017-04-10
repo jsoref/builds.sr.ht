@@ -10,7 +10,7 @@ if not hasattr(db, "session"):
     db.init()
     runner_name = cfg("builds.sr.ht", "runner")
 
-from buildsrht.types import Job
+from buildsrht.types import Job, JobStatus, TaskStatus
 from celery import Celery
 from buildsrht.manifest import Manifest
 from tempfile import TemporaryDirectory
@@ -71,6 +71,7 @@ def run_build(job_id):
         print("Error - no job by that ID")
         return
     job.runner = runner_name
+    job.status = JobStatus.running
     db.session.commit()
     manifest = Manifest(job.manifest)
     logs = os.path.join(buildlogs, str(job.id))
@@ -133,14 +134,24 @@ def run_build(job_id):
             print("Running tasks")
             for task in manifest.tasks:
                 print("Running " + task.name)
+                task.status = TaskStatus.running
+                db.session.commit()
                 with open(os.path.join(logs, task, "log"), "wb") as f:
                     r = ssh(port, "./.tasks/" + task.name,
                             stdout=f, stderr=subprocess.STDOUT)
                 if r.returncode != 0:
+                    task.status = TaskStatus.failed
+                    db.session.commit()
                     raise Exception("Task failed: {}".format(task.name))
+                task.status = TaskStatus.success
+                db.session.commit()
 
+            job.status = JobStatus.success
+            db.session.commit()
             print("Build complete.")
         except Exception as ex:
+            job.status = JobStatus.failed
+            db.session.commit()
             print(ex)
             raise ex
         finally:
