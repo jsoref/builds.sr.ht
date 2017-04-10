@@ -51,16 +51,12 @@ GET /api/jobs/:id
     {
       "id": integer,
       "status": "job status enum",
-      "logs": {
-        "setup": "url",                 URL of captured stdout/stderr of setup
-                                          phase (packages, repos, etc)
-        "build": "url",                 URL of captured stdout/stderr of build
-                                          phase (task outputs)
-      },
+      "setup_log": "url",               URL to captured stdout/stderr of setup
       "tasks": [
         {
           "name": "setup",
           "status": "task status enum"
+          "log": "url",
         },
         ...
       ]

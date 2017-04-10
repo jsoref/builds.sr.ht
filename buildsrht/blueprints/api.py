@@ -11,7 +11,7 @@ import json
 api = Blueprint('api', __name__)
 
 @api.route("/api/jobs", methods=["POST"])
-@oauth("jobs:read")
+@oauth("jobs:write")
 def jobs_POST(token):
     valid = Validation(request)
     _manifest = valid.require("manifest", str)
@@ -54,4 +54,23 @@ def jobs_POST(token):
         db.session.commit()
     return {
         "id": job.id
+    }
+
+@api.route("/api/jobs/<job_id>")
+@oauth("jobs:read")
+def jobs_GET_by_id(token, job_id):
+    job = Job.query.filter(Job.id == job_id).first()
+    # TODO: ACLs
+    return {
+        "id": job.id,
+        "status": job.status.value,
+        "setup_log": "http://{}/logs/{}/log".format(job.runner, job.id),
+        "tasks": [
+            {
+                "name": task.name,
+                "status": task.status.value,
+                "log": "http://{}/logs/{}/{}/log".format(
+                    job.runner, job.id, task.id)
+            } for task in job.tasks
+        ]
     }
