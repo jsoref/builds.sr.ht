@@ -19,3 +19,9 @@ class Task(Base):
             sau.ChoiceType(TaskStatus, impl=sa.String()),
             nullable=False,
             default=TaskStatus.pending)
+    job_id = sa.Column(sa.Integer, sa.ForeignKey("job.id"), nullable=False)
+    job = sa.orm.relationship("Job", backref=sa.orm.backref("tasks"))
+
+    def __init__(self, job, name):
+        self.job_id = job.id
+        self.name = name

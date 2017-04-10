@@ -28,7 +28,7 @@ function run_normal() {
         /bin/bash -c "cd /home/build && $cmd"
 }
 
-echo 'Server = http://lug.mtu.edu/archlinux/$repo/os/$arch' >> $root/etc/pacman.d/mirrorlist
+echo 'Server = http://mirror.us.leaseweb.net/archlinux/$repo/os/$arch' >> $root/etc/pacman.d/mirrorlist
 echo 'nameserver 8.8.8.8' >> $root/etc/resolv.conf
 
 mount $root $root --bind
@@ -42,6 +42,7 @@ mount --bind /run $root/run
 run_root pacman -Syy
 run_root pacman-key --init
 run_root pacman-key --populate archlinux
+run_root pacman -Syu --force --noconfirm pacman-mirrorlist
 run_root pacman -Syu --force --noconfirm \
     base-devel \
     git \
@@ -110,4 +111,5 @@ run_normal rm -r pacaur pacaur.tar.gz
 
 pkill gpg-agent
 umount -R $root
+rm -rf root
 mv $root root

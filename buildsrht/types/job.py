@@ -16,8 +16,7 @@ class Job(Base):
     id = sa.Column(sa.Integer, primary_key=True)
     created = sa.Column(sa.DateTime, nullable=False)
     updated = sa.Column(sa.DateTime, nullable=False)
-    name = sa.Column(sa.Unicode(256), nullable=False)
-    _manifest = sa.Column(sa.Unicode(16384), nullable=False, name="manifest")
+    manifest = sa.Column(sa.Unicode(16384), nullable=False)
     owner_id = sa.Column(sa.Integer, sa.ForeignKey('user.id'), nullable=False)
     owner = sa.orm.relationship('User', backref=sa.orm.backref('jobs'))
     job_group_id = sa.Column(sa.Integer, sa.ForeignKey('job_group.id'))
@@ -29,11 +28,6 @@ class Job(Base):
             nullable=False,
             default=JobStatus.pending)
 
-    @property
-    def manifest(self):
-        return self._manifest
-
-    @manifest.setter
-    def manifest_set(self, value):
-        m = Manifest(value)
-        self._manifest = value
+    def __init__(self, owner, manifest):
+        self.owner_id = owner.id
+        self.manifest = manifest

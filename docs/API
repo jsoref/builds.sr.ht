@@ -22,6 +22,7 @@ POST /api/jobs
                                       build will be included regardless of this
                                       value. The special username "*" indicates
                                       public read access to this build.
+                                      Defaults to *.
         "string"                    Username
       ],
       "access:write": [             List of users that have write access to this

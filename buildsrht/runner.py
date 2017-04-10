@@ -64,6 +64,11 @@ def write_env(env, path):
             else:
                 print("Warning: unsupported env variable type")
 
+def queue_build(job):
+    job.status = JobStatus.queued
+    db.session.commit()
+    run_build.delay(job.id)
+
 @runner.task
 def run_build(job_id):
     job = Job.query.filter(Job.id == job_id).first()
@@ -134,16 +139,17 @@ def run_build(job_id):
             print("Running tasks")
             for task in manifest.tasks:
                 print("Running " + task.name)
-                task.status = TaskStatus.running
+                job_task = next(t for t in job.tasks if t.name == task.name)
+                job_task.status = TaskStatus.running
                 db.session.commit()
                 with open(os.path.join(logs, task, "log"), "wb") as f:
                     r = ssh(port, "./.tasks/" + task.name,
                             stdout=f, stderr=subprocess.STDOUT)
                 if r.returncode != 0:
-                    task.status = TaskStatus.failed
+                    job_task.status = TaskStatus.failed
                     db.session.commit()
                     raise Exception("Task failed: {}".format(task.name))
-                task.status = TaskStatus.success
+                job_task.status = TaskStatus.success
                 db.session.commit()
 
             job.status = JobStatus.success

@@ -30,3 +30,10 @@ class Trigger(Base):
     job = sa.orm.relationship('Job', backref=sa.orm.backref('triggers'))
     job_group_id = sa.Column(sa.Integer, sa.ForeignKey('job_group.id'))
     job_group = sa.orm.relationship('JobGroup', backref=sa.orm.backref('triggers'))
+
+    def __init__(self, job_or_group):
+        from buildsrht.types import Job, JobGroup
+        if isinstance(job_or_group, Job):
+            self.job_id = job_or_group.id
+        if isinstance(job_or_group, JobGroup):
+            self.job_group_id = job_or_group.id

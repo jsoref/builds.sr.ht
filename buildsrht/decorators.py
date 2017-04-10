@@ -64,6 +64,7 @@ def get_token(token):
         user.oauth_token = token
         user.oauth_token_expires = expires
         db.session.add(user)
+        db.session.flush()
     token = OAuthToken(user, token, expires)
     token.scopes = ",".join(str(s) for s in scopes)
     db.session.add(token)
@@ -84,6 +85,7 @@ def oauth(scopes):
             oauth_token = get_token(token)
             if not isinstance(oauth_token, OAuthToken):
                 return oauth_token
+            args = (oauth_token,) + args
             required = OAuthScope(scopes)
             available = [OAuthScope(s) for s in oauth_token.scopes.split(',')]
             applicable = [
