@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-guest_kernel=/boot/vmlinuz-*
-guest_initrd=/boot/initrd.img-*
+guest_kernel=kernel
+guest_initrd=initrd
 poweroff_cmd="sudo systemctl poweroff"
 cmdline="loglevel=3"
 
@@ -11,9 +11,7 @@ function install() {
 }
 
 function sanity_check() {
-    dir=$(mktemp --tmpdir -d jessie.sanity.XXXXXX)
-    prepare "$dir"
-    boot "$dir" 8023 &
+    boot 8023 &
     qemu=$!
     sleep 5
     # This script is set -e so any failure will cause the sanity check to exit non-zero
@@ -30,6 +28,5 @@ function sanity_check() {
     # Shut down
     guest_ssh -p 8023 build@localhost sudo systemctl poweroff || true
     wait $qemu
-    cleanup "$dir"
-    rm -r "$dir"
+    cleanup 8023
 }
