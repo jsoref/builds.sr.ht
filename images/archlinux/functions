@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-guest_kernel=/boot/vmlinuz-linux
-guest_initrd=/boot/initramfs-linux.img
+guest_kernel=kernel
+guest_initrd=initrd
 poweroff_cmd="sudo systemctl poweroff"
 
 function install() {
@@ -10,9 +10,7 @@ function install() {
 }
 
 function sanity_check() {
-    dir=$(mktemp --tmpdir -d archlinux.sanity.XXXXXX)
-    prepare "$dir"
-    boot "$dir" 8022 &
+    boot 8022 &
     qemu=$!
     sleep 5
     # This script is set -e so any failure will cause the sanity check to exit non-zero
@@ -29,6 +27,5 @@ function sanity_check() {
     # Shut down
     guest_ssh -p 8022 build@localhost sudo systemctl poweroff || true
     wait $qemu
-    cleanup "$dir"
-    rm -r "$dir"
+    cleanup 8022
 }

@@ -23,49 +23,28 @@ function guest_ssh() {
     ssh $ssh_opts "$@"
 }
 
-function check_root() {
-    if [ $EUID != 0 ]
-    then
-        echo "This command requires root."
-        exit 1
-    fi
-}
-
 function qemu_pid() {
     ps aux | awk '{ printf "%s ", $2; for(i=11;i<=NF;i++){printf "%s ", $i}; printf "\n" }' \
         | grep -E "^[0-9]+ qemu-system-x86_64.*hostfwd=tcp::$port" \
         | awk '{ print $1 }' | head -n 1
 }
 
-function prepare() {
-    mkdir -p "$1"/{temp,overlay}
-    mount -t tmpfs tmpfs -o size=1G "$1"/temp
-    mkdir -p "$1"/temp/{root,work}
-    chmod -R 777 "$1"/temp
-    mount -t overlay overlay \
-        -olowerdir="$self/$base"/root/,upperdir="$1/temp/root",workdir="$1/temp/work" \
-        "$1/overlay"
-}
-
 function boot() {
-    path=$1
-    port=$2
+    port=$1
     qemu-system-x86_64 \
         -m 2048 \
         -net nic,model=virtio -net user,hostfwd=tcp::$port-:22 \
         -cpu host \
         -enable-kvm \
         -nographic \
-        -fsdev "local,id=root,path=$path/overlay,security_model=passthrough" \
-        -device "virtio-9p-pci,fsdev=root,mount_tag=qroot" \
-        -kernel "$self/$base"/root/$guest_kernel \
-        -initrd "$self/$base"/root/$guest_initrd \
-        -append "root=qroot rw rootfstype=9p rootflags=trans=virtio,version=9p2000.L console=ttyS0 $cmdline"
+        -drive file="$self/$base/root.img.qcow2",media=disk,snapshot=on,if=virtio \
+        -kernel "$self/$base"/$guest_kernel \
+        -initrd "$self/$base"/$guest_initrd \
+        -append "root=/dev/vda rw console=ttyS0 $cmdline"
 }
 
 function cleanup() {
-    root=$1
-    port=$2
+    port=$1
     # Power off
     if [ $# == 2 ]
     then
@@ -78,29 +57,18 @@ function cleanup() {
             kill -9 $pid && sleep 2 || true
         fi
     fi
-    # Clean up
-    umount "$root"/overlay || true
-    umount "$root"/temp || true
-    rm -r "$root"/{overlay,temp}
 }
 
 . $self/$base/functions
 
 case "$cmd" in
-    prepare)
-        check_root
-        prepare "$@"
-        ;;
     boot)
-        check_root
         boot "$@"
         ;;
     cleanup)
-        check_root
         cleanup "$@"
         ;;
     sanity-check)
-        check_root
         sanity_check "$@"
         ;;
     install)

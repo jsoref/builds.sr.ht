@@ -39,6 +39,8 @@ mount --bind /dev/pts $root/dev/pts
 mount --bind /dev/shm $root/dev/shm
 mount --bind /run $root/run
 
+cp mkinitcpio.conf $root/etc
+
 run_root pacman -Syy
 run_root pacman-key --init
 run_root pacman-key --populate archlinux
@@ -55,40 +57,7 @@ run_root pacman -Syu --force --noconfirm \
 sed -i 's/#en_US.UTF-8/en_US.UTF-8/' $root/etc/locale.gen
 run_root locale-gen
 
-cat <<EOF > $root/usr/lib/initcpio/hooks/fix-mount
-#!/bin/bash
-custom_mount_handler() {
-    msg ":: mounting '\$root' on real root"
-    if ! mount \${rootfstype:+-t \$rootfstype} -o \${rwopt:-ro}\${rootflags:+,\$rootflags} "\$root" "\$1"; then
-        echo "You are now being dropped into an emergency shell."
-        launch_interactive_shell
-        msg "Trying to continue (this will most likely fail) ..."
-    fi
-}
-
-run_earlyhook() {
-    mount_handler=custom_mount_handler
-}
-EOF
-
-cat <<EOF > $root/usr/lib/initcpio/install/fix-mount
-#!/bin/bash
-build() {
-    add_runscript
-}
-
-help() {
-    cat <<HELPEOF
-This hook fixes booting to 9p filesystems
-HELPEOF
-}
-EOF
-
-cp mkinitcpio.conf $root/etc/
-
-run_root mkinitcpio -p linux
 run_root systemctl enable dhcpcd
-
 run_root systemctl enable systemd-timesyncd.service
 
 run_root groupadd sudo
@@ -111,5 +80,7 @@ run_normal rm -r pacaur pacaur.tar.gz
 
 pkill gpg-agent
 umount -R $root
-rm -rf root
-mv $root root
+cp $root/boot/vmlinuz-linux ./kernel
+cp $root/boot/initramfs-linux.img ./initrd
+virt-make-fs --format=qcow2 --size=+4G $root root.img.qcow2
+rm -rf $root
