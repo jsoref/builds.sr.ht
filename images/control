@@ -46,7 +46,7 @@ function boot() {
 function cleanup() {
     port=$1
     # Power off
-    if [ $# == 2 ]
+    if [ $# == 1 ]
     then
         pid=$(qemu_pid)
         if [ "$pid" != "" ]

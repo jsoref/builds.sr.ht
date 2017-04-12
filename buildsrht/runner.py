@@ -83,85 +83,83 @@ def run_build(job_id):
     os.makedirs(logs)
     for task in manifest.tasks:
         os.makedirs(os.path.join(logs, task.name))
-    with TemporaryDirectory(prefix="sr.ht.build.") as buildroot:
-        root = TemporaryDirectory(prefix="sr.ht.").name
-        print("Running job in ", buildroot)
-        port = None
-        try:
-            run_or_die("sudo", os.path.join(images, "control"),
-                manifest.image, "prepare", buildroot)
-            root = os.path.join(buildroot, "temp", "root")
-            home = os.path.join(root, "home", "build")
+    print("Running job " + str(job_id))
+    port = None
+    try:
+        port = str(get_next_port())
+        print("Booting image and waiting for it to settle")
+        qemu = subprocess.Popen([
+            os.path.join(images, "control"),
+            manifest.image, "boot", port
+        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        time.sleep(5)
+        if qemu.poll() != None:
+            raise Exception("qemu aborted suspiciously early")
 
-            os.makedirs(os.path.join(home, ".tasks"))
-            for task in manifest.tasks:
-                path = os.path.join(home, ".tasks", task.name)
-                with open(path, "w") as f:
-                    f.write("#!/usr/bin/env bash\n")
-                    if manifest.environment:
-                        f.write(". ~/.buildenv\n")
-                    if not task.encrypted:
-                        f.write("set -x\nset -e\n")
-                    f.write(task.script)
-                os.chmod(path, 0o755)
+        print("Running sanity check")
+        result = ssh(port, "echo", "hello world", stdout=subprocess.PIPE)
+        if result.returncode != 0 or result.stdout != b"hello world\n":
+            raise Exception("Sanity check failed, aborting build")
 
+        print("Sending build scripts")
+        home = "/home/build"
+        result = ssh(port, "mkdir", "-p", os.path.join(home, "/home/build/.tasks"))
+        if result.returncode != 0:
+            raise Exception("Failed to transfer scripts to build environment")
+        for task in manifest.tasks:
+            path = os.path.join(home, ".tasks", task.name)
+            script = "#!/usr/bin/env bash\n"
             if manifest.environment:
-                write_env(manifest.environment, os.path.join(home, ".buildenv"))
+                script += ". ~/.buildenv\n"
+            if not task.encrypted:
+                script += "set -x\nset -e\n"
+            script += task.script
+            ssh(port, "tee", path, input=script.encode(), stdout=subprocess.DEVNULL)
+            ssh(port, "chmod", "755", path)
 
-            port = str(get_next_port())
-            print("Booting image and waiting for it to settle")
-            qemu = subprocess.Popen([
-                "sudo", os.path.join(images, "control"),
-                manifest.image, "boot", buildroot, port
-            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            time.sleep(5)
-            if qemu.poll() != None:
-                raise Exception("qemu aborted suspiciously early")
+        if manifest.environment:
+            write_env(manifest.environment, os.path.join(home, ".buildenv"))
 
-            print("Running sanity check")
-            result = ssh(port, "echo", "hello world", stdout=subprocess.PIPE)
-            if result.returncode != 0 or result.stdout != b"hello world\n":
-                raise Exception("Sanity check failed, aborting build")
+        print("Installing packages")
+        if any(manifest.packages):
+            with open(os.path.join(logs, "log"), "wb") as f:
+                r = run_or_die(os.path.join(images, "control"),
+                    manifest.image, "install", port, *manifest.packages,
+                    stdout=f, stderr=subprocess.STDOUT)
 
-            print("Installing packages")
-            if any(manifest.packages):
-                with open(os.path.join(logs, "log"), "wb") as f:
-                    r = run_or_die("sudo", os.path.join(images, "control"),
-                        manifest.image, "install", port, *manifest.packages,
+        print("Cloning repositories")
+        for repo in manifest.repos:
+            result = ssh(port, "git", "clone", "--recursive", repo)
+            if result.returncode != 0:
+                raise Exception("git clone failed for {}".format(repo))
+
+        print("Running tasks")
+        for task in manifest.tasks:
+            print("Running " + task.name)
+            job_task = next(t for t in job.tasks if t.name == task.name)
+            job_task.status = TaskStatus.running
+            db.session.commit()
+            with open(os.path.join(logs, task.name, "log"), "wb") as f:
+                r = ssh(port, "./.tasks/" + task.name,
                         stdout=f, stderr=subprocess.STDOUT)
-
-            print("Cloning repositories")
-            for repo in manifest.repos:
-                result = ssh(port, "git", "clone", "--recursive", repo)
-                if result.returncode != 0:
-                    raise Exception("git clone failed for {}".format(repo))
-
-            print("Running tasks")
-            for task in manifest.tasks:
-                print("Running " + task.name)
-                job_task = next(t for t in job.tasks if t.name == task.name)
-                job_task.status = TaskStatus.running
+            if r.returncode != 0:
+                job_task.status = TaskStatus.failed
                 db.session.commit()
-                with open(os.path.join(logs, task.name, "log"), "wb") as f:
-                    r = ssh(port, "./.tasks/" + task.name,
-                            stdout=f, stderr=subprocess.STDOUT)
-                if r.returncode != 0:
-                    job_task.status = TaskStatus.failed
-                    db.session.commit()
-                    raise Exception("Task failed: {}".format(task.name))
-                job_task.status = TaskStatus.success
-                db.session.commit()
+                raise Exception("Task failed: {}".format(task.name))
+            job_task.status = TaskStatus.success
+            db.session.commit()
 
-            job.status = JobStatus.success
-            db.session.commit()
-            print("Build complete.")
-        except Exception as ex:
-            job.status = JobStatus.failed
-            db.session.commit()
-            print(ex)
-            raise ex
-        finally:
+        job.status = JobStatus.success
+        db.session.commit()
+        print("Build complete.")
+    except Exception as ex:
+        job.status = JobStatus.failed
+        db.session.commit()
+        print(ex)
+        raise ex
+    finally:
+        if port:
             subprocess.run([
-                "sudo", os.path.join(images, "control"),
-                manifest.image, "cleanup", buildroot
-            ] + [port] if port else [])
+                os.path.join(images, "control"),
+                manifest.image, "cleanup", port
+            ])

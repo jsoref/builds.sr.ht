@@ -35,11 +35,11 @@ def oauth_url(return_to):
 
 from buildsrht.blueprints.api import api
 from buildsrht.blueprints.auth import auth
-from buildsrht.blueprints.public import public
+from buildsrht.blueprints.html import html
 
 app.register_blueprint(api)
 app.register_blueprint(auth)
-app.register_blueprint(public)
+app.register_blueprint(html)
 
 @app.context_processor
 def inject():

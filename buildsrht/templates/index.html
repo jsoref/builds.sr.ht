@@ -1,8 +1,16 @@
 {% extends "layout.html" %}
 {% block content %} 
-<h2>builds</h2>
-<form method="POST" action="/adhoc">
-  <textarea name="manifest" class="form-control"></textarea>
-  <button class="btn btn-primary" type="submit">Submit</button>
-</form>
+<section class="row">
+  <div class="col-md-6">
+    <h2>builds</h2>
+    {% if jobs %}
+    <p>
+      You don't have any builds yet. Jobs can be inserted with our API - consult
+      the
+      <a href="https://git.sr.ht/~sircmpwn/builds.sr.ht/tree/docs">documentation</a>
+      for details. TODO: wiki page that documents git.sr.ht integration
+    </p>
+  </div>
+</section>
+{% endif %}
 {% endblock %}
