@@ -17,10 +17,10 @@ def jobs_POST(token):
     valid = Validation(request)
     _manifest = valid.require("manifest", str)
     note = valid.optional("note", str)
-    read = valid.optional("access:read", list, default=["*"])
-    write = valid.optional("access:write", list, default=[token.user.username])
-    triggers = valid.optional("triggers", list, default=list())
-    execute = valid.optional("execute", bool, default=True)
+    read = valid.optional("access:read", ["*"], list)
+    write = valid.optional("access:write", [token.user.username], list)
+    triggers = valid.optional("triggers", list(), list)
+    execute = valid.optional("execute", True, bool)
     if not valid.ok:
         return valid.response
     try:
