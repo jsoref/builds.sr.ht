@@ -20,6 +20,7 @@ def jobs_POST(token):
     note = valid.optional("note", cls=str)
     read = valid.optional("access:read", ["*"], list)
     write = valid.optional("access:write", [token.user.username], list)
+    tags = valid.optional("tags", [], list)
     triggers = valid.optional("triggers", list(), list)
     execute = valid.optional("execute", True, bool)
     if not valid.ok:
@@ -76,7 +77,9 @@ def jobs_by_id_GET(token, job_id):
                 "log": "http://{}/logs/{}/{}/log".format(
                     job.runner, job.id, task.name)
             } for task in job.tasks
-        ]
+        ],
+        "note": job.note,
+        "runner": job.runner
     }
 
 @api.route("/api/jobs/<job_id>/manifest")
