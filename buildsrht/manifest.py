@@ -24,6 +24,7 @@ class Task():
                     stderr=subprocess.DEVNULL)
             if res.returncode != 0:
                 raise Exception("Failed to decrypt encrypted script")
+            self.encrypted_script = self.script
             self.script = res.stdout.decode()
             self.encrypted = True
         else:
@@ -36,7 +37,7 @@ class Task():
 
 class Manifest():
     def __init__(self, yml):
-        self.yaml = yaml.load(yml)
+        self.yaml = yml
         image = self.yaml.get("image")
         packages = self.yaml.get("packages")
         repos = self.yaml.get("repos")
@@ -68,3 +69,18 @@ class Manifest():
 
     def __repr__(self):
         return "<Manifest {}, {} tasks>".format(self.image, len(self.tasks))
+    
+    def to_dict(self):
+        return {
+            "image": self.image,
+            "packages": self.packages,
+            "repos": self.repos,
+            "environment": self.env,
+            "tasks": [
+                t.encrypted_script if t.encrypted else t.script
+                for t in self.tasks
+            ]
+        }
+
+    def to_yaml(self):
+        return yaml.dump(self.to_dict())

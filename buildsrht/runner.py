@@ -39,7 +39,7 @@ def get_next_port():
 
 def ssh(port, *args, **kwargs):
     return subprocess.run([
-        "ssh", "-p", port,
+        "ssh", "-q", "-p", port,
         "-o", "UserKnownHostsFile=/dev/null",
         "-o", "StrictHostKeyChecking=no",
         "build@localhost",
@@ -78,7 +78,7 @@ def run_build(job_id):
     job.runner = runner_name
     job.status = JobStatus.running
     db.session.commit()
-    manifest = Manifest(job.manifest)
+    manifest = Manifest(yaml.load(job.manifest))
     logs = os.path.join(buildlogs, str(job.id))
     os.makedirs(logs)
     for task in manifest.tasks:
@@ -120,18 +120,32 @@ def run_build(job_id):
         if manifest.environment:
             write_env(manifest.environment, os.path.join(home, ".buildenv"))
 
-        print("Installing packages")
-        if any(manifest.packages):
-            with open(os.path.join(logs, "log"), "wb") as f:
-                r = run_or_die(os.path.join(images, "control"),
+        with open(os.path.join(logs, "log"), "wb") as f:
+            print("Cloning repositories")
+            for repo in manifest.repos:
+                refname = None
+                if "#" in repo:
+                    _repo = repo.split("#")
+                    refname = _repo[1]
+                    repo = _repo[0]
+                repo_name = os.path.basename(repo)
+                result = ssh(port, "git", "clone", "--recursive", repo,
+                    stdout=f, stderr=subprocess.STDOUT)
+                if result.returncode != 0:
+                    raise Exception("git clone failed for {}".format(repo))
+                if refname:
+                    _cmd = "'cd {} && git checkout {}'".format(repo_name, refname)
+                    result = ssh(port, "sh", "-xc", _cmd,
+                        stdout=f, stderr=subprocess.STDOUT)
+                    if result.returncode != 0:
+                        raise Exception("git checkout failed for {}#{}".format(
+                            repo, refname))
+
+            print("Installing packages")
+            if any(manifest.packages):
+                run_or_die(os.path.join(images, "control"),
                     manifest.image, "install", port, *manifest.packages,
                     stdout=f, stderr=subprocess.STDOUT)
-
-        print("Cloning repositories")
-        for repo in manifest.repos:
-            result = ssh(port, "git", "clone", "--recursive", repo)
-            if result.returncode != 0:
-                raise Exception("git clone failed for {}".format(repo))
 
         print("Running tasks")
         for task in manifest.tasks:

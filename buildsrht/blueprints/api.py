@@ -7,6 +7,7 @@ from buildsrht.runner import queue_build
 from buildsrht.types import Job, JobStatus, Task
 from buildsrht.types import Trigger, TriggerType, TriggerCondition
 from buildsrht.manifest import Manifest
+import yaml
 import json
 
 api = Blueprint('api', __name__)
@@ -15,8 +16,8 @@ api = Blueprint('api', __name__)
 @oauth("jobs:write")
 def jobs_POST(token):
     valid = Validation(request)
-    _manifest = valid.require("manifest", str)
-    note = valid.optional("note", str)
+    _manifest = valid.require("manifest", cls=str)
+    note = valid.optional("note", cls=str)
     read = valid.optional("access:read", ["*"], list)
     write = valid.optional("access:write", [token.user.username], list)
     triggers = valid.optional("triggers", list(), list)
@@ -24,7 +25,7 @@ def jobs_POST(token):
     if not valid.ok:
         return valid.response
     try:
-        manifest = Manifest(_manifest)
+        manifest = Manifest(yaml.load(_manifest))
     except ex:
         valid.error(ex.message)
         return valid.response
