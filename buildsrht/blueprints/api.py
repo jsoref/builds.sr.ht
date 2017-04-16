@@ -38,6 +38,7 @@ def jobs_POST(token):
     for task in manifest.tasks:
         t = Task(job, task.name)
         db.session.add(t)
+        db.session.flush() # assigns IDs for ordering purposes
     for index, trigger in enumerate(triggers):
         _valid = Validation(trigger)
         action = _valid.require("action", TriggerType)

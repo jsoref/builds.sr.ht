@@ -1,1 +1,46 @@
-@import "base"
+@import "base";
+
+.job {
+  margin-bottom: 1rem;
+}
+
+.card {
+  border: none;
+
+  .card-header {
+    border: none;
+    padding: 0;
+    background: transparent;
+  }
+
+  .card-block {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  .card-footer {
+    padding-top: 0;
+    padding-bottom: 0;
+    background: transparent;
+  }
+}
+
+.status {
+  &.text-success, &.text-danger, &.text-primary {
+    font-weight: bold;
+  }
+}
+
+.text-black {
+  color: black !important;
+}
+
+a[href^="mailto:"] {
+  &:before {
+    content: "<";
+  }
+
+  &:after {
+    content: ">";
+  }
+}

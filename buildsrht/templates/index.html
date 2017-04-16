@@ -1,16 +1,72 @@
 {% extends "layout.html" %}
 {% block content %} 
 <section class="row">
-  <div class="col-md-6">
+  <div class="col-md-4">
     <h2>builds</h2>
-    {% if jobs %}
     <p>
-      You don't have any builds yet. Jobs can be inserted with our API - consult
-      the
+      Welcome back, {{ current_user.username }}!
+    </p>
+    <p>
+      Please consult the
       <a href="https://git.sr.ht/~sircmpwn/builds.sr.ht/tree/docs">documentation</a>
-      for details. TODO: wiki page that documents git.sr.ht integration
+      for information on configuring and running build jobs.
     </p>
   </div>
+  <div class="col-md-8">
+    {% if len(jobs) != 0 %}
+    {% for job in jobs %}
+    <div class="job card">
+      <div class="card-header">
+        <h3>
+          <a href="/jobs/{{ job.id }}">#{{ job.id }}</a>
+          <!-- TODO: tags -->
+          <small>
+            <a href="/jobs/~{{ job.owner.username }}">
+              ~{{ job.owner.username }}
+            </a>
+          </small>
+          <small
+            class="pull-right {{ status_map.get(job.status) or "" }}"
+          >[{{ job.status.value }}]</small>
+        </h3>
+      </div>
+      <div class="card-block">
+        {% if job.status != JobStatus.pending and job.status != JobStatus.queued %}
+        {% endif %}
+        {% if job.note %}
+          <p>{{ job.note | md }}</p>
+        {% endif %}
+        Tasks:
+        {% for task in sort_tasks(job.tasks) %}
+          <span
+            class="status {{ status_map.get(task.status) }}"
+            title="{{ task.status.value }}"
+          >[{{task.name}}]</span>
+        {% endfor %}
+      </div>
+      <div class="card-footer">
+        {{ job.created | humanize }}
+      </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% if total_pages > 1 %}
+    <div class="row">
+      <div class="col-md-4">
+      {% if page != 1 %}
+        <a href="?page={{ page - 1 }}{{ '&search=' + search if search else '' }}">[previous]</a>
+      {% endif %}
+      </div>
+      <div class="col-md-4 text-centered">
+        [ {{ page }} / {{ total_pages }} ]
+      </div>
+      <div class="col-md-4 text-right">
+      {% if page != total_pages %}
+        <a href="?page={{ page + 1 }}{{ '&search=' + search if search else '' }}">[next]</a>
+      {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
 </section>
-{% endif %}
 {% endblock %}
