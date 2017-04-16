@@ -36,7 +36,6 @@
         {% if job.note %}
           <p>{{ job.note | md }}</p>
         {% endif %}
-        Tasks:
         {% for task in sort_tasks(job.tasks) %}
           <span
             class="status {{ status_map.get(task.status) }}"
