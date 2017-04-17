@@ -4,6 +4,7 @@ from srht.database import db
 from buildsrht.types import Job, JobStatus, TaskStatus, User
 from buildsrht.decorators import loginrequired
 from buildsrht.runner import run_build
+import requests
 
 html = Blueprint("html", __name__)
 
@@ -19,6 +20,16 @@ def tags(tags):
         })
         previous.append(tag)
     return results
+
+status_map = {
+    JobStatus.success: "text-success",
+    JobStatus.failed: "text-danger",
+    JobStatus.running: "text-black",
+    TaskStatus.success: "text-success",
+    TaskStatus.failed: "text-danger",
+    TaskStatus.running: "text-black",
+    TaskStatus.pending: "text-muted",
+}
 
 def jobs_page(jobs, sidebar, **kwargs):
     jobs = jobs.order_by(Job.updated.desc())
@@ -38,15 +49,7 @@ def jobs_page(jobs, sidebar, **kwargs):
     jobs = jobs.limit(10).all()
     return render_template("jobs.html",
         jobs=jobs,
-        status_map={
-            JobStatus.success: "text-success",
-            JobStatus.failed: "text-danger",
-            JobStatus.running: "text-black",
-            TaskStatus.success: "text-success",
-            TaskStatus.failed: "text-danger",
-            TaskStatus.running: "text-black",
-            TaskStatus.pending: "text-muted",
-        },
+        status_map=status_map,
         sort_tasks=lambda tasks: sorted(tasks, key=lambda t: t.id),
         total_pages=total_pages,
         page=page+1,
@@ -85,3 +88,28 @@ def tag(username, path):
     return jobs_page(jobs, "user.html", user=user, breadcrumbs=[
         { "name": "~" + user.username, "url": "" }
     ] + tags(path))
+
+@html.route("/job/<int:job_id>")
+def job_by_id(job_id):
+    job = Job.query.get(job_id)
+    if not job:
+        abort(404)
+    logs = list()
+    # TODO: cache this shit
+    r = requests.get("http://{}/logs/{}/log".format(job.runner, job.id))
+    if r.status_code == 200:
+        logs.append({
+            "name": None,
+            "log": r.text.splitlines()
+        })
+    for task in job.tasks:
+        if task.status == TaskStatus.pending:
+            continue
+        r = requests.get("http://{}/logs/{}/{}/log".format(job.runner,
+            job.id, task.name))
+        if r.status_code == 200:
+            logs.append({
+                "name": task.name,
+                "log": r.text.splitlines()
+            })
+    return render_template("job.html", job=job, status_map=status_map, logs=logs)

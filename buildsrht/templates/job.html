@@ -1,0 +1,108 @@
+{% extends "layout.html" %}
+{% block head %}
+{% if job.status.value == "pending" or job.status.value == "queued" %}
+<meta id="refresh" http-equiv="refresh" content="30">
+{% endif %}
+{% if job.status.value == "running" %}
+<meta id="refresh" http-equiv="refresh" content="5">
+{% endif %}
+{% endblock %}
+{% block body %} 
+<div class="container-fluid">
+  <section class="row">
+    <div class="col-md-3">
+      <h2>
+        #{{ job.id }}
+        <small
+          class="status-lg {{ status_map.get(job.status) or "" }}"
+        >[{{ job.status.value }}]</small>
+      </h2>
+      <dl>
+        <dt>Owner</dt>
+        <dd>
+          <a href="/jobs/~{{ job.owner.username }}">
+            ~{{ job.owner.username }}
+          </a>
+        </dt>
+        <dt>Created</dt>
+        <dd>{{ job.created | humanize }}</dt>
+        <dt>Updated</dt>
+        <dd>{{ job.updated | humanize }}</dt>
+      </dl>
+      <h4>Tasks</h4>
+      <table class="table table-sm">
+        <tr class="text-muted">
+          <td>
+            build setup
+          </td>
+          <td></td>
+          <td>
+            <a href="#setup">view log »</a>
+          </td>
+        </tr>
+      {% for task in job.tasks %}
+        <tr>
+          <td>{{ task.name }}</td>
+          <td>
+            <span
+              class="status {{ status_map.get(task.status) }}"
+              title="{{ task.status.value }}"
+            >[{{task.status.value}}]</span>
+          </td>
+          <td>
+            <a href="#task-{{ task.name }}">view log »</a>
+          </td>
+        </tr>
+      {% endfor %}
+      </table>
+      <a href="#bottom">go to bottom »</a>
+    </div>
+    <div class="col-md-9">
+      {% for log in logs %}
+      {% if log["name"] %}
+      <h3 id="task-{{log["name"]}}">{{ log["name"] }}</h3>
+      {% else %}
+      <a id="setup"></a>
+      {% endif %}
+      <table class="table-code">
+        <tr>
+          <td>
+            <pre>{% for line in log["log"] %}<a href="#{{"task-" + log["name"] if log["name"] else "setup"}}-{{loop.index}}" id="{{"task-" + log["name"] if log["name"] else "setup"}}-{{loop.index}}">{{loop.index}}</a>{% if not loop.last %}
+{% endif %}{% endfor %}</pre>
+          </td>
+          <td>
+            <pre>{% for line in log["log"] %}{{ line }}{% if not loop.last %}
+{% endif %}{% endfor %}</pre>
+          </td>
+        </tr>
+      </table>
+      {% endfor %}
+      <div class="alert {{ "alert-success" if job.status.value == "success" else "alert-danger" }}">
+        Build complete: <strong>{{ job.status.value }}</strong> {{ job.updated | humanize }}
+      </div>
+      <a id="bottom"></a>
+    </div>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function() {
+  document.addEventListener("DOMContentLoaded", function() {
+    var meta_refresh = document.getElementById("refresh");
+    if (meta_refresh) {
+      var timeout = parseInt(meta_refresh.getAttribute("content"));
+      meta_refresh.parentNode.removeChild(meta_refresh);
+      window.setTimeout(function() {
+        location.reload();
+      }, timeout * 1000);
+    }
+    if (window.location.hash === "#bottom") {
+      window.setTimeout(function() {
+        document.body.scrollTop = document.body.scrollHeight;
+      }, 100);
+    }
+  });
+})();
+</script>
+{% endblock %}

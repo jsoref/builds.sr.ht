@@ -42,6 +42,7 @@ def ssh(port, *args, **kwargs):
         "ssh", "-q", "-p", port,
         "-o", "UserKnownHostsFile=/dev/null",
         "-o", "StrictHostKeyChecking=no",
+        "-o", "LogLevel=quiet",
         "build@localhost",
     ] + list(args), **kwargs)
 
