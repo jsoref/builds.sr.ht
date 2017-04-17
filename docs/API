@@ -13,10 +13,12 @@ POST /api/jobs
     {
       "manifest": "string",         The build manifest
       "note": "string",             Human-friendly description of this build
-                                      (optional)
+                                      (markdown, optional)
       "tags": [...],                Arbitrary list of strings that identify this
                                       build and can be used to navigate the
-                                      dashboard (optional)
+                                      dashboard. Each string must use only
+                                      lowercase alphanumeric characters, or any
+                                      of "-_.:" (optional)
       "access:read": [              List of users that have read access to this
                                       job (optional). The user submitting the
                                       build will be included regardless of this

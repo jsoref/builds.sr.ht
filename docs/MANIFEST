@@ -58,6 +58,10 @@ tasks: list (string)
     the preamble, and the script will be decrypted before being sent to the
     build environment.
 
+    Task names must use only lowercase alphanumeric characters or underscores
+    and must be <=128 characters in length. Tasks are executed in the order
+    specified.
+
 triggers: list (trigger)
     A list of triggers to execute post-build, which can be used to send emails
     or do other post-build tasks. This uses the same structure as triggers in
