@@ -17,6 +17,7 @@ def tags(job):
             "name": tag,
             "url": "/".join(previous + [tag])
         })
+        previous.append(tag)
     print(results)
     return results
 
