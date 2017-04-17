@@ -1,0 +1,71 @@
+{% extends "layout.html" %}
+{% block content %} 
+<section class="row">
+  <div class="col-md-4">
+    {% include sidebar %}
+  </div>
+  <div class="col-md-8">
+    {% if breadcrumbs %}
+    <h3>
+    {% for crumb in breadcrumbs %}<a
+     href="/jobs/~{{ user.username if user else current_user.username }}{{ crumb['url'] }}"
+    >{{ crumb['name'] }}</a>{% if not loop.last %}/{% endif %}{% endfor %}
+    </h3>
+    {% endif %}
+    {% if len(jobs) != 0 %}
+    {% for job in jobs %}
+    <div class="job card">
+      <div class="card-header">
+        <h3>
+          <a href="/jobs/{{ job.id }}">#{{ job.id }}</a>
+          <small>
+            <a
+              href="/jobs/~{{ job.owner.username }}"
+            >~{{ job.owner.username }}</a>{% for tag in tags(job.tags) %}/<a
+               href="/jobs/~{{ job.owner.username }}{{ tag['url'] }}"
+            >{{ tag['name'] }}</a>{% endfor %}
+          </small>
+          <small
+            class="pull-right {{ status_map.get(job.status) or "" }}"
+          >[{{ job.status.value }}]</small>
+        </h3>
+      </div>
+      <div class="card-block">
+        {% if job.status != JobStatus.pending and job.status != JobStatus.queued %}
+        {% endif %}
+        {% if job.note %}
+          <p>{{ job.note | md }}</p>
+        {% endif %}
+        {% for task in sort_tasks(job.tasks) %}
+          <span
+            class="status {{ status_map.get(task.status) }}"
+            title="{{ task.status.value }}"
+          >[{{task.name}}]</span>
+        {% endfor %}
+      </div>
+      <div class="card-footer">
+        {{ job.created | humanize }}
+      </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% if total_pages > 1 %}
+    <div class="row">
+      <div class="col-md-4">
+      {% if page != 1 %}
+        <a href="?page={{ page - 1 }}{{ '&search=' + search if search else '' }}">[previous]</a>
+      {% endif %}
+      </div>
+      <div class="col-md-4 text-centered">
+        [ {{ page }} / {{ total_pages }} ]
+      </div>
+      <div class="col-md-4 text-right">
+      {% if page != total_pages %}
+        <a href="?page={{ page + 1 }}{{ '&search=' + search if search else '' }}">[next]</a>
+      {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

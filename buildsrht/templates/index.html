@@ -1,82 +1,19 @@
-{% extends "layout.html" %}
-{% block content %} 
-<section class="row">
-  <div class="col-md-4">
-    <h2>builds</h2>
-    <p>
-      Welcome back, {{ current_user.username }}!
-    </p>
-    <p>
-      You can create build jobs here by passing a
-      <a href="https://git.sr.ht/~sircmpwn/builds.sr.ht/tree/docs/MANIFEST">
-        manifest
-      </a>
-      into the
-      <a href="https://git.sr.ht/~sircmpwn/builds.sr.ht/tree/docs/API">
-        API
-      </a>.
-      {% if cfg("network", "git") %}
-      You can also write your manifest in a <code>.build.yml</code> file in
-      your <a href="{{ cfg("network", "git") }}">git.sr.ht</a> repositories and
-      it will automatically run a build each time you push.
-      {% endif %}
-    </p>
-  </div>
-  <div class="col-md-8">
-    {% if len(jobs) != 0 %}
-    {% for job in jobs %}
-    <div class="job card">
-      <div class="card-header">
-        <h3>
-          <a href="/jobs/{{ job.id }}">#{{ job.id }}</a>
-          <small>
-            <a
-              href="/jobs/~{{ job.owner.username }}"
-            >~{{ job.owner.username }}</a>{% for tag in tags(job) %}/<a
-               href="/jobs/~{{ job.owner.username }}/{{ tag['url'] }}"
-            >{{ tag['name'] }}</a>{% endfor %}
-          </small>
-          <small
-            class="pull-right {{ status_map.get(job.status) or "" }}"
-          >[{{ job.status.value }}]</small>
-        </h3>
-      </div>
-      <div class="card-block">
-        {% if job.status != JobStatus.pending and job.status != JobStatus.queued %}
-        {% endif %}
-        {% if job.note %}
-          <p>{{ job.note | md }}</p>
-        {% endif %}
-        {% for task in sort_tasks(job.tasks) %}
-          <span
-            class="status {{ status_map.get(task.status) }}"
-            title="{{ task.status.value }}"
-          >[{{task.name}}]</span>
-        {% endfor %}
-      </div>
-      <div class="card-footer">
-        {{ job.created | humanize }}
-      </div>
-    </div>
-    {% endfor %}
-    {% endif %}
-    {% if total_pages > 1 %}
-    <div class="row">
-      <div class="col-md-4">
-      {% if page != 1 %}
-        <a href="?page={{ page - 1 }}{{ '&search=' + search if search else '' }}">[previous]</a>
-      {% endif %}
-      </div>
-      <div class="col-md-4 text-centered">
-        [ {{ page }} / {{ total_pages }} ]
-      </div>
-      <div class="col-md-4 text-right">
-      {% if page != total_pages %}
-        <a href="?page={{ page + 1 }}{{ '&search=' + search if search else '' }}">[next]</a>
-      {% endif %}
-      </div>
-    </div>
-    {% endif %}
-  </div>
-</section>
-{% endblock %}
+<h2>builds</h2>
+<p>
+  Welcome back, {{ current_user.username }}!
+</p>
+<p>
+  You can create build jobs here by passing a
+  <a href="https://git.sr.ht/~sircmpwn/builds.sr.ht/tree/docs/MANIFEST">
+    manifest
+  </a>
+  into the
+  <a href="https://git.sr.ht/~sircmpwn/builds.sr.ht/tree/docs/API">
+    API
+  </a>.
+  {% if cfg("network", "git") %}
+  You can also write your manifest in a <code>.build.yml</code> file in
+  your <a href="{{ cfg("network", "git") }}">git.sr.ht</a> repositories and
+  it will automatically run a build each time you push.
+  {% endif %}
+</p>
