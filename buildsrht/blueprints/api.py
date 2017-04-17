@@ -9,6 +9,7 @@ from buildsrht.types import Trigger, TriggerType, TriggerCondition
 from buildsrht.manifest import Manifest
 import yaml
 import json
+import re
 
 api = Blueprint('api', __name__)
 
@@ -21,6 +22,9 @@ def jobs_POST(token):
     read = valid.optional("access:read", ["*"], list)
     write = valid.optional("access:write", [token.user.username], list)
     tags = valid.optional("tags", [], list)
+    valid.expect(all(re.match(r"^[a-z0-9_]+$", tag) for tag in tags),
+        "Invalid tag name, tags must use lowercase alphanumeric characters or underscores",
+        field="tags")
     triggers = valid.optional("triggers", list(), list)
     execute = valid.optional("execute", True, bool)
     if not valid.ok:
@@ -33,6 +37,8 @@ def jobs_POST(token):
     # TODO: access controls
     job = Job(token.user, _manifest)
     job.note = note
+    if tags:
+        job.tags = "/".join(tags)
     db.session.add(job)
     db.session.flush()
     for task in manifest.tasks:
