@@ -7,9 +7,19 @@
       Welcome back, {{ current_user.username }}!
     </p>
     <p>
-      Please consult the
-      <a href="https://git.sr.ht/~sircmpwn/builds.sr.ht/tree/docs">documentation</a>
-      for information on configuring and running build jobs.
+      You can create build jobs here by passing a
+      <a href="https://git.sr.ht/~sircmpwn/builds.sr.ht/tree/docs/MANIFEST">
+        manifest
+      </a>
+      into the
+      <a href="https://git.sr.ht/~sircmpwn/builds.sr.ht/tree/docs/API">
+        API
+      </a>.
+      {% if cfg("network", "git") %}
+      You can also write your manifest in a <code>.build.yml</code> file in
+      your <a href="{{ cfg("network", "git") }}">git.sr.ht</a> repositories and
+      it will automatically run a build each time you push.
+      {% endif %}
     </p>
   </div>
   <div class="col-md-8">
