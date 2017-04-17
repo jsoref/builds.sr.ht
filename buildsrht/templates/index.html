@@ -29,11 +29,12 @@
       <div class="card-header">
         <h3>
           <a href="/jobs/{{ job.id }}">#{{ job.id }}</a>
-          <!-- TODO: tags -->
           <small>
-            <a href="/jobs/~{{ job.owner.username }}">
-              ~{{ job.owner.username }}
-            </a>
+            <a
+              href="/jobs/~{{ job.owner.username }}"
+            >~{{ job.owner.username }}</a>{% for tag in tags(job) %}/<a
+               href="/jobs/~{{ job.owner.username }}/{{ tag['url'] }}"
+            >{{ tag['name'] }}</a>{% endfor %}
           </small>
           <small
             class="pull-right {{ status_map.get(job.status) or "" }}"

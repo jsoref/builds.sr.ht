@@ -7,6 +7,19 @@ from buildsrht.runner import run_build
 
 html = Blueprint("html", __name__)
 
+def tags(job):
+    if not job.tags:
+        return list()
+    previous = list()
+    results = list()
+    for tag in job.tags.split("/"):
+        results.append({
+            "name": tag,
+            "url": "/".join(previous + [tag])
+        })
+    print(results)
+    return results
+
 @html.route("/")
 def index():
     if not current_user:
@@ -41,5 +54,6 @@ def index():
         },
         sort_tasks=lambda tasks: sorted(tasks, key=lambda t: t.id),
         total_pages=total_pages,
-        page=page + 1
+        page=page+1,
+        tags=tags
     )
