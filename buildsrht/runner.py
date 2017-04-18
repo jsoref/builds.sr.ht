@@ -66,13 +66,13 @@ def write_env(env, path):
             else:
                 print("Warning: unsupported env variable type")
 
-def queue_build(job):
+def queue_build(job, manifest):
     job.status = JobStatus.queued
     db.session.commit()
-    run_build.delay(job.id)
+    run_build.delay(job.id, manifest.to_dict(encrypted=False))
 
 @runner.task
-def run_build(job_id):
+def run_build(job_id, manifest):
     job = Job.query.filter(Job.id == job_id).first()
     if not job:
         print("Error - no job by that ID")
@@ -80,7 +80,7 @@ def run_build(job_id):
     job.runner = runner_name
     job.status = JobStatus.running
     db.session.commit()
-    manifest = Manifest(yaml.load(job.manifest))
+    manifest = Manifest(manifest)
     logs = os.path.join(buildlogs, str(job.id))
     os.makedirs(logs)
     for task in manifest.tasks:

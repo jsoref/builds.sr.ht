@@ -4,7 +4,11 @@ import yaml
 import pgpy
 import re
 
-_pgp_key, _ = pgpy.PGPKey.from_file(cfg("builds.sr.ht", "pgp-private-key"))
+_privkey_path = cfg("builds.sr.ht", "pgp-private-key", default=None)
+if _privkey_path:
+    _pgp_key, _ = pgpy.PGPKey.from_file(cfg("builds.sr.ht", "pgp-private-key"))
+else:
+    _pgp_key = None
 
 class Task():
     def __init__(self, yml):
@@ -15,7 +19,7 @@ class Task():
                 raise Exception("Expected task to be a string: string")
             self.name = key
             self.script = yml[key].strip()
-        if self.script.startswith("-----BEGIN PGP MESSAGE-----") \
+        if _pgp_key and self.script.startswith("-----BEGIN PGP MESSAGE-----") \
                 and self.script.endswith("-----END PGP MESSAGE-----"):
             # TODO: https://github.com/SecurityInnovation/PGPy/issues/160
             res = subprocess.run(["gpg", "--decrypt"],
@@ -70,14 +74,14 @@ class Manifest():
     def __repr__(self):
         return "<Manifest {}, {} tasks>".format(self.image, len(self.tasks))
     
-    def to_dict(self):
+    def to_dict(self, encrypted=True):
         return {
             "image": self.image,
             "packages": self.packages,
             "repos": self.repos,
             "environment": self.env,
             "tasks": [
-                t.encrypted_script if t.encrypted else t.script
+                t.encrypted_script if t.encrypted and encrypted else t.script
                 for t in self.tasks
             ]
         }
