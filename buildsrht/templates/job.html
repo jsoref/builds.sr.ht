@@ -18,6 +18,12 @@
         >[{{ job.status.value }}]</small>
       </h2>
       <dl>
+        {% if job.note %}
+        <dt>Note</dt>
+        <dd>
+          <p>{{ job.note | md }}</p>
+        </dd>
+        {% endif %}
         <dt>Owner</dt>
         <dd>
           <a href="/jobs/~{{ job.owner.username }}">
@@ -77,9 +83,11 @@
         </tr>
       </table>
       {% endfor %}
+      {% if job.status.value == "success" or job.status.value == "failed" %}
       <div class="alert {{ "alert-success" if job.status.value == "success" else "alert-danger" }}">
         Build complete: <strong>{{ job.status.value }}</strong> {{ job.updated | humanize }}
       </div>
+      {% endif %}
       <a id="bottom"></a>
     </div>
   </section>
