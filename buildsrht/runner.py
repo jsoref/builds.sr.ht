@@ -23,12 +23,7 @@ import yaml
 import os
 
 runner = Celery('builds', broker=cfg("builds.sr.ht", "redis"))
-redis = None
-images = None
-buildlogs = None
-
 if runner_name:
-    global redis, images, buildlogs
     redis = Redis() # local redis
     images = cfg("builds.sr.ht", "images")
     buildlogs = cfg("builds.sr.ht", "buildlogs")
