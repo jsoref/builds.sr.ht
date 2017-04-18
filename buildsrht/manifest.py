@@ -79,7 +79,7 @@ class Manifest():
             "image": self.image,
             "packages": self.packages,
             "repos": self.repos,
-            "environment": self.env,
+            "environment": self.environment,
             "tasks": [
                 t.encrypted_script if t.encrypted and encrypted else t.script
                 for t in self.tasks
