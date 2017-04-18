@@ -59,7 +59,7 @@ def jobs_POST(token):
         t.details = json.dumps(trigger)
         db.session.add(t)
     if execute:
-        queue_build(job) # commits the session
+        queue_build(job, manifest) # commits the session
     else:
         db.session.commit()
     return {
@@ -117,5 +117,5 @@ def jobs_by_id_start_POST(token, job_id):
                 { "reason": "This job is already {}".format(reason_map.get(job.status)) }
             ]
         }, 400
-    queue_build(job)
+    queue_build(job, Manifest(job.manifest))
     return { }
