@@ -17,7 +17,7 @@ function sanity_check() {
     # Does sudo work?
     guest_ssh -p 8022 build@localhost sudo ls -a
     # Does pacman work?
-    guest_ssh -p 8022 build@localhost sudo pacman -Syu
+    guest_ssh -p 8022 build@localhost sudo pacman -Syu --noconfirm
     # Does networking work?
     guest_ssh -p 8022 build@localhost curl http://example.org
     # Does git work?
