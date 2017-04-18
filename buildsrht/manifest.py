@@ -82,7 +82,7 @@ class Manifest():
             "environment": self.environment,
             "tasks": [{
                 t.name: t.encrypted_script if t.encrypted and encrypted else t.script
-            }] for t in self.tasks
+            } for t in self.tasks]
         }
 
     def to_yaml(self):
