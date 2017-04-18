@@ -26,7 +26,6 @@ setup(
   install_requires = [
       'srht',
       'pgpy',
-      'humanize',
       'redis',
       'celery',
       'yaml',

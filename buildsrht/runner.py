@@ -22,10 +22,16 @@ import time
 import yaml
 import os
 
-redis = Redis() # local redis
 runner = Celery('builds', broker=cfg("builds.sr.ht", "redis"))
-images = cfg("builds.sr.ht", "images")
-buildlogs = cfg("builds.sr.ht", "buildlogs")
+redis = None
+images = None
+buildlogs = None
+
+if runner_name:
+    global redis, images, buildlogs
+    redis = Redis() # local redis
+    images = cfg("builds.sr.ht", "images")
+    buildlogs = cfg("builds.sr.ht", "buildlogs")
 
 def get_next_port():
     port = redis.incr("builds.sr.ht.ssh-port")
