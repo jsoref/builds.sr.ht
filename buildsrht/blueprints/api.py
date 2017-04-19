@@ -31,8 +31,8 @@ def jobs_POST(token):
         return valid.response
     try:
         manifest = Manifest(yaml.load(_manifest))
-    except ex:
-        valid.error(ex.message)
+    except Exception as ex:
+        valid.error(str(ex))
         return valid.response
     # TODO: access controls
     job = Job(token.user, _manifest)

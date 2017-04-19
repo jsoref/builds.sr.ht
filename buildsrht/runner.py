@@ -22,6 +22,14 @@ import time
 import yaml
 import os
 
+buildenv = \
+"""
+#!/bin/sh
+function complete-build() {
+    exit 255
+}
+"""
+
 runner = Celery('builds', broker=cfg("builds.sr.ht", "redis"))
 if runner_name:
     redis = Redis() # local redis
@@ -54,17 +62,20 @@ def run_or_die(*args, **kwargs):
         raise Exception("{} exited with {}".format(" ".join(args), r.returncode))
     return r
 
-def write_env(env, path):
-    with open(path, "w") as f:
+def write_env(port, env, path):
+    script = buildenv[:]
+    if env:
         for key in env:
             val = env[key]
             if isinstance(val, str):
-                f.write("{}={}\n".format(key, val))
+                script += "{}={}\n".format(key, val)
             elif isinstance(val, list):
-                f.write("{}=({})\n".format(key,
-                    " ".join(['"{}"'.format(v) for v in val])))
+                script += "{}=({})\n".format(key,
+                    " ".join(['"{}"'.format(v) for v in val]))
             else:
                 print("Warning: unsupported env variable type")
+    ssh(port, "tee", path, input=script.encode(), stdout=subprocess.DEVNULL)
+    ssh(port, "chmod", "755", path)
 
 def queue_build(job, manifest):
     job.status = JobStatus.queued
@@ -111,16 +122,16 @@ def run_build(job_id, manifest):
         for task in manifest.tasks:
             path = os.path.join(home, ".tasks", task.name)
             script = "#!/usr/bin/env bash\n"
-            if manifest.environment:
-                script += ". ~/.buildenv\n"
+            script += ". ~/.buildenv\n"
             if not task.encrypted:
                 script += "set -x\nset -e\n"
+            else:
+                script += "set -e\n"
             script += task.script
             ssh(port, "tee", path, input=script.encode(), stdout=subprocess.DEVNULL)
             ssh(port, "chmod", "755", path)
 
-        if manifest.environment:
-            write_env(manifest.environment, os.path.join(home, ".buildenv"))
+        write_env(port, manifest.environment, os.path.join(home, ".buildenv"))
 
         with open(os.path.join(logs, "log"), "wb") as f:
             print("Cloning repositories")
@@ -150,15 +161,23 @@ def run_build(job_id, manifest):
                     stdout=f, stderr=subprocess.STDOUT)
 
         print("Running tasks")
+        skip = False
         for task in manifest.tasks:
-            print("Running " + task.name)
             job_task = next(t for t in job.tasks if t.name == task.name)
+            if skip:
+                print("Skipping " + task.name)
+                job_task.status = TaskStatus.skipped
+                db.session.commit()
+                continue
+            print("Running " + task.name)
             job_task.status = TaskStatus.running
             db.session.commit()
             with open(os.path.join(logs, task.name, "log"), "wb") as f:
                 r = ssh(port, "./.tasks/" + task.name,
                         stdout=f, stderr=subprocess.STDOUT)
-            if r.returncode != 0:
+            if r.returncode == 255:
+                skip = True
+            elif r.returncode != 0:
                 job_task.status = TaskStatus.failed
                 db.session.commit()
                 raise Exception("Task failed: {}".format(task.name))

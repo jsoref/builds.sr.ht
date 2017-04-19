@@ -8,6 +8,7 @@ class TaskStatus(Enum):
     running = 'running'
     success = 'success'
     failed = 'failed'
+    skipped = 'skipped'
 
 class Task(Base):
     __tablename__ = 'task'

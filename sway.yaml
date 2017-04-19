@@ -13,6 +13,12 @@ packages:
   - asciidoc
 repos:
   - https://github.com/SirCmpwn/sway
+environment:
+  hello: world
+  stuff:
+    - apples
+    - zebras
+    - metaphors
 tasks:
   - setup: |
       cd sway
@@ -23,3 +29,13 @@ tasks:
       cd sway
       cd build
       make
+  - stuff: |
+      cat ~/.buildenv
+      echo $hello
+      for thing in "${stuff[@]}"
+      do
+        echo $thing
+      done
+      complete-build
+  - party: |
+      echo party time

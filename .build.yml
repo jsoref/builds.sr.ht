@@ -1,0 +1,152 @@
+image: archlinux
+repositories:
+  - https://mirror.sr.ht/sr.ht/archlinux/#1ED4E14494433AE3FD302CAB74B4BCCEA60D0437
+packages:
+  - python-srht
+  - python-pytest
+  - python-pgpy
+  - python-celery
+  - python-redis
+  - python-yaml
+  - python-markdown
+  - python-bleach
+sources:
+  https://git.sr.ht/~sircmpwn/builds.sr.ht
+  https://git.sr.ht/~sircmpwn/sr.ht-pkgbuilds
+env:
+  repo_server: deploy@mirror.sr.ht
+  repo_path: /var/html/mirror/sr.ht/archlinux
+  master: builds.sr.ht
+  slaves:
+    - yui.runners.sr.ht
+tasks:
+  - keys: |
+    -----BEGIN PGP MESSAGE-----
+
+    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
+    =pfD4
+    -----END PGP MESSAGE-----
+  - build: |
+      cd builds.sr.ht
+      ./setup.py build
+  - test: |
+      cd builds.sr.ht
+      pytest
+  - archive: |
+      cd builds.sr.ht
+      pkgver=$(git describe)
+      echo "pkgver=$pkgver" >> ~/.buildenv
+      git archive -o ../builds.sr.ht/builds.sr.ht-$pkgver.tar.xz \
+        --prefix=builds.sr.ht-$pkgver/ HEAD
+  - package: |
+      cd sr.ht-pkgbuilds/builds.sr.ht
+      sed -e "s/pkgver=.*/pkgver=$pkgver/" -i PKGBUILD
+      cp ~/builds.sr.ht-$pkgver.tar.xz ./
+      updpkgsums
+      makepkg --config ../makepkg.conf -s
+      [ ! git describe --exact-match HEAD ] && complete-build
+  - deploy: |
+      cd sr.ht-pkgbuilds/builds.sr.ht
+      rsync -rP *.pkg.tar.xz{,.sig} $repo_server:$repo_path/
+      ssh $repo_server repo-add -n -R \
+        $repo_path/sr.ht.db.tar.gz \
+        $repo_path/builds.sr.ht-$pkgver-1-any.pkg.tar.xz
+      ssh $repo_server repo-add -n -R \
+        $repo_path/sr.ht.db.tar.gz \
+        $repo_path/builds.sr.ht-images-$pkgver-1-any.pkg.tar.xz
+
+      ssh $master pacman -Sy builds.sr.ht
+      ssh $master systemctl restart builds.sr.ht
+      for server in "$slaves[@]"
+      do
+        ssh $server pacman -Sy builds.sr.ht builds.sr.ht-images
+        ssh $server systemctl restart runner
+      done

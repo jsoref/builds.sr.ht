@@ -29,6 +29,7 @@ status_map = {
     TaskStatus.failed: "text-danger",
     TaskStatus.running: "text-black",
     TaskStatus.pending: "text-muted",
+    TaskStatus.skipped: "text-black",
 }
 
 def jobs_page(jobs, sidebar, **kwargs):
@@ -112,4 +113,8 @@ def job_by_id(job_id):
                 "name": task.name,
                 "log": r.text.splitlines()
             })
-    return render_template("job.html", job=job, status_map=status_map, logs=logs)
+    return render_template("job.html",
+            job=job,
+            status_map=status_map,
+            logs=logs,
+            sort_tasks=lambda tasks: sorted(tasks, key=lambda t: t.id))
