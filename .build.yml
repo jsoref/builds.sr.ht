@@ -1,152 +1,154 @@
 image: archlinux
 repositories:
-  - https://mirror.sr.ht/sr.ht/archlinux/#1ED4E14494433AE3FD302CAB74B4BCCEA60D0437
+  sr.ht: https://mirror.sr.ht/sr.ht/archlinux/#1ED4E14494433AE3FD302CAB74B4BCCEA60D0437
 packages:
+  - python-setuptools
   - python-srht
-  - python-pytest
   - python-pgpy
   - python-celery
   - python-redis
   - python-yaml
   - python-markdown
   - python-bleach
+  - rsync
 sources:
-  https://git.sr.ht/~sircmpwn/builds.sr.ht
-  https://git.sr.ht/~sircmpwn/sr.ht-pkgbuilds
-env:
+  - https://git.sr.ht/~sircmpwn/builds.sr.ht
+  - https://git.sr.ht/~sircmpwn/sr.ht-pkgbuilds
+environment:
   repo_server: deploy@mirror.sr.ht
   repo_path: /var/html/mirror/sr.ht/archlinux
-  master: builds.sr.ht
+  master: deploy@builds.sr.ht
   slaves:
-    - yui.runners.sr.ht
+    - deploy@yui.runners.sr.ht
 tasks:
   - keys: |
-    -----BEGIN PGP MESSAGE-----
+      -----BEGIN PGP MESSAGE-----
 
-    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
-    =pfD4
-    -----END PGP MESSAGE-----
+      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
+      TLxsI1WCW1uhME2LotG8jt0=
+      =HjpK
+      -----END PGP MESSAGE-----
   - build: |
       cd builds.sr.ht
       ./setup.py build
-  - test: |
-      cd builds.sr.ht
-      pytest
   - archive: |
       cd builds.sr.ht
       pkgver=$(git describe)
       echo "pkgver=$pkgver" >> ~/.buildenv
-      git archive -o ../builds.sr.ht/builds.sr.ht-$pkgver.tar.xz \
+      git archive -o ~/sr.ht-pkgbuilds/builds.sr.ht/builds.sr.ht-$pkgver.tar.xz \
         --prefix=builds.sr.ht-$pkgver/ HEAD
   - package: |
       cd sr.ht-pkgbuilds/builds.sr.ht
+      pkgrel=$(pacman -Si builds.sr.ht | grep Version | cut -d'-' -f2)
+      pkgrel=$(expr $pkgrel + 1)
       sed -e "s/pkgver=.*/pkgver=$pkgver/" -i PKGBUILD
-      cp ~/builds.sr.ht-$pkgver.tar.xz ./
+      sed -e "s/pkgrel=.*/pkgrel=$pkgrel/" -i PKGBUILD
+      echo "pkgrel=$pkgrel" >> ~/.buildenv
       updpkgsums
-      makepkg --config ../makepkg.conf -s
-      [ ! git describe --exact-match HEAD ] && complete-build
+      makepkg --config ../makepkg.conf -s --noconfirm
+      cd ~/builds.sr.ht
+      git describe --exact-match HEAD || complete-build
   - deploy: |
       cd sr.ht-pkgbuilds/builds.sr.ht
-      rsync -rP *.pkg.tar.xz{,.sig} $repo_server:$repo_path/
-      ssh $repo_server repo-add -n -R \
+      sshopts="-o StrictHostKeyChecking=no" # TODO: remove this when builds run on a tty
+      rsync --rsh="ssh $sshopts" -rP *.pkg.tar.xz{,.sig} $repo_server:$repo_path/
+      ssh $sshopts $repo_server repo-add -n -R \
         $repo_path/sr.ht.db.tar.gz \
-        $repo_path/builds.sr.ht-$pkgver-1-any.pkg.tar.xz
-      ssh $repo_server repo-add -n -R \
+        $repo_path/builds.sr.ht-$pkgver-$pkgrel-any.pkg.tar.xz
+      ssh $sshopts $repo_server repo-add -n -R \
         $repo_path/sr.ht.db.tar.gz \
-        $repo_path/builds.sr.ht-images-$pkgver-1-any.pkg.tar.xz
+        $repo_path/builds.sr.ht-images-$pkgver-$pkgrel-any.pkg.tar.xz
 
-      #ssh $master pacman -Sy builds.sr.ht
-      #ssh $master systemctl restart builds.sr.ht
-      #for server in "$slaves[@]"
-      #do
-      #  ssh $server pacman -Sy builds.sr.ht builds.sr.ht-images
-      #  ssh $server systemctl restart runner
-      #done
+      ssh $sshopts $master sudo /usr/local/bin/update-srht builds.sr.ht
+      for server in "$slaves[@]"
+      do
+        ssh $sshopts $server sudo /usr/local/bin/update-srht builds.sr.ht builds.sr.ht-images
+      done

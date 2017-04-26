@@ -74,6 +74,14 @@ case "$cmd" in
     install)
         install "$@"
         ;;
+    add-repo)
+        add_repository "$@"
+        ;;
+    ssh)
+        port=$1
+        shift
+        guest_ssh -p "$port" build@localhost "$@"
+        ;;
     *)
         echo "Unknown command $cmd"
         ;;

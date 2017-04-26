@@ -103,7 +103,7 @@ def job_by_id(job_id):
             "name": None,
             "log": r.text.splitlines()
         })
-    for task in job.tasks:
+    for task in sorted(job.tasks, key=lambda t: t.id):
         if task.status == TaskStatus.pending:
             continue
         r = requests.get("http://{}/logs/{}/{}/log".format(job.runner,

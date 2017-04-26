@@ -80,10 +80,12 @@ def write_env(port, env, path):
 def queue_build(job, manifest):
     job.status = JobStatus.queued
     db.session.commit()
-    run_build.delay(job.id, manifest.to_dict(encrypted=False))
+    run_build.delay(job.id, manifest.to_dict(encrypted=False), [
+        t.name for t in manifest.tasks if t.encrypted
+    ])
 
 @runner.task
-def run_build(job_id, manifest):
+def run_build(job_id, manifest, encrypted_tasks):
     job = Job.query.filter(Job.id == job_id).first()
     if not job:
         print("Error - no job by that ID")
@@ -123,7 +125,7 @@ def run_build(job_id, manifest):
             path = os.path.join(home, ".tasks", task.name)
             script = "#!/usr/bin/env bash\n"
             script += ". ~/.buildenv\n"
-            if not task.encrypted:
+            if not task.name in encrypted_tasks:
                 script += "set -x\nset -e\n"
             else:
                 script += "set -e\n"
@@ -134,8 +136,16 @@ def run_build(job_id, manifest):
         write_env(port, manifest.environment, os.path.join(home, ".buildenv"))
 
         with open(os.path.join(logs, "log"), "wb") as f:
-            print("Cloning repositories")
+            print("Adding user repositories")
             for repo in manifest.repos:
+                source = manifest.repos[repo]
+                f.write("Adding repository: {}\n".format(repo).encode())
+                f.flush()
+                run_or_die(os.path.join(images, "control"), manifest.image,
+                    "add-repo", port, repo, source, stdout=f, stderr=subprocess.STDOUT)
+
+            print("Cloning repositories")
+            for repo in manifest.sources:
                 refname = None
                 if "#" in repo:
                     _repo = repo.split("#")

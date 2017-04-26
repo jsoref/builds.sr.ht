@@ -44,7 +44,8 @@ class Manifest():
         self.yaml = yml
         image = self.yaml.get("image")
         packages = self.yaml.get("packages")
-        repos = self.yaml.get("repos")
+        repos = self.yaml.get("repositories")
+        sources = self.yaml.get("sources")
         env = self.yaml.get("environment")
         if not image:
             raise Exception("Missing image in manifest")
@@ -54,14 +55,21 @@ class Manifest():
             if not isinstance(packages, list) or not all([isinstance(p, str) for p in packages]):
                 raise Exception("Expected packages to be a string array")
         if repos:
-            if not isinstance(repos, list) or not all([isinstance(r, str) for r in repos]):
-                raise Exception("Expected repos to be a string array")
+            if not isinstance(repos, dict):
+                raise Exception("Expected repositories to be a dict")
+            for repo in repos:
+                if not isinstance(repos[repo], str):
+                    raise Exception("Expected url for repository {}".format(repo))
+        if sources:
+            if not isinstance(sources, list) or not all([isinstance(s, str) for s in sources]):
+                raise Exception("Expected sources to be a string array")
         if env:
             if not isinstance(env, dict):
                 raise Exception("Expected environment to be a dictionary")
         self.image = image
         self.packages = packages
         self.repos = repos
+        self.sources = sources
         self.environment = env
         tasks = self.yaml.get("tasks")
         if not tasks or not isinstance(tasks, list):
@@ -78,7 +86,8 @@ class Manifest():
         return {
             "image": self.image,
             "packages": self.packages,
-            "repos": self.repos,
+            "repositories": self.repos,
+            "sources": self.sources,
             "environment": self.environment,
             "tasks": [{
                 t.name: t.encrypted_script if t.encrypted and encrypted else t.script

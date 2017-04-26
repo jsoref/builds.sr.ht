@@ -9,6 +9,19 @@ function install() {
     guest_ssh -p $port build@localhost EDITOR=true pacaur --noconfirm --noedit -Syu "$@"
 }
 
+function add_repository() {
+    port=$1
+    name=$2
+    src=$3
+    repo=$(echo $src | cut -d'#' -f1)
+    key=$(echo $src | cut -d'#' -f2)
+    printf '[%s]\nServer = %s\n' "$name" "$repo" \
+        | guest_ssh -p $port build@localhost sudo tee -a /etc/pacman.conf
+    guest_ssh -p $port build@localhost sudo pacman-key -r $key
+    guest_ssh -p $port build@localhost sudo pacman-key --lsign-key $key
+    guest_ssh -p $port build@localhost sudo pacman -Sy
+}
+
 function sanity_check() {
     boot 8022 &
     qemu=$!

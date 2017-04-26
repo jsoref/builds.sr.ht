@@ -22,8 +22,8 @@ def jobs_POST(token):
     read = valid.optional("access:read", ["*"], list)
     write = valid.optional("access:write", [token.user.username], list)
     tags = valid.optional("tags", [], list)
-    valid.expect(all(re.match(r"^[a-z0-9_]+$", tag) for tag in tags),
-        "Invalid tag name, tags must use lowercase alphanumeric characters or underscores",
+    valid.expect(all(re.match(r"^[a-z0-9_.-]+$", tag) for tag in tags),
+        "Invalid tag name, tags must use lowercase alphanumeric characters, underscores, dashes, or dots",
         field="tags")
     triggers = valid.optional("triggers", list(), list)
     execute = valid.optional("execute", True, bool)
