@@ -117,5 +117,5 @@ def jobs_by_id_start_POST(token, job_id):
                 { "reason": "This job is already {}".format(reason_map.get(job.status)) }
             ]
         }, 400
-    queue_build(job, Manifest(job.manifest))
+    queue_build(job, Manifest(yaml.load(job.manifest)))
     return { }
