@@ -68,6 +68,7 @@ echo '%sudo ALL=(ALL) NOPASSWD: ALL' >> $root/etc/sudoers
 sed -i 's/#PermitEmptyPasswords no/PermitEmptyPasswords yes/' $root/etc/ssh/sshd_config
 run_root systemctl enable sshd
 
+echo "makeopts=(--skippgpcheck)" >> $root/etc/makepkg.conf
 run_normal curl -O https://aur.archlinux.org/cgit/aur.git/snapshot/cower.tar.gz
 run_normal tar xf cower.tar.gz
 run_normal 'cd cower && makepkg -si --noconfirm --skippgpcheck'

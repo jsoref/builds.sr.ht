@@ -143,10 +143,10 @@ tasks:
         $repo_path/sr.ht.db.tar.gz \
         $repo_path/builds.sr.ht-images-$pkgver-1-any.pkg.tar.xz
 
-      ssh $master pacman -Sy builds.sr.ht
-      ssh $master systemctl restart builds.sr.ht
-      for server in "$slaves[@]"
-      do
-        ssh $server pacman -Sy builds.sr.ht builds.sr.ht-images
-        ssh $server systemctl restart runner
-      done
+      #ssh $master pacman -Sy builds.sr.ht
+      #ssh $master systemctl restart builds.sr.ht
+      #for server in "$slaves[@]"
+      #do
+      #  ssh $server pacman -Sy builds.sr.ht builds.sr.ht-images
+      #  ssh $server systemctl restart runner
+      #done
