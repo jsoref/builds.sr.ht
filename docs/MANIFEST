@@ -14,7 +14,7 @@ A build manifest is a YAML file that describes how to perform a build. Here's an
       - wayland
       - gdk-pixbuf2
       - asciidoc
-    repos:
+    sources:
       - https://github.com/SirCmpwn/sway
     tasks:
       - setup: |
@@ -37,7 +37,11 @@ packages: list
     A list of package names to install on the image. The details of this process
     varies from image to image.
 
-repos: list (string)
+repositories: dictionary (string: string)
+    A list of extra repositories to enable with the image's package manager.
+    The format is name: url, and the syntax of url varies between images.
+
+sources: list (string)
     A list of git repositories to clone into the home directory of the build
     user in the build environment.
 
