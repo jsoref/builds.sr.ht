@@ -90,8 +90,8 @@ def jobs_by_id_GET(token, job_id):
     }
 
 @api.route("/api/jobs/<job_id>/manifest")
-@oauth("jobs:read")
-def jobs_by_id_manifest_GET(token, job_id):
+def jobs_by_id_manifest_GET(job_id):
+    # TODO: ACLs
     job = Job.query.filter(Job.id == job_id).first()
     if not job:
         abort(404)

@@ -34,6 +34,8 @@
         <dd>{{ job.created | humanize }}</dt>
         <dt>Updated</dt>
         <dd>{{ job.updated | humanize }}</dt>
+        <dt>Build manifest</dt>
+        <dd><a href="/api/jobs/{{ job.id }}/manifest">view manifest »</a></dt>
       </dl>
       <h4>Tasks</h4>
       <table class="table table-sm">
