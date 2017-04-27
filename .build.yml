@@ -148,7 +148,7 @@ tasks:
         $repo_path/builds.sr.ht-images-$pkgver-$pkgrel-any.pkg.tar.xz
 
       ssh $sshopts $master sudo /usr/local/bin/update-srht builds.sr.ht
-      for server in "$slaves[@]"
+      for server in "${slaves[@]}"
       do
         ssh $sshopts $server sudo /usr/local/bin/update-srht builds.sr.ht builds.sr.ht-images
       done
