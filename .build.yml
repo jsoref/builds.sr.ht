@@ -121,7 +121,7 @@ tasks:
       ./setup.py build
   - archive: |
       cd builds.sr.ht
-      pkgver=$(git describe)
+      pkgver=$(git describe | sed -e 's/-/_/g')
       echo "pkgver=$pkgver" >> ~/.buildenv
       git archive -o ~/sr.ht-pkgbuilds/builds.sr.ht/builds.sr.ht-$pkgver.tar.xz \
         --prefix=builds.sr.ht-$pkgver/ HEAD
