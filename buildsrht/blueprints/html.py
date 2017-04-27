@@ -22,14 +22,14 @@ def tags(tags):
     return results
 
 status_map = {
-    JobStatus.success: "text-success",
-    JobStatus.failed: "text-danger",
-    JobStatus.running: "text-black",
-    TaskStatus.success: "text-success",
-    TaskStatus.failed: "text-danger",
-    TaskStatus.running: "text-black",
-    TaskStatus.pending: "text-muted",
-    TaskStatus.skipped: "text-black",
+    JobStatus.success: "status-text text-success",
+    JobStatus.failed: "status-text text-danger",
+    JobStatus.running: "status-text text-info",
+    TaskStatus.success: "status-text text-success",
+    TaskStatus.failed: "status-text text-danger",
+    TaskStatus.running: "status-text text-primary",
+    TaskStatus.pending: "status-text text-black",
+    TaskStatus.skipped: "status-text text-muted",
 }
 
 def jobs_page(jobs, sidebar, **kwargs):

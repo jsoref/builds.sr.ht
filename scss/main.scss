@@ -39,6 +39,12 @@
   color: black !important;
 }
 
+.status-text {
+  &.text-primary {
+    font-weight: bold;
+  }
+}
+
 a[href^="mailto:"] {
   &:before {
     content: "<";
