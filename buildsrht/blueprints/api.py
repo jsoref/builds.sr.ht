@@ -30,7 +30,7 @@ def jobs_POST(token):
     if not valid.ok:
         return valid.response
     try:
-        manifest = Manifest(yaml.load(_manifest))
+        manifest = Manifest(yaml.safe_load(_manifest))
     except Exception as ex:
         valid.error(str(ex))
         return valid.response
@@ -117,5 +117,5 @@ def jobs_by_id_start_POST(token, job_id):
                 { "reason": "This job is already {}".format(reason_map.get(job.status)) }
             ]
         }, 400
-    queue_build(job, Manifest(yaml.load(job.manifest)))
+    queue_build(job, Manifest(yaml.safe_load(job.manifest)))
     return { }
