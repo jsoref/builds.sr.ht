@@ -136,36 +136,38 @@ def run_build(job_id, manifest, encrypted_tasks):
         write_env(port, manifest.environment, os.path.join(home, ".buildenv"))
 
         with open(os.path.join(logs, "log"), "wb") as f:
-            print("Adding user repositories")
-            for repo in manifest.repos:
-                source = manifest.repos[repo]
-                f.write("Adding repository: {}\n".format(repo).encode())
-                f.flush()
-                run_or_die(os.path.join(images, "control"), manifest.image,
-                    "add-repo", port, repo, source, stdout=f, stderr=subprocess.STDOUT)
+            if manifest.repos and any(manifest.repos):
+                print("Adding user repositories")
+                for repo in manifest.repos:
+                    source = manifest.repos[repo]
+                    f.write("Adding repository: {}\n".format(repo).encode())
+                    f.flush()
+                    run_or_die(os.path.join(images, "control"), manifest.image,
+                        "add-repo", port, repo, source, stdout=f, stderr=subprocess.STDOUT)
 
-            print("Cloning repositories")
-            for repo in manifest.sources:
-                refname = None
-                if "#" in repo:
-                    _repo = repo.split("#")
-                    refname = _repo[1]
-                    repo = _repo[0]
-                repo_name = os.path.basename(repo)
-                result = ssh(port, "git", "clone", "--recursive", repo,
-                    stdout=f, stderr=subprocess.STDOUT)
-                if result.returncode != 0:
-                    raise Exception("git clone failed for {}".format(repo))
-                if refname:
-                    _cmd = "'cd {} && git checkout {}'".format(repo_name, refname)
-                    result = ssh(port, "sh", "-xc", _cmd,
+            if manifest.sources and any(manifest.sources):
+                print("Cloning repositories")
+                for repo in manifest.sources:
+                    refname = None
+                    if "#" in repo:
+                        _repo = repo.split("#")
+                        refname = _repo[1]
+                        repo = _repo[0]
+                    repo_name = os.path.basename(repo)
+                    result = ssh(port, "git", "clone", "--recursive", repo,
                         stdout=f, stderr=subprocess.STDOUT)
                     if result.returncode != 0:
-                        raise Exception("git checkout failed for {}#{}".format(
-                            repo, refname))
+                        raise Exception("git clone failed for {}".format(repo))
+                    if refname:
+                        _cmd = "'cd {} && git checkout {}'".format(repo_name, refname)
+                        result = ssh(port, "sh", "-xc", _cmd,
+                            stdout=f, stderr=subprocess.STDOUT)
+                        if result.returncode != 0:
+                            raise Exception("git checkout failed for {}#{}".format(
+                                repo, refname))
 
-            print("Installing packages")
-            if any(manifest.packages):
+            if manifest.packages and any(manifest.packages):
+                print("Installing packages")
                 run_or_die(os.path.join(images, "control"),
                     manifest.image, "install", port, *manifest.packages,
                     stdout=f, stderr=subprocess.STDOUT)
