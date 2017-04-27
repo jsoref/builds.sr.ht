@@ -25,7 +25,6 @@ def md(text):
     html = bleach.clean(markdown.markdown(text),
         tags=bleach.sanitizer.ALLOWED_TAGS + ["p"],
         strip=True)
-    print(html)
     return Markup(html)
 
 @app.template_filter("humanize")
