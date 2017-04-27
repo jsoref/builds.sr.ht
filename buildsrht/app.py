@@ -22,8 +22,10 @@ import bleach
 
 @app.template_filter()
 def md(text):
-    return Markup(bleach.clean(markdown.markdown(text))\
-            .strip("&lt;p&gt;").strip("&lt;/p&gt;"))
+    html = bleach.clean(markdown.markdown(text,
+        tags=bleach.sanitizer.ALLOWED_TAGS + ["p"]),
+        strip=True)
+    return Markup(html)
 
 @app.template_filter("humanize")
 def _humanize(date):
