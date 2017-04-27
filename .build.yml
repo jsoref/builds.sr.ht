@@ -146,7 +146,6 @@ tasks:
       ssh $sshopts $repo_server repo-add -n -R \
         $repo_path/sr.ht.db.tar.gz \
         $repo_path/builds.sr.ht-images-$pkgver-$pkgrel-any.pkg.tar.xz
-
       ssh $sshopts $master sudo /usr/local/bin/update-srht builds.sr.ht
       for server in "${slaves[@]}"
       do
