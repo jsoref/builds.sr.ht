@@ -28,7 +28,7 @@ function run_normal() {
         /bin/bash -c "cd /home/build && $cmd"
 }
 
-echo 'Server = http://mirror.us.leaseweb.net/archlinux/$repo/os/$arch' >> $root/etc/pacman.d/mirrorlist
+echo 'Server = http://lug.mtu.edu/archlinux/$repo/os/$arch' >> $root/etc/pacman.d/mirrorlist
 echo 'nameserver 8.8.8.8' >> $root/etc/resolv.conf
 
 mount $root $root --bind
@@ -45,6 +45,14 @@ run_root pacman -Syy
 run_root pacman-key --init
 run_root pacman-key --populate archlinux
 run_root pacman -Syu --force --noconfirm pacman-mirrorlist
+sed -e 's/^#//g' -i $root/etc/pacman.d/mirrorlist.pacnew
+cat - $root/etc/pacman.d/mirrorlist.pacnew <<EOF > $root/etc/pacman.d/mirrorlist
+Server = http://mirror.rackspace.com/archlinux/\$repo/os/\$arch
+Server = http://mirror.us.leaseweb.net/archlinux/\$repo/os/\$arch
+Server = http://lug.mtu.edu/archlinux/\$repo/os/\$arch
+Server = http://mirrors.kernel.org/archlinux/\$repo/os/\$arch
+EOF
+run_root pacman -Sy
 run_root pacman -Syu --force --noconfirm \
     base-devel \
     git \

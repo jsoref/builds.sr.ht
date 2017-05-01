@@ -5,12 +5,8 @@ if not loaded():
 runner_name = None
 from srht.database import DbSession, db
 if not hasattr(db, "session"):
-    db = DbSession(cfg("sr.ht", "connection-string"))
-    import buildsrht.types
-    db.init()
     runner_name = cfg("builds.sr.ht", "runner")
 
-from buildsrht.types import Job, JobStatus, TaskStatus
 from celery import Celery
 from buildsrht.manifest import Manifest
 from tempfile import TemporaryDirectory
@@ -29,6 +25,11 @@ function complete-build() {
     exit 255
 }
 """
+
+def init_db():
+    db = DbSession(cfg("sr.ht", "connection-string"))
+    import buildsrht.types
+    db.init()
 
 runner = Celery('builds', broker=cfg("builds.sr.ht", "redis"))
 if runner_name:
@@ -86,6 +87,8 @@ def queue_build(job, manifest):
 
 @runner.task
 def run_build(job_id, manifest, encrypted_tasks):
+    init_db()
+    from buildsrht.types import Job, JobStatus, TaskStatus
     job = Job.query.filter(Job.id == job_id).first()
     if not job:
         print("Error - no job by that ID")
