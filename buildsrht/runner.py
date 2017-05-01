@@ -6,6 +6,8 @@ runner_name = None
 from srht.database import DbSession, db
 if not hasattr(db, "session"):
     runner_name = cfg("builds.sr.ht", "runner")
+else:
+    from buildsrht.types import Job, JobStatus, TaskStatus
 
 from celery import Celery
 from buildsrht.manifest import Manifest
