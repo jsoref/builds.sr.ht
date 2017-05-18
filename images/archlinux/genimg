@@ -45,6 +45,7 @@ run_root pacman -Syy
 run_root pacman-key --init
 run_root pacman-key --populate archlinux
 run_root pacman -Syu --force --noconfirm pacman-mirrorlist
+[ ! -f $root/etc/pacman.d/mirrorlist.pacnew ] && mv $root/etc/pacman.d/mirrorlist $root/etc/pacman.d/mirrorlist.pacnew
 sed -e 's/^#//g' -i $root/etc/pacman.d/mirrorlist.pacnew
 cat - $root/etc/pacman.d/mirrorlist.pacnew <<EOF > $root/etc/pacman.d/mirrorlist
 Server = http://mirror.rackspace.com/archlinux/\$repo/os/\$arch
