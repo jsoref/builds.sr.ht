@@ -3,7 +3,6 @@ repositories:
   sr.ht: https://mirror.sr.ht/sr.ht/archlinux/#1ED4E14494433AE3FD302CAB74B4BCCEA60D0437
 packages:
   - qemu-headless
-  - wget
   - libguestfs
   - procps-ng
 sources:
