@@ -1,6 +1,6 @@
 image: archlinux
 packages:
-  - qemu
+  - qemu-headless
   - wget
   - libguestfs
   - procps-ng

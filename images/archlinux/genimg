@@ -95,5 +95,5 @@ pkill gpg-agent
 umount -R $root
 cp $root/boot/vmlinuz-linux ./kernel
 cp $root/boot/initramfs-linux.img ./initrd
-virt-make-fs --format=qcow2 --size=+4G $root root.img.qcow2
+virt-make-fs --format=qcow2 --size=+8G $root root.img.qcow2
 rm -rf $root
