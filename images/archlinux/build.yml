@@ -1,0 +1,16 @@
+image: archlinux
+packages:
+  - qemu
+  - wget
+  - libguestfs
+  - procps-ng
+sources:
+  - https://git.sr.ht/~sircmpwn/builds.sr.ht
+tasks:
+  - build: |
+      cd builds.sr.ht
+      cd images/archlinux
+      sudo ./genimg
+  - sanitycheck: |
+      cd builds.sr.ht
+      ./images/control archlinux sanity-check
