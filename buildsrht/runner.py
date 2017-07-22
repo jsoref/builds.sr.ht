@@ -164,7 +164,7 @@ def run_build(job_id, manifest, encrypted_tasks):
                     if result.returncode != 0:
                         raise Exception("git clone failed for {}".format(repo))
                     if refname:
-                        _cmd = "'cd {} && git checkout {}'".format(repo_name, refname)
+                        _cmd = "'cd {} && git checkout -q {}'".format(repo_name, refname)
                         result = ssh(port, "sh", "-xc", _cmd,
                             stdout=f, stderr=subprocess.STDOUT)
                         if result.returncode != 0:

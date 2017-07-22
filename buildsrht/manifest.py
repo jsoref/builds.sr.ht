@@ -33,8 +33,9 @@ class Task():
             self.encrypted = True
         else:
             self.encrypted = False
-        if not re.match(r"^[a-z0-9_]+$", self.name) or len(self.name) > 128:
-            raise Exception("Task name '{}' is invalid (must be all lowercase letters, numbers, and underscores, and <=128 characters)")
+        if not re.match(r"^[a-z0-9_-]+$", self.name) or len(self.name) > 128:
+            raise Exception("Task name '{}' is invalid (must be all lowercase letters, " +
+                "numbers, underscores, and dashes, and <=128 characters)".format(self.name))
 
     def __repr__(self):
         return "<Task {}>".format(self.name)

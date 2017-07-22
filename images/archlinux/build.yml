@@ -11,6 +11,6 @@ tasks:
       cd builds.sr.ht
       cd images/archlinux
       sudo ./genimg
-  - sanitycheck: |
+  - sanity-check: |
       cd builds.sr.ht
       ./images/control archlinux sanity-check
