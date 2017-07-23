@@ -32,7 +32,7 @@ function qemu_pid() {
 function boot() {
     port=$1
     qemu-system-x86_64 \
-        -m 2048 \
+        -m ${MEMORY:-2048} \
         -net nic,model=virtio -net user,hostfwd=tcp::$port-:22 \
         -cpu host \
         -enable-kvm \

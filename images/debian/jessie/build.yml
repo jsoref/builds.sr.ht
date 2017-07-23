@@ -1,3 +1,4 @@
+# TODO: Build debian images from debian
 image: archlinux
 repositories:
   sr.ht: https://mirror.sr.ht/sr.ht/archlinux/#1ED4E14494433AE3FD302CAB74B4BCCEA60D0437
@@ -5,17 +6,15 @@ packages:
   - qemu-headless
   - libguestfs
   - procps-ng
-  - haveged # temporary
+  - debootstrap
 sources:
   - https://git.sr.ht/~sircmpwn/builds.sr.ht
 tasks:
   - build: |
       cd builds.sr.ht
-      cd images/archlinux
-      sudo chown build:build /dev/kvm
-      # Temporary:
-      sudo systemctl start haveged
+      cd images/debian/jessie
+      sudo usermod -mG kvm build
       sudo ./genimg
   - sanity-check: |
       cd builds.sr.ht
-      MEMORY=1024 ./images/control archlinux sanity-check
+      ./images/control debian/jessie sanity-check

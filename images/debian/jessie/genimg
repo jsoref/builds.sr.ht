@@ -72,6 +72,6 @@ run_root update-initramfs -u
 
 umount -R $root
 cp $root/boot/vmlinuz-* ./kernel
-cp $root/boot/initrd*.img ./initrd
+cp $root/boot/initrd ./initrd
 virt-make-fs --format=qcow2 --size=+4G $root root.img.qcow2
 rm -rf $root
