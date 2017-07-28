@@ -1,4 +1,9 @@
 {% extends "layout.html" %}
+{% block title %}
+<title>
+  builds.sr.ht #{{ job.id }} - {{ job.status.value }}
+</title>
+{% endblock %}
 {% block head %}
 {% if job.status.value == "pending" or job.status.value == "queued" %}
 <meta id="refresh" http-equiv="refresh" content="30">
