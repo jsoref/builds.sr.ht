@@ -17,15 +17,6 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 from jinja2 import Markup
 import humanize
-import markdown
-import bleach
-
-@app.template_filter()
-def md(text):
-    html = bleach.clean(markdown.markdown(text),
-        tags=bleach.sanitizer.ALLOWED_TAGS + ["p"],
-        strip=True)
-    return Markup(html)
 
 @app.template_filter("humanize")
 def _humanize(date):
