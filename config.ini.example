@@ -1,0 +1,55 @@
+#
+# builds.sr.ht config
+
+[server]
+#
+# Specifies the protocol (usually http or https) meta.sr.ht runs with.
+protocol=http
+#
+# Specifies the domain name meta.sr.ht is running on.
+domain=builds.sr.ht.local
+#
+# A secret key to encrypt session cookies with.
+secret-key=CHANGEME
+
+[debug]
+#
+# Address and port to bind the debug server to.
+debug-host=0.0.0.0
+debug-port=5002
+
+[sr.ht]
+#
+# Configures the SQLAlchemy connection string for the database.
+connection-string=postgresql://postgres@localhost/builds.sr.ht
+#
+# The name of your network of sr.ht-based sites
+site-name=sr.ht
+
+[network]
+#
+# Location of other sites in your network
+#
+# This isn't a hardcoded list, add or remove entries as you like. The upstream
+# sites do know about each other and will omit integrations if you leave out
+# the relevant site. Only meta is required.
+meta=http://meta.sr.ht.local
+git=http://git.sr.ht.local
+builds=http://builds.sr.ht.local
+builds=http://todo.sr.ht.local
+
+[builds.sr.ht]
+redis=redis://localhost:6379/0
+buildlogs=./logs
+images=./images
+pgp-private-key=.pgp/builds@sr.ht.asc
+pgp-public-key=.pgp/builds@sr.ht.asc
+#
+# Hostname of this build runner
+# Used to construct URLs to stdin/stdout, which are served directly by the
+# relevant runner
+runner=runner.sr.ht.local
+
+[meta.sr.ht]
+oauth-client-id=CHANGEME
+oauth-client-secret=CHANGEME
