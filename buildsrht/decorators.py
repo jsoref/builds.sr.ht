@@ -90,16 +90,12 @@ def oauth(scopes):
             available = [OAuthScope(s) for s in oauth_token.scopes.split(',')]
             applicable = [
                 s for s in available
-                if s.client_id == client_id and s.scope == required.scope
+                if s.fulfills(required)
             ]
             if not any(applicable):
                 return { "errors": [ { "reason": "Your OAuth token is not permitted to use this endpoint (needs {})".format(required) } ] }, 403
-            if required.access == 'read' and any([s for s in applicable if s.access == 'read' or s.access == 'write']):
-                return f(*args, **kwargs)
-            if required.access == 'write' and any([s for s in applicable if s.access == 'write']):
-                return f(*args, **kwargs)
             oauth_token.updated = datetime.utcnow()
             db.session.commit()
-            return { "errors": [ { "reason": "Your OAuth token is not permitted to use this endpoint (needs {})".format(required) } ] }, 403
+            return f(*args, **kwargs)
         return wrapper
     return wrap
