@@ -74,3 +74,6 @@ triggers: list (trigger)
 environment: dictionary (string: string OR string: list)
     A list of key/value pairs for options to set in the build environment via
     ~/.buildenv.
+
+secrets: list (string)
+    List of secret UUIDs to be added to the guest during the build.

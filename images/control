@@ -8,7 +8,7 @@ base=$1
 cmd=$2
 shift 2
 
-if [ ! -d $base ]
+if [ ! -d $self/$base ]
 then
     echo "Unknown base image $base"
     exit 1

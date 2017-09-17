@@ -139,7 +139,7 @@ tasks:
       git describe --exact-match HEAD || complete-build
   - deploy: |
       cd sr.ht-pkgbuilds/builds.sr.ht
-      sshopts="-o StrictHostKeyChecking=no" # TODO: remove this when builds run on a tty
+      sshopts="-o StrictHostKeyChecking=no"
       rsync --rsh="ssh $sshopts" -rP *.pkg.tar.xz{,.sig} $repo_server:$repo_path/
       ssh $sshopts $repo_server repo-add -n -R \
         $repo_path/sr.ht.db.tar.gz \

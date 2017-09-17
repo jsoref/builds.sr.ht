@@ -1,5 +1,6 @@
 from srht.config import cfg
 import subprocess
+import uuid
 import yaml
 import pgpy
 import re
@@ -48,6 +49,7 @@ class Manifest():
         repos = self.yaml.get("repositories")
         sources = self.yaml.get("sources")
         env = self.yaml.get("environment")
+        secrets = self.yaml.get("secrets")
         if not image:
             raise Exception("Missing image in manifest")
         if not isinstance(image, str):
@@ -67,11 +69,17 @@ class Manifest():
         if env:
             if not isinstance(env, dict):
                 raise Exception("Expected environment to be a dictionary")
+        if secrets:
+            if not isinstance(secrets, list) or not all([isinstance(s, str) for s in secrets]):
+                raise Exception("Expected secrets to be a UUID array")
+            # Will throw exception on invalid UUIDs as well
+            secrets = list(map(uuid.UUID, secrets))
         self.image = image
         self.packages = packages
         self.repos = repos
         self.sources = sources
         self.environment = env
+        self.secrets = secrets
         tasks = self.yaml.get("tasks")
         if not tasks or not isinstance(tasks, list):
             raise Exception("Attempted to create manifest with no tasks")
@@ -90,6 +98,7 @@ class Manifest():
             "repositories": self.repos,
             "sources": self.sources,
             "environment": self.environment,
+            "secrets": self.secrets,
             "tasks": [{
                 t.name: t.encrypted_script if t.encrypted and encrypted else t.script
             } for t in self.tasks]

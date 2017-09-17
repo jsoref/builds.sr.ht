@@ -90,7 +90,7 @@ def queue_build(job, manifest):
 @runner.task
 def run_build(job_id, manifest, encrypted_tasks):
     init_db()
-    from buildsrht.types import Job, JobStatus, TaskStatus
+    from buildsrht.types import Job, JobStatus, TaskStatus, Secret, SecretType
     job = Job.query.filter(Job.id == job_id).first()
     if not job:
         print("Error - no job by that ID")
@@ -120,7 +120,7 @@ def run_build(job_id, manifest, encrypted_tasks):
         result = ssh(port, "echo", "hello world", stdout=subprocess.PIPE)
         if result.returncode != 0 or result.stdout != b"hello world\n":
             raise Exception("Sanity check failed, aborting build")
-
+        
         print("Sending build scripts")
         home = "/home/build"
         result = ssh(port, "mkdir", "-p", os.path.join(home, "/home/build/.tasks"))
@@ -141,6 +141,39 @@ def run_build(job_id, manifest, encrypted_tasks):
         write_env(port, manifest.environment, os.path.join(home, ".buildenv"))
 
         with open(os.path.join(logs, "log"), "wb") as f:
+            ssh_key_used = False
+            print("Resolving secrets")
+            if manifest.secrets and any(manifest.secrets):
+                for s in manifest.secrets:
+                    secret = Secret.query.filter(Secret.uuid == s).first()
+                    if not secret:
+                        f.write("Warning: unknown secret {}\n".format(s).encode())
+                        return
+                    # TODO: more sophisticated checks here (i.e. orgs)
+                    if secret.user_id != job.owner_id:
+                        f.write("Warning: access denied for secret {}\n".format(s).encode())
+                        return
+                    if secret.secret_type == SecretType.ssh_key:
+                        path = os.path.join("/home/build/.ssh", str(s))
+                        ssh(port, "mkdir", "-p", "/home/build/.ssh",
+                                stdout=subprocess.DEVNULL)
+                        ssh(port, "tee", path,
+                                input=secret.secret.encode(),
+                                stdout=subprocess.DEVNULL)
+                        ssh(port, "chmod", "600", path)
+                        if not ssh_key_used:
+                            ssh(port, "ln", "-s", str(s), "/home/build/.ssh/id_rsa")
+                            ssh(port, "chmod", "600", "/home/build/.ssh/id_rsa")
+                            ssh_key_used = True
+                    elif secret.secret_type == SecretType.pgp_key:
+                        # TODO: make this the default key similar to the SSH thing?
+                        ssh(port, "gpg", "--import",
+                                input=secret.secret.encode(),
+                                stdout=f,
+                                stderr=f)
+                    f.write("Loaded secret {}\n".format(str(s)).encode())
+            f.flush()
+
             if manifest.repos and any(manifest.repos):
                 print("Adding user repositories")
                 for repo in manifest.repos:

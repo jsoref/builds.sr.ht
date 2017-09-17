@@ -1,19 +1,45 @@
-<h2>builds</h2>
-<p>
-  Welcome back, {{ current_user.username }}!
-</p>
-<p>
-  You can create build jobs here by passing a
-  <a href="https://git.sr.ht/~sircmpwn/builds.sr.ht/tree/docs/MANIFEST">
-    manifest
-  </a>
-  into the
-  <a href="https://git.sr.ht/~sircmpwn/builds.sr.ht/tree/docs/API">
-    API
-  </a>.
-  {% if cfg("network", "git") %}
-  You can also write your manifest in a <code>.build.yml</code> file in
-  your <a href="{{ cfg("network", "git") }}">git.sr.ht</a> repositories and
-  it will automatically run a build each time you push.
-  {% endif %}
-</p>
+<div class="sidebar">
+  <h2>builds</h2>
+  <p>
+    Welcome back, {{ current_user.username }}!
+  </p>
+  <p>
+    You can create build jobs here by passing a
+    <a href="https://git.sr.ht/~sircmpwn/builds.sr.ht/tree/docs/MANIFEST">
+      manifest
+    </a>
+    into the
+    <a href="https://git.sr.ht/~sircmpwn/builds.sr.ht/tree/docs/API">
+      API
+    </a>.
+    {% if cfg("network", "git") %}
+    You can also write your manifest in a <code>.build.yml</code> file in
+    your <a href="{{ cfg("network", "git") }}">git.sr.ht</a> repositories and
+    it will automatically run a build each time you push.
+    {% endif %}
+  </p>
+  <h3>Secrets</h3>
+  <p>
+  builds.sr.ht provides tools for managing secrets like SSH keys that are
+  available to build guests.
+  </p>
+  <a class="btn btn-default btn-block" href="/secrets">Manage secrets</a>
+  {#
+  <h3>Stored Manifests</h3>
+  <p>
+  You can store build manifests directly on builds.sr.ht and trigger them
+  without having to rely on the API.
+  </p>
+  <dl class="row">
+    <dt class="col-md-8">Deploy meta.sr.ht</dt>
+    <dd class="col-md-4"><button class="btn btn-default btn-block">Trigger</button></dd>
+    <dt class="col-md-8">Deploy git.sr.ht</dt>
+    <dd class="col-md-4"><button class="btn btn-default btn-block">Trigger</button></dd>
+    <dt class="col-md-8">Deploy todo.sr.ht</dt>
+    <dd class="col-md-4"><button class="btn btn-default btn-block">Trigger</button></dd>
+    <dt class="col-md-8">Deploy builds.sr.ht</dt>
+    <dd class="col-md-4"><button class="btn btn-default btn-block">Trigger</button></dd>
+  </dl>
+  <a class="btn btn-default btn-block" href="/manifests">Manage stored manifests</a>
+  #}
+</div>

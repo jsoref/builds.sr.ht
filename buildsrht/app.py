@@ -45,15 +45,18 @@ def oauth_url(return_to):
 
 from buildsrht.blueprints.api import api
 from buildsrht.blueprints.auth import auth
-from buildsrht.blueprints.html import html
+from buildsrht.blueprints.jobs import jobs
+from buildsrht.blueprints.secrets import secrets
 
 app.register_blueprint(api)
 app.register_blueprint(auth)
-app.register_blueprint(html)
+app.register_blueprint(jobs)
+app.register_blueprint(secrets)
 
 @app.context_processor
 def inject():
     return {
         "oauth_url": oauth_url(request.full_path),
-        "JobStatus": JobStatus
+        "JobStatus": JobStatus,
+        "str": str
     }

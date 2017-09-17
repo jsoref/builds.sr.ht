@@ -6,7 +6,7 @@ from buildsrht.decorators import loginrequired
 from buildsrht.runner import run_build
 import requests
 
-html = Blueprint("html", __name__)
+jobs = Blueprint("jobs", __name__)
 
 def tags(tags):
     if not tags:
@@ -59,13 +59,13 @@ def jobs_page(jobs, sidebar, **kwargs):
         **kwargs
     )
 
-@html.route("/")
+@jobs.route("/")
 def index():
     if not current_user:
         return render_template("index-logged-out.html")
     return jobs_page(Job.query.filter(Job.owner_id == current_user.id), "index.html")
 
-@html.route("/jobs/~<username>")
+@jobs.route("/jobs/~<username>")
 def user(username):
     user = User.query.filter(User.username == username).first()
     if not user:
@@ -77,7 +77,7 @@ def user(username):
         { "name": "~" + user.username, "link": "" }
     ])
 
-@html.route("/jobs/~<username>/<path:path>")
+@jobs.route("/jobs/~<username>/<path:path>")
 def tag(username, path):
     user = User.query.filter(User.username == username).first()
     if not user:
@@ -90,7 +90,7 @@ def tag(username, path):
         { "name": "~" + user.username, "url": "" }
     ] + tags(path))
 
-@html.route("/job/<int:job_id>")
+@jobs.route("/job/<int:job_id>")
 def job_by_id(job_id):
     job = Job.query.get(job_id)
     if not job:
