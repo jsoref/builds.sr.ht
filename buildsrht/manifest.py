@@ -98,7 +98,7 @@ class Manifest():
             "repositories": self.repos,
             "sources": self.sources,
             "environment": self.environment,
-            "secrets": self.secrets,
+            "secrets": [str(s) for s in self.secrets],
             "tasks": [{
                 t.name: t.encrypted_script if t.encrypted and encrypted else t.script
             } for t in self.tasks]
