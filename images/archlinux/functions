@@ -26,18 +26,17 @@ function sanity_check() {
     boot 8022 &
     qemu=$!
     sleep 5
-    # This script is set -e so any failure will cause the sanity check to exit non-zero
-    # Does sudo work?
+    echo "Testing sudo..."
     guest_ssh -p 8022 build@localhost sudo ls -a
-    # Does pacman work?
-    guest_ssh -p 8022 build@localhost sudo pacman -Syu --noconfirm
-    # Does networking work?
+    echo "Testing networking..."
     guest_ssh -p 8022 build@localhost curl http://example.org
-    # Does git work?
+    echo "Testing pacman..."
+    guest_ssh -p 8022 build@localhost sudo pacman -Syu --noconfirm
+    echo "Testing git..."
     guest_ssh -p 8022 build@localhost git --version
-    # Does pacaur work?
+    echo "Testing AUR packages..."
     install 8022 brightnessctl
-    # Shut down
+    echo "Everything works!"
     guest_ssh -p 8022 build@localhost sudo systemctl poweroff || true
     wait $qemu
     cleanup 8022
