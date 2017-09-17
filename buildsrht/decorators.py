@@ -87,7 +87,7 @@ def oauth(scopes):
                 return oauth_token
             args = (oauth_token,) + args
             required = OAuthScope(scopes)
-            required.client = client_id
+            required.client_id = client_id
             available = [OAuthScope(s) for s in oauth_token.scopes.split(',')]
             applicable = [
                 s for s in available
