@@ -42,8 +42,6 @@ builds=http://todo.sr.ht.local
 redis=redis://localhost:6379/0
 buildlogs=./logs
 images=./images
-pgp-private-key=.pgp/builds@sr.ht.asc
-pgp-public-key=.pgp/builds@sr.ht.asc
 #
 # Hostname of this build runner
 # Used to construct URLs to stdin/stdout, which are served directly by the

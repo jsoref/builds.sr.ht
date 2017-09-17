@@ -83,12 +83,10 @@ def write_env(port, env, path):
 def queue_build(job, manifest):
     job.status = JobStatus.queued
     db.session.commit()
-    run_build.delay(job.id, manifest.to_dict(encrypted=False), [
-        t.name for t in manifest.tasks if t.encrypted
-    ])
+    run_build.delay(job.id, manifest.to_dict())
 
 @runner.task
-def run_build(job_id, manifest, encrypted_tasks):
+def run_build(job_id, manifest):
     init_db()
     from buildsrht.types import Job, JobStatus, TaskStatus, Secret, SecretType
     job = Job.query.filter(Job.id == job_id).first()
@@ -130,10 +128,7 @@ def run_build(job_id, manifest, encrypted_tasks):
             path = os.path.join(home, ".tasks", task.name)
             script = "#!/usr/bin/env bash\n"
             script += ". ~/.buildenv\n"
-            if not task.name in encrypted_tasks:
-                script += "set -x\nset -e\n"
-            else:
-                script += "set -e\n"
+            script += "set -x\nset -e\n"
             script += task.script
             ssh(port, "tee", path, input=script.encode(), stdout=subprocess.DEVNULL)
             ssh(port, "chmod", "755", path)

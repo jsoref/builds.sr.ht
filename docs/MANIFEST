@@ -57,11 +57,6 @@ tasks: list (string)
     ~/.buildenv contains environment variables specified by the `environment`
     directive.
 
-    The text of each script may be encrypted with the build server's PGP key,
-    which is provided via /api/pgp-key. In this case, `set -x` is omitted from
-    the preamble, and the script will be decrypted before being sent to the
-    build environment.
-
     Task names must use only lowercase alphanumeric characters or underscores
     and must be <=128 characters in length. Tasks are executed in the order
     specified.

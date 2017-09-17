@@ -2,14 +2,7 @@ from srht.config import cfg
 import subprocess
 import uuid
 import yaml
-import pgpy
 import re
-
-_privkey_path = cfg("builds.sr.ht", "pgp-private-key", default=None)
-if _privkey_path:
-    _pgp_key, _ = pgpy.PGPKey.from_file(cfg("builds.sr.ht", "pgp-private-key"))
-else:
-    _pgp_key = None
 
 class Task():
     def __init__(self, yml):
@@ -20,20 +13,6 @@ class Task():
                 raise Exception("Expected task to be a string: string")
             self.name = key
             self.script = yml[key].strip()
-        if _pgp_key and self.script.startswith("-----BEGIN PGP MESSAGE-----") \
-                and self.script.endswith("-----END PGP MESSAGE-----"):
-            # TODO: https://github.com/SecurityInnovation/PGPy/issues/160
-            res = subprocess.run(["gpg", "--decrypt"],
-                    input=self.script.encode(),
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.DEVNULL)
-            if res.returncode != 0:
-                raise Exception("Failed to decrypt encrypted script")
-            self.encrypted_script = self.script
-            self.script = res.stdout.decode()
-            self.encrypted = True
-        else:
-            self.encrypted = False
         if not re.match(r"^[a-z0-9_-]+$", self.name) or len(self.name) > 128:
             raise Exception("Task name '{}' is invalid (must be all lowercase letters, " +
                 "numbers, underscores, and dashes, and <=128 characters)".format(self.name))
@@ -91,7 +70,7 @@ class Manifest():
     def __repr__(self):
         return "<Manifest {}, {} tasks>".format(self.image, len(self.tasks))
     
-    def to_dict(self, encrypted=True):
+    def to_dict(self):
         return {
             "image": self.image,
             "packages": self.packages,
@@ -99,9 +78,7 @@ class Manifest():
             "sources": self.sources,
             "environment": self.environment,
             "secrets": [str(s) for s in self.secrets],
-            "tasks": [{
-                t.name: t.encrypted_script if t.encrypted and encrypted else t.script
-            } for t in self.tasks]
+            "tasks": [{ t.name: t.script } for t in self.tasks]
         }
 
     def to_yaml(self):
