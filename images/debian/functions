@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+guest_kernel=kernel
+guest_initrd=initrd
+poweroff_cmd="sudo systemctl poweroff"
+cmdline="loglevel=3 net.ifnames=0 biosdevname=0"
+
+function install() {
+    port=$1
+    shift 1
+    guest_ssh -p $port build@localhost sudo apt-get install -y "$@"
+}
+
+function sanity_check() {
+    boot 8023 &
+    qemu=$!
+    sleep 5
+    # This script is set -e so any failure will cause the sanity check to exit non-zero
+    # Does sudo work?
+    guest_ssh -p 8023 build@localhost sudo ls -a
+    # Does apt work?
+    guest_ssh -p 8023 build@localhost sudo apt-get update
+    # Does apt-get install work?
+    install 8023 curl
+    # Does networking work?
+    guest_ssh -p 8023 build@localhost curl http://example.org
+    # Does git work?
+    guest_ssh -p 8023 build@localhost git --version
+    # Shut down
+    guest_ssh -p 8023 build@localhost sudo systemctl poweroff || true
+    wait $qemu
+    cleanup 8023
+}

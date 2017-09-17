@@ -8,14 +8,11 @@ base=$1
 cmd=$2
 shift 2
 
-case "$base" in
-    archlinux|debian/jessie)
-        ;;
-    *)
-        echo "Unknown base image $base"
-        exit 1
-        ;;
-esac
+if [ ! -d $base ]
+then
+    echo "Unknown base image $base"
+    exit 1
+fi
 
 ssh_opts="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 
