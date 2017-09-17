@@ -77,7 +77,7 @@ class Manifest():
             "repositories": self.repos,
             "sources": self.sources,
             "environment": self.environment,
-            "secrets": [str(s) for s in self.secrets],
+            "secrets": [str(s) for s in self.secrets] if self.secrets else None,
             "tasks": [{ t.name: t.script } for t in self.tasks]
         }
 
