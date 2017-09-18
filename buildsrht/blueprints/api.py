@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, Response
 from flask_login import current_user
 from srht.database import db
 from srht.validation import Validation
-from buildsrht.decorators import oauth
+from srht.oauth import oauth
 from buildsrht.runner import queue_build
 from buildsrht.types import Job, JobStatus, Task
 from buildsrht.types import Trigger, TriggerType, TriggerCondition

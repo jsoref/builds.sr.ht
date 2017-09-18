@@ -15,6 +15,7 @@ app = SrhtFlask("builds", __name__)
 app.secret_key = cfg("server", "secret-key")
 login_manager = LoginManager()
 login_manager.init_app(app)
+import buildsrht.oauth
 from jinja2 import Markup
 import humanize
 
