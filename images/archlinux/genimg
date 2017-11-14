@@ -71,8 +71,7 @@ run_root systemctl enable dhcpcd
 run_root systemctl enable systemd-timesyncd.service
 
 run_root groupadd sudo
-run_root useradd -mG sudo build
-run_root useradd -mG kvm build
+run_root useradd -mG sudo,kvm build
 run_root passwd -d build
 echo '%sudo ALL=(ALL) NOPASSWD: ALL' >> $root/etc/sudoers
 echo 'source /etc/profile.d/perlbin.sh' > $root/home/build/.bashrc
