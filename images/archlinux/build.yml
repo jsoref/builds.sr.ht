@@ -18,8 +18,6 @@ tasks:
   - build: |
       cd builds.sr.ht
       cd images/archlinux
-      # TODO: would be nice to avoid this
-      sudo chown build:build /dev/kvm
       # Temporary:
       sudo systemctl start haveged
       sudo ./genimg
