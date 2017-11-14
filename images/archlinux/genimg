@@ -71,7 +71,6 @@ run_root systemctl enable dhcpcd
 run_root systemctl enable systemd-timesyncd.service
 
 run_root groupadd sudo
-run_root groupadd kvm
 run_root useradd -mG sudo build
 run_root useradd -mG kvm build
 run_root passwd -d build
