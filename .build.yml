@@ -18,7 +18,7 @@ sources:
 environment:
   project: builds.sr.ht
   repo_server: deploy@mirror.sr.ht
-  repo_path: /var/html/mirror/archlinux/sr.ht/
+  repo_path: /var/www/mirror.sr.ht/archlinux/sr.ht/
   master: deploy@builds.sr.ht
   slaves:
     - deploy@yui.runners.sr.ht
