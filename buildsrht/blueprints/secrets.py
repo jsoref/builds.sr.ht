@@ -41,6 +41,8 @@ def secrets_POST():
     if not valid.ok:
         return render_template("secrets.html", **valid.kwargs)
 
+    secret = Secret(current_user, secret_type)
+
     if secret_type == SecretType.ssh_key:
         try:
             serialization.load_pem_private_key(
@@ -59,10 +61,23 @@ def secrets_POST():
         except Exception as ex:
             valid.error("Invalid PGP key.",
                     field="secret")
+    elif secret_type == SecretType.plaintext_file:
+        file_path = valid.require("file-path", friendly_name="Path")
+        file_mode = valid.require("file-mode", friendly_name="Mode")
+        if not valid.ok:
+            return render_template("secrets.html", **valid.kwargs)
+        try:
+            file_mode = int(file_mode, 8)
+        except:
+            valid.error("Must be specified in octal",
+                    field="file-mode")
+        if not valid.ok:
+            return render_template("secrets.html", **valid.kwargs)
+        secret.path = file_path
+        secret.mode = file_mode
     if not valid.ok:
         return render_template("secrets.html", **valid.kwargs)
 
-    secret = Secret(current_user, secret_type)
     secret.name = name
     secret.secret = _secret
 

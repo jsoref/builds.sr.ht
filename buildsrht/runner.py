@@ -166,6 +166,13 @@ def run_build(job_id, manifest):
                                 input=secret.secret.encode(),
                                 stdout=f,
                                 stderr=f)
+                    elif secret.secret_type == SecretType.plaintext_file:
+                        path = secret.path.replace("~", "/home/build")
+                        ssh(port, "mkdir", "-p", os.path.dirname(path))
+                        ssh(port, "tee", path,
+                                input=secret.secret.encode(),
+                                stdout=subprocess.DEVNULL)
+                        ssh(port, "chmod", oct(secret.mode)[2:], path)
                     f.write("Loaded secret {}\n".format(str(s)).encode())
             f.flush()
 

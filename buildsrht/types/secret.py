@@ -7,6 +7,7 @@ import uuid
 class SecretType(Enum):
     ssh_key = "ssh_key"
     pgp_key = "pgp_key"
+    plaintext_file = "plaintext_file"
 
 class Secret(Base):
     __tablename__ = "secret"
@@ -21,6 +22,8 @@ class Secret(Base):
             sau.ChoiceType(SecretType, impl=sa.String()),
             nullable=False)
     secret = sa.Column(sa.Unicode(16384), nullable=False)
+    path = sa.Column(sa.Unicode(512))
+    mode = sa.Column(sa.Integer())
 
     def __init__(self, user, secret_type):
         self.uuid = uuid.uuid4()
