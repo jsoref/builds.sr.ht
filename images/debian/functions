@@ -7,7 +7,7 @@ cmdline="loglevel=3 net.ifnames=0 biosdevname=0"
 function install() {
     port=$1
     shift 1
-    guest_ssh -p $port build@localhost sudo apt-get install -y "$@"
+    guest_ssh -p $port build@localhost sudo apt-get update && sudo apt-get install -y "$@"
 }
 
 function sanity_check() {
