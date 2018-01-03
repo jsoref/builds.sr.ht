@@ -8,7 +8,7 @@ set -xe
 
 root=root
 
-debootstrap --arch=amd64 $release $root
+debootstrap --include=gnupg2 --arch=amd64 $release $root
 
 function run_root() {
     local cmd="$@"
