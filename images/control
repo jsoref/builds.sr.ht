@@ -20,24 +20,24 @@ function guest_ssh() {
     ssh $ssh_opts "$@"
 }
 
-function qemu_pid() {
-    port=$1
-    cat /tmp/qemu-$port.pid
-}
-
 function boot() {
     port=$1
-    qemu-system-x86_64 \
-        -m ${MEMORY:-2048} \
-        -net nic,model=virtio -net user,hostfwd=tcp::$port-:22 \
-        -cpu host \
-        -enable-kvm \
-        -nographic \
-		-pidfile /tmp/qemu-$port.pid \
-        -drive file="$self/$base/root.img.qcow2",media=disk,snapshot=on,if=virtio \
-        -kernel "$self/$base"/$guest_kernel \
-        -initrd "$self/$base"/$guest_initrd \
-        -append "root=/dev/vda rw console=ttyS0 $cmdline"
+    id=$(docker run -d \
+        -v "$self/$base":/base:ro \
+        --mount type=tmpfs,destination=/var/tmp \
+        --device /dev/kvm \
+        -p 127.0.0.1:$port:$port \
+        qemu /bin/qemu-system-x86_64 \
+            -m ${MEMORY:-2048} \
+            -net nic,model=virtio -net user,hostfwd=tcp::$port-:22 \
+            -cpu host \
+            -enable-kvm \
+            -nographic \
+            -drive file="/base/root.img.qcow2",media=disk,snapshot=on,if=virtio \
+            -kernel /base/$guest_kernel \
+            -initrd /base/$guest_initrd \
+            -append "root=/dev/vda rw console=ttyS0 $cmdline" > /dev/null)
+    echo $id > /tmp/qemu-$port.id
 }
 
 function cleanup() {
@@ -45,13 +45,14 @@ function cleanup() {
     # Power off
     if [ $# == 1 ]
     then
-        pid=$(qemu_pid $port)
-        if [ "$pid" != "" ]
+        cid=$(cat /tmp/qemu-$port.id)
+        if [ "$cid" != "" ]
         then
             guest_ssh -p $port build@localhost $poweroff_cmd || true
             sleep 2
-            kill $pid && sleep 2 || true
-            kill -9 $pid && sleep 2 || true
+            docker kill $cid && sleep 2 || true
+            docker kill -s 9 $cid && sleep 2 || true
+            rm /tmp/qemu-$port.id
         fi
     fi
 }

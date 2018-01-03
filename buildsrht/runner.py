@@ -132,8 +132,6 @@ def run_build(job_id, manifest):
             manifest.image, "boot", port
         ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         time.sleep(5)
-        if qemu.poll() != None:
-            raise Exception("qemu aborted suspiciously early")
 
         print("Running sanity check")
         result = ssh(port, "echo", "hello world", stdout=subprocess.PIPE)

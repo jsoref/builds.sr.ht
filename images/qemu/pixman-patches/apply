@@ -1,0 +1,6 @@
+#!/bin/sh
+for p in /pixman-patches/*.patch
+do
+    echo "Applying patch $p"
+    patch -p1 < "$p"
+done
