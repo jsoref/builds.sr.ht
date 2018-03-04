@@ -1,8 +1,36 @@
 from srht.config import cfg
+from enum import Enum
 import subprocess
 import uuid
 import yaml
 import re
+
+class TriggerAction(Enum):
+    webhook = 'webhook'
+
+class TriggerCondition(Enum):
+    success = 'success'
+    failure = 'failure'
+    always = 'always'
+
+class Trigger:
+    def __init__(self, yml):
+        if not isinstance(yml, dict):
+            raise Exception("Expected trigger to be a dict")
+        self.action = TriggerAction(yml["action"])
+        self.condition = TriggerCondition(yml["condition"])
+        self.attrs = {
+            key: yml[key] for key in yml.keys()
+                if key not in ["action", "condition"]
+        }
+
+    def to_dict(self):
+        attrs = self.attrs
+        attrs.update({
+            "action": self.action.value,
+            "condition": self.condition.value,
+        })
+        return attrs
 
 class Task():
     def __init__(self, yml):
@@ -66,6 +94,8 @@ class Manifest():
         for task in self.tasks:
             if len([t for t in self.tasks if t.name == task.name]) != 1:
                 raise Exception("Duplicate task '{}'", task.name)
+        triggers = self.yaml.get("triggers")
+        self.triggers = [Trigger(t) for t in triggers] if triggers else []
 
     def __repr__(self):
         return "<Manifest {}, {} tasks>".format(self.image, len(self.tasks))
@@ -78,7 +108,8 @@ class Manifest():
             "sources": self.sources,
             "environment": self.environment,
             "secrets": [str(s) for s in self.secrets] if self.secrets else None,
-            "tasks": [{ t.name: t.script } for t in self.tasks]
+            "tasks": [{ t.name: t.script } for t in self.tasks],
+            "triggers": [t.to_dict() for t in self.triggers] if any(self.triggers) else None,
         }
 
     def to_yaml(self):

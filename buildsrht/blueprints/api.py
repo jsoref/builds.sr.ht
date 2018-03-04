@@ -73,21 +73,7 @@ def jobs_by_id_GET(token, job_id):
     if not job:
         abort(404)
     # TODO: ACLs
-    return {
-        "id": job.id,
-        "status": job.status.value,
-        "setup_log": "http://{}/logs/{}/log".format(job.runner, job.id),
-        "tasks": [
-            {
-                "name": task.name,
-                "status": task.status.value,
-                "log": "http://{}/logs/{}/{}/log".format(
-                    job.runner, job.id, task.name)
-            } for task in job.tasks
-        ],
-        "note": job.note,
-        "runner": job.runner
-    }
+    return job.to_dict()
 
 @api.route("/api/jobs/<job_id>/manifest")
 def jobs_by_id_manifest_GET(job_id):

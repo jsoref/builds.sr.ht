@@ -12,7 +12,7 @@ bootstrap=archlinux-bootstrap-$bootstrap_date-x86_64.tar.gz
 
 if [ ! -f $bootstrap ]
 then
-    curl -sO http://mirrors.kernel.org/archlinux/iso/$bootstrap_date/$bootstrap
+    curl -O http://mirrors.kernel.org/archlinux/iso/$bootstrap_date/$bootstrap
 fi
 tar xf $bootstrap
 

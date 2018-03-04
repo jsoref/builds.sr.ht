@@ -32,3 +32,20 @@ class Job(Base):
     def __init__(self, owner, manifest):
         self.owner_id = owner.id
         self.manifest = manifest
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "status": self.status.value,
+            "setup_log": "http://{}/logs/{}/log".format(self.runner, self.id),
+            "tasks": [
+                {
+                    "name": task.name,
+                    "status": task.status.value,
+                    "log": "http://{}/logs/{}/{}/log".format(
+                        self.runner, self.id, task.name)
+                } for task in self.tasks
+            ],
+            "note": self.note,
+            "runner": self.runner
+        }

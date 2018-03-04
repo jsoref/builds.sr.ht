@@ -10,14 +10,16 @@ else:
     from buildsrht.types import Job, JobStatus, TaskStatus
 
 from celery import Celery
-from buildsrht.manifest import Manifest
+from buildsrht.manifest import Manifest, TriggerAction, TriggerCondition
 from tempfile import TemporaryDirectory
 from redis import Redis
 import hashlib
 import subprocess
 import random
+import requests
 import time
 import yaml
+import shlex
 import os
 
 buildenv = \
@@ -27,6 +29,8 @@ function complete-build() {
     exit 255
 }
 """
+
+control_cmd = cfg("builds.sr.ht", "controlcmd")
 
 def init_db():
     db = DbSession(cfg("sr.ht", "connection-string"))
@@ -85,6 +89,21 @@ def queue_build(job, manifest):
     db.session.commit()
     run_build.delay(job.id, manifest.to_dict())
 
+def process_triggers(manifest, job):
+    print("Executing triggers")
+    for trigger in manifest.triggers:
+        if (trigger.condition == TriggerCondition.success and
+                job.status == [JobStatus.failed]):
+            continue
+        if (trigger.condition == TriggerCondition.failure and
+                job.status == [JobStatus.success]):
+            continue
+        if trigger.action == TriggerAction.webhook:
+            url = trigger.attrs.get("url")
+            if url:
+                print("Webhook: ", url)
+                requests.post(url, json=job.to_dict())
+
 @runner.task
 def run_build(job_id, manifest):
     init_db()
@@ -106,8 +125,10 @@ def run_build(job_id, manifest):
     try:
         port = str(get_next_port())
         print("Booting image and waiting for it to settle")
-        qemu = subprocess.Popen([
-            os.path.join(images, "control"),
+        print(shlex.split(control_cmd) + [
+            manifest.image, "boot", port
+        ])
+        qemu = subprocess.Popen(shlex.split(control_cmd) + [
             manifest.image, "boot", port
         ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         time.sleep(5)
@@ -117,6 +138,7 @@ def run_build(job_id, manifest):
         print("Running sanity check")
         result = ssh(port, "echo", "hello world", stdout=subprocess.PIPE)
         if result.returncode != 0 or result.stdout != b"hello world\n":
+            print(result.returncode, result.stdout)
             raise Exception("Sanity check failed, aborting build")
         
         print("Sending build scripts")
@@ -193,7 +215,7 @@ def run_build(job_id, manifest):
                         _repo = repo.split("#")
                         refname = _repo[1]
                         repo = _repo[0]
-                    repo_name = os.path.basename(repo)
+                    repo_name = os.path.basename(repo).rstrip(".git")
                     result = ssh(port, "git", "clone", "--recursive", repo,
                         stdout=f, stderr=subprocess.STDOUT)
                     if result.returncode != 0:
@@ -237,16 +259,17 @@ def run_build(job_id, manifest):
             db.session.commit()
 
         job.status = JobStatus.success
+        process_triggers(manifest, job)
         db.session.commit()
         print("Build complete.")
     except Exception as ex:
         job.status = JobStatus.failed
+        process_triggers(manifest, job)
         db.session.commit()
         print(ex)
         raise ex
     finally:
         if port:
-            subprocess.run([
-                os.path.join(images, "control"),
+            subprocess.run(shlex.split(control_cmd) + [
                 manifest.image, "cleanup", port
             ])
