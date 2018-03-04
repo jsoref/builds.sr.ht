@@ -217,7 +217,7 @@ def run_build(job_id, manifest):
                         repo = _repo[0]
                     repo_name = os.path.basename(repo)
                     if repo_name.endswith(".git"):
-                        repo_name = repo_name[:4]
+                        repo_name = repo_name[:-4]
                     result = ssh(port, "git", "clone", "--recursive", repo,
                         stdout=f, stderr=subprocess.STDOUT)
                     if result.returncode != 0:
