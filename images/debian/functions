@@ -7,7 +7,28 @@ cmdline="loglevel=3 net.ifnames=0 biosdevname=0"
 function install() {
     port=$1
     shift 1
-    guest_ssh -p $port build@localhost sudo apt-get update && sudo apt-get install -y "$@"
+    guest_ssh -p $port build@localhost sudo apt-get update
+	guest_ssh -p $port build@localhost sudo apt-get install -y "$@"
+}
+
+function add_repository() {
+    port=$1
+    name=$2
+    src=$3
+    repo=$(echo $src | cut -d' ' -f1)
+    distro=$(echo $src | cut -d' ' -f2)
+    cmpnt=$(echo $src | cut -d' ' -f3)
+	key=$(echo $src | cut -d' ' -f4)
+	if [ "$key" != "" ]
+	then
+		guest_ssh -p $port build@localhost sudo \
+			apt-key adv \
+			--keyserver hkp://keyserver.ubuntu.com:80 \
+			--recv-keys $key
+	fi
+    printf 'deb %s %s %s' "$repo" "$distro" "$cmpnt" \
+        | guest_ssh -p $port build@localhost sudo tee -a /etc/apt/sources.list
+	guest_ssh -p "$port" build@localhost sudo apt-get update
 }
 
 function sanity_check() {
