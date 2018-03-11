@@ -5,19 +5,23 @@ poweroff_cmd="sudo systemctl poweroff"
 cmdline="loglevel=3 net.ifnames=0 biosdevname=0"
 
 function install() {
-    port=$1
-    shift 1
-    guest_ssh -p $port build@localhost sudo apt-get update
-	guest_ssh -p $port build@localhost sudo apt-get install -y "$@"
+	port=$1
+	shift 1
+	guest_ssh -p $port build@localhost sudo env DEBIAN_FRONTEND=noninteractive \
+		apt-get update -y
+	guest_ssh -p $port build@localhost sudo env DEBIAN_FRONTEND=noninteractive \
+		apt-get upgrade -y
+	guest_ssh -p $port build@localhost sudo env DEBIAN_FRONTEND=noninteractive \
+		apt-get install -y "$@"
 }
 
 function add_repository() {
-    port=$1
-    name=$2
-    src=$3
-    repo=$(echo $src | cut -d' ' -f1)
-    distro=$(echo $src | cut -d' ' -f2)
-    cmpnt=$(echo $src | cut -d' ' -f3)
+	port=$1
+	name=$2
+	src=$3
+	repo=$(echo $src | cut -d' ' -f1)
+	distro=$(echo $src | cut -d' ' -f2)
+	cmpnt=$(echo $src | cut -d' ' -f3)
 	key=$(echo $src | cut -d' ' -f4)
 	if [ "$key" != "" ]
 	then
@@ -26,28 +30,28 @@ function add_repository() {
 			--keyserver hkp://keyserver.ubuntu.com:80 \
 			--recv-keys $key
 	fi
-    printf 'deb %s %s %s' "$repo" "$distro" "$cmpnt" \
-        | guest_ssh -p $port build@localhost sudo tee -a /etc/apt/sources.list
+	printf 'deb %s %s %s' "$repo" "$distro" "$cmpnt" \
+		| guest_ssh -p $port build@localhost sudo tee -a /etc/apt/sources.list
 	guest_ssh -p "$port" build@localhost sudo apt-get update
 }
 
 function sanity_check() {
-    boot 8023 &
-    qemu=$!
-    sleep 5
-    # This script is set -e so any failure will cause the sanity check to exit non-zero
-    # Does sudo work?
-    guest_ssh -p 8023 build@localhost sudo ls -a
-    # Does apt work?
-    guest_ssh -p 8023 build@localhost sudo apt-get update
-    # Does apt-get install work?
-    install 8023 curl
-    # Does networking work?
-    guest_ssh -p 8023 build@localhost curl http://example.org
-    # Does git work?
-    guest_ssh -p 8023 build@localhost git --version
-    # Shut down
-    guest_ssh -p 8023 build@localhost sudo systemctl poweroff || true
-    wait $qemu
-    cleanup 8023
+	boot 8023 &
+	qemu=$!
+	sleep 5
+	# This script is set -e so any failure will cause the sanity check to exit non-zero
+	# Does sudo work?
+	guest_ssh -p 8023 build@localhost sudo ls -a
+	# Does apt work?
+	guest_ssh -p 8023 build@localhost sudo apt-get update
+	# Does apt-get install work?
+	install 8023 curl
+	# Does networking work?
+	guest_ssh -p 8023 build@localhost curl http://example.org
+	# Does git work?
+	guest_ssh -p 8023 build@localhost git --version
+	# Shut down
+	guest_ssh -p 8023 build@localhost sudo systemctl poweroff || true
+	wait $qemu
+	cleanup 8023
 }

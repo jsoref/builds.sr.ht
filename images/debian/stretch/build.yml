@@ -1,0 +1,39 @@
+image: debian/stretch
+packages:
+  - debootstrap
+  - qemu-system-x86
+  - libguestfs-tools
+  - procps
+  - haveged # temporary
+  - rsync
+sources:
+  - https://git.sr.ht/~sircmpwn/builds.sr.ht
+environment:
+  slaves:
+    - deploy@mio.runners.sr.ht
+secrets:
+  - fa00a8d3-7b63-42d5-8060-3bb31c3e3018
+tasks:
+  - genimg: |
+      cd builds.sr.ht
+      cd images/debian/stretch
+      # Temporary:
+      sudo systemctl start haveged
+      sudo ./genimg
+  - sanity-check: |
+      cd builds.sr.ht
+      MEMORY=1024 ./images/control debian/stretch sanity-check
+#  - deploy: |
+#      cd builds.sr.ht/images/archlinux
+#      sshopts="-o StrictHostKeyChecking=no"
+#      for server in "${slaves[@]}"
+#      do
+#        rsync \
+#          --rsh="ssh $sshopts" \
+#          -rzP initrd kernel root.img.qcow2 \
+#          ${server}:/var/lib/images/archlinux-new
+#        ssh $sshopts $server \
+#          mv /var/lib/images/archlinux-new/{initrd,kernel,root.img.qcow2} \
+#             /var/lib/images/archlinux/
+#        ssh $sshopts $server rm -rf /var/lib/images/archlinux-new
+#      done

@@ -59,7 +59,7 @@ run_root apt-get -y install build-essential git ssh sudo dirmngr
 
 run_root systemctl enable systemd-timesyncd.service
 
-run_root useradd -mG sudo build
+run_root useradd -mG sudo,kvm build
 run_root passwd -d build
 echo '%sudo ALL=(ALL) NOPASSWD: ALL' >> $root/etc/sudoers
 
