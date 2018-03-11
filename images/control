@@ -21,6 +21,7 @@ function guest_ssh() {
 }
 
 function qemu_pid() {
+    port=$1
     cat /tmp/qemu-$port.pid
 }
 
@@ -32,12 +33,11 @@ function boot() {
         -cpu host \
         -enable-kvm \
         -nographic \
+		-pidfile /tmp/qemu-$port.pid \
         -drive file="$self/$base/root.img.qcow2",media=disk,snapshot=on,if=virtio \
         -kernel "$self/$base"/$guest_kernel \
         -initrd "$self/$base"/$guest_initrd \
         -append "root=/dev/vda rw console=ttyS0 $cmdline"
-    pid=$?
-    echo $pid > /tmp/qemu-$port.pid
 }
 
 function cleanup() {
@@ -45,7 +45,7 @@ function cleanup() {
     # Power off
     if [ $# == 1 ]
     then
-        pid=$(qemu_pid)
+        pid=$(qemu_pid $port)
         if [ "$pid" != "" ]
         then
             guest_ssh -p $port build@localhost $poweroff_cmd || true
