@@ -31,7 +31,7 @@ tasks:
       do
         rsync \
           --rsh="ssh $sshopts" \
-          -r initrd kernel root.img.qcow2 \
+          -rzP initrd kernel root.img.qcow2 \
           ${server}:/var/lib/images/archlinux-new
         ssh $sshopts $server \
           mv /var/lib/images/archlinux-new/{initrd,kernel,root.img.qcow2} \
