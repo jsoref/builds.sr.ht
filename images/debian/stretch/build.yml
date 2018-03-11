@@ -4,7 +4,7 @@ packages:
   - qemu-system-x86
   - libguestfs-tools
   - procps
-  - haveged # temporary
+  - haveged # TEMP
   - rsync
 sources:
   - https://git.sr.ht/~sircmpwn/builds.sr.ht
@@ -17,23 +17,24 @@ tasks:
   - genimg: |
       cd builds.sr.ht
       cd images/debian/stretch
-      # Temporary:
-      sudo systemctl start haveged
+      sudo systemctl start haveged # TEMP
       sudo ./genimg
   - sanity-check: |
       cd builds.sr.ht
+      # Debian does not have a kvm group so we just gotta do it this way
+      sudo chmod 666 /dev/kvm
       MEMORY=1024 ./images/control debian/stretch sanity-check
-#  - deploy: |
-#      cd builds.sr.ht/images/archlinux
-#      sshopts="-o StrictHostKeyChecking=no"
-#      for server in "${slaves[@]}"
-#      do
-#        rsync \
-#          --rsh="ssh $sshopts" \
-#          -rzP initrd kernel root.img.qcow2 \
-#          ${server}:/var/lib/images/archlinux-new
-#        ssh $sshopts $server \
-#          mv /var/lib/images/archlinux-new/{initrd,kernel,root.img.qcow2} \
-#             /var/lib/images/archlinux/
-#        ssh $sshopts $server rm -rf /var/lib/images/archlinux-new
-#      done
+  - deploy: |
+      cd builds.sr.ht/images/debian/stretch
+      sshopts="-o StrictHostKeyChecking=no"
+      for server in "${slaves[@]}"
+      do
+        rsync \
+          --rsh="ssh $sshopts" \
+          -rzP initrd kernel root.img.qcow2 \
+          ${server}:/var/lib/images/debian/stretch-new
+        ssh $sshopts $server \
+          mv /var/lib/images/debian/stretch-new/{initrd,kernel,root.img.qcow2} \
+             /var/lib/images/debian/stretch/
+        ssh $sshopts $server rm -rf /var/lib/images/debian/stretch-new
+      done
