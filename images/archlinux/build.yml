@@ -11,7 +11,7 @@ sources:
   - https://git.sr.ht/~sircmpwn/builds.sr.ht
 environment:
   slaves:
-    - deploy@yui.runners.sr.ht
+    - deploy@mio.runners.sr.ht
 secrets:
   - fa00a8d3-7b63-42d5-8060-3bb31c3e3018
 tasks:

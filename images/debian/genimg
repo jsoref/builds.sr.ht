@@ -55,7 +55,7 @@ run_root apt-key update
 run_root apt-get update
 run_root apt-get -y install locales
 run_root apt-get -y install linux-image-amd64
-run_root apt-get -y install build-essential git ssh sudo
+run_root apt-get -y install build-essential git ssh sudo dirmngr
 
 run_root systemctl enable systemd-timesyncd.service
 
