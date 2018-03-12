@@ -160,7 +160,7 @@ def run_build(job_id, manifest):
         with open(os.path.join(logs, "log"), "wb") as f:
             ssh_key_used = False
             print("Resolving secrets")
-            if manifest.secrets and any(manifest.secrets):
+            if job.secrets and manifest.secrets and any(manifest.secrets):
                 for s in manifest.secrets:
                     secret = Secret.query.filter(Secret.uuid == s).first()
                     if not secret:

@@ -21,6 +21,7 @@ def jobs_POST(token):
     note = valid.optional("note", cls=str)
     read = valid.optional("access:read", ["*"], list)
     write = valid.optional("access:write", [token.user.username], list)
+    secrets = valid.optional("secrets", cls=bool, default=True)
     tags = valid.optional("tags", [], list)
     valid.expect(all(re.match(r"^[a-z0-9_.-]+$", tag) for tag in tags),
         "Invalid tag name, tags must use lowercase alphanumeric characters, underscores, dashes, or dots",
@@ -39,6 +40,7 @@ def jobs_POST(token):
     job.note = note
     if tags:
         job.tags = "/".join(tags)
+    job.secrets = secrets
     db.session.add(job)
     db.session.flush()
     for task in manifest.tasks:
