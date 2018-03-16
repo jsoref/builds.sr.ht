@@ -5,18 +5,16 @@
   </p>
   <p>
     You can create build jobs here by passing a
-    <a href="https://git.sr.ht/~sircmpwn/builds.sr.ht/tree/docs/MANIFEST">
+    <a href="https://man.sr.ht/builds.sr.ht/#build-manifests">
       manifest
     </a>
     into the
-    <a href="https://git.sr.ht/~sircmpwn/builds.sr.ht/tree/docs/API">
+    <a href="https://man.sr.ht/builds.sr.ht/api.md">
       API
-    </a>.
-    {% if cfg("network", "git") %}
-    You can also write your manifest in a <code>.build.yml</code> file in
-    your <a href="{{ cfg("network", "git") }}">git.sr.ht</a> repositories and
-    it will automatically run a build each time you push.
-    {% endif %}
+    </a>, or through various
+    <a href="https://man.sr.ht/builds.sr.ht/api.md">
+      integrations
+    </a> with other services.
   </p>
   <h3>Secrets</h3>
   <p>
