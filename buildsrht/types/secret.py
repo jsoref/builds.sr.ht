@@ -9,6 +9,16 @@ class SecretType(Enum):
     pgp_key = "pgp_key"
     plaintext_file = "plaintext_file"
 
+    @property
+    def pretty_name(self):
+        if self == SecretType.ssh_key:
+            return "SSH Key"
+        elif self == SecretType.pgp_key:
+            return "PGP Key"
+        elif self == SecretType.plaintext_file:
+            return "File"
+        return ""
+
 class Secret(Base):
     __tablename__ = "secret"
     id = sa.Column(sa.Integer, primary_key=True)

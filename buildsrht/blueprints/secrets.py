@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, session
+from flask import Blueprint, render_template, request, redirect, session, abort
 from flask_login import current_user
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -85,4 +85,39 @@ def secrets_POST():
     db.session.commit()
 
     session["message"] = "Successfully added secret {}.".format(secret.uuid)
+    return redirect("/secrets")
+
+@secrets.route("/secret/delete/<uuid>")
+@loginrequired
+def secret_delete_GET(uuid):
+    secret = Secret.query.filter(Secret.uuid == uuid).first()
+    if not secret:
+        abort(404)
+    if secret.user_id != current_user.id:
+        abort(401)
+
+    return render_template("secret_delete.html", secret=secret)
+
+
+@secrets.route("/secret/delete", methods=["POST"])
+@loginrequired
+def secret_delete_POST():
+    valid = Validation(request)
+
+    uuid = valid.require("uuid")
+    if not uuid:
+        abort(404)
+
+    secret = Secret.query.filter(Secret.uuid == uuid).first()
+    if not secret:
+        abort(404)
+    if secret.user_id != current_user.id:
+        abort(401)
+
+    name = secret.name
+    db.session.delete(secret)
+    db.session.commit()
+
+    session["message"] = "Successfully removed secret {}{}.".format(uuid,
+            " ({})".format(name) if name else "")
     return redirect("/secrets")
