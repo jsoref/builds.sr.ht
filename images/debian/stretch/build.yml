@@ -4,7 +4,6 @@ packages:
   - qemu-system-x86
   - libguestfs-tools
   - procps
-  - haveged # TEMP
   - rsync
 sources:
   - https://git.sr.ht/~sircmpwn/builds.sr.ht
@@ -17,7 +16,6 @@ tasks:
   - genimg: |
       cd builds.sr.ht
       cd images/debian/stretch
-      sudo systemctl start haveged # TEMP
       sudo ./genimg
   - sanity-check: |
       cd builds.sr.ht

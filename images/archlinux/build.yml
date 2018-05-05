@@ -5,7 +5,6 @@ packages:
   - qemu-headless
   - libguestfs
   - procps-ng
-  - haveged # temporary
   - rsync
 sources:
   - https://git.sr.ht/~sircmpwn/builds.sr.ht
@@ -18,8 +17,6 @@ tasks:
   - genimg: |
       cd builds.sr.ht
       cd images/archlinux
-      # Temporary:
-      sudo systemctl start haveged
       sudo ./genimg
   - sanity-check: |
       cd builds.sr.ht
