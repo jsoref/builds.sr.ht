@@ -120,10 +120,10 @@ def run_build(job_id, manifest):
     os.makedirs(logs)
     for task in manifest.tasks:
         os.makedirs(os.path.join(logs, task.name))
-    print("Running job " + str(job_id))
     port = None
     try:
         port = str(get_next_port())
+        print("Running job {} on assigned port {}", job_id, port)
         print("Booting image and waiting for it to settle")
         print(shlex.split(control_cmd) + [
             manifest.image, "boot", port
