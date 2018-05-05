@@ -34,6 +34,7 @@ function boot() {
             -enable-kvm \
             -nographic \
             -drive file="/base/root.img.qcow2",media=disk,snapshot=on,if=virtio \
+			-device virtio-rng-pci \
             -kernel /base/$guest_kernel \
             -initrd /base/$guest_initrd \
             -append "root=/dev/vda rw console=ttyS0 $cmdline" > /dev/null)
