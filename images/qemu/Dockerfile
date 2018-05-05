@@ -1,40 +1,27 @@
-FROM alpine:latest
+FROM debian:sid
 
-RUN apk update && apk upgrade && \
-    apk add alsa-lib-dev bison curl curl-dev flex glib-dev glib-static \
-    libaio-dev libcap-dev libcap-ng-dev linux-headers lzo-dev paxmark \
-    texinfo util-linux-dev vde2-dev xfsprogs-dev zlib-dev pixman-dev \
-    xz alpine-sdk
+RUN apt-get -y update && apt-get -y upgrade && apt-get install -y \
+    build-essential pkg-config curl xz-utils
 
-# pixman
-# https://bugs.alpinelinux.org/issues/8376
-RUN curl -O https://www.cairographics.org/releases/pixman-0.34.0.tar.gz \
-    && tar xf pixman-0.34.0.tar.gz
+RUN curl -O https://download.qemu.org/qemu-2.12.0.tar.xz \
+    && tar xf qemu-2.12.0.tar.xz
 
-COPY ./pixman-patches /pixman-patches
+RUN apt-get install -y \
+    python \
+    libaio-dev \
+    libcap-dev \
+    libcap-ng-dev \
+    liblzo2-dev \
+    texinfo \
+    vde2 \
+    zlib1g-dev \
+    libpixman-1-dev \
+    libglib2.0-dev
 
-RUN cd pixman-0.34.0 && /pixman-patches/apply
-
-RUN cd pixman-0.34.0 && ./configure \
-    --prefix=/usr \
-    --enable-static \
-    --disable-openmp \
-    --disable-arm-iwmmxt
-
-RUN cd pixman-0.34.0 && make && make install
-
-# qemu
-RUN curl -O https://download.qemu.org/qemu-2.11.0.tar.xz \
-    && tar xf qemu-2.11.0.tar.xz
-
-COPY ./qemu-patches /qemu-patches
-
-RUN cd qemu-2.11.0 && /qemu-patches/apply && \
-    sed -i 's/^VL_LDFLAGS=$/VL_LDFLAGS=-Wl,-z,execheap/' Makefile.target
-
-RUN cd qemu-2.11.0 && ./configure \
+RUN cd qemu-2.12.0 && ./configure \
     --prefix=/ \
     --static \
+    --python=/usr/bin/python2 \
     --audio-drv-list="" \
     --disable-docs \
     --disable-debug-info \
@@ -68,7 +55,7 @@ RUN cd qemu-2.11.0 && ./configure \
     --disable-virglrenderer \
     --target-list="x86_64-softmmu"
 
-RUN cd qemu-2.11.0 && make && make install
+RUN cd qemu-2.12.0 && make && make install
 
 FROM scratch
 COPY --from=0 /bin/qemu-system-x86_64 /bin/

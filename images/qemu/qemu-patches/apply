@@ -1,6 +1,0 @@
-#!/bin/sh
-for p in /qemu-patches/*.patch
-do
-    echo "Applying patch $p"
-    patch -p1 < "$p"
-done
