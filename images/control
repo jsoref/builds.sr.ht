@@ -37,7 +37,7 @@ function boot() {
 			-device virtio-rng-pci \
             -kernel /base/$guest_kernel \
             -initrd /base/$guest_initrd \
-            -append "root=/dev/vda rw console=ttyS0 $cmdline" > /dev/null)
+            -append "root=/dev/vda rw console=ttyS0 $cmdline")
     echo $id > /tmp/qemu-$port.id
 }
 
@@ -52,7 +52,6 @@ function cleanup() {
             guest_ssh -p $port build@localhost $poweroff_cmd || true
             sleep 2
             docker kill $cid && sleep 2 || true
-            docker kill -s 9 $cid && sleep 2 || true
             rm /tmp/qemu-$port.id
         fi
     fi
