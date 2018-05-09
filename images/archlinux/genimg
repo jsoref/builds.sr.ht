@@ -77,7 +77,7 @@ echo '%sudo ALL=(ALL) NOPASSWD: ALL' >> $root/etc/sudoers
 echo 'source /etc/profile.d/perlbin.sh' > $root/home/build/.bashrc
 echo 'export EDITOR=true' > $root/home/build/.bashrc
 
-sed -e 's/$IgnorePkg.*/IgnorePkg = linux mkinitcpio/' -i $root/etc/pacman.conf
+sed -e 's/#IgnorePkg.*/IgnorePkg = linux mkinitcpio/' -i $root/etc/pacman.conf
 
 sed -e 's/#PermitEmptyPasswords no/PermitEmptyPasswords yes/' -i $root/etc/ssh/sshd_config
 run_root systemctl enable sshd
