@@ -13,6 +13,7 @@ from celery import Celery
 from buildsrht.manifest import Manifest, TriggerAction, TriggerCondition
 from tempfile import TemporaryDirectory
 from redis import Redis
+from datetime import datetime, timedelta
 import hashlib
 import subprocess
 import random
@@ -131,12 +132,18 @@ def run_build(job_id, manifest):
         qemu = subprocess.Popen(shlex.split(control_cmd) + [
             manifest.image, "boot", port
         ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        time.sleep(5)
 
-        print("Running sanity check")
-        result = ssh(port, "echo", "hello world", stdout=subprocess.PIPE)
-        if result.returncode != 0 or result.stdout != b"hello world\n":
-            print(result.returncode, result.stdout)
+        timeout = datetime.utcnow() + timedelta(seconds=60)
+        check_passed = False
+        while datetime.utcnow() < timeout and not check_passed:
+            time.sleep(5)
+            print("Running sanity check")
+            result = ssh(port, "echo", "hello world", stdout=subprocess.PIPE)
+            if result.returncode == 0 and result.stdout == b"hello world\n":
+                check_passed = True
+                break
+
+        if not check_passed:
             raise Exception("Sanity check failed, aborting build")
         
         print("Sending build scripts")
