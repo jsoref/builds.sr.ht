@@ -6,7 +6,7 @@ poweroff_cmd="sudo systemctl poweroff"
 function install() {
     port=$1
     shift 1
-    guest_ssh -p $port build@localhost EDITOR=true pacaur --noconfirm --noedit -Syu "$@"
+    guest_ssh -p $port build@localhost EDITOR=true yay --noconfirm -Syu "$@"
 }
 
 function add_repository() {

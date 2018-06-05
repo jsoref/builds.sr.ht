@@ -83,15 +83,11 @@ sed -e 's/#PermitEmptyPasswords no/PermitEmptyPasswords yes/' -i $root/etc/ssh/s
 run_root systemctl enable sshd
 
 echo "makeopts=(--skippgpcheck)" >> $root/etc/makepkg.conf
-run_normal curl -O https://aur.archlinux.org/cgit/aur.git/snapshot/cower.tar.gz
-run_normal tar xf cower.tar.gz
-run_normal 'cd cower && makepkg -si --noconfirm --skippgpcheck'
-run_normal rm -r cower cower.tar.gz
 
-run_normal curl -O https://aur.archlinux.org/cgit/aur.git/snapshot/pacaur.tar.gz
-run_normal tar xf pacaur.tar.gz
-run_normal 'cd pacaur && makepkg -si --noconfirm --skippgpcheck'
-run_normal rm -r pacaur pacaur.tar.gz
+run_normal curl -O https://aur.archlinux.org/cgit/aur.git/snapshot/yay.tar.gz
+run_normal tar xf yay.tar.gz
+run_normal 'cd yay && makepkg -si --noconfirm --skippgpcheck'
+run_normal rm -r yay yay.tar.gz
 
 pkill gpg-agent
 umount -R $root
