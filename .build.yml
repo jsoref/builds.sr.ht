@@ -12,6 +12,7 @@ packages:
   - python-markdown
   - python-bleach
   - rsync
+  - pacman-contrib
 sources:
   - https://git.sr.ht/~sircmpwn/builds.sr.ht
   - https://git.sr.ht/~sircmpwn/sr.ht-pkgbuilds
