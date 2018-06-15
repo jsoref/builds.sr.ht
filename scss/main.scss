@@ -1,29 +1,5 @@
 @import "base";
-
-.job {
-  margin-bottom: 1rem;
-}
-
-.card {
-  border: none;
-
-  .card-header {
-    border: none;
-    padding: 0;
-    background: transparent;
-  }
-
-  .card-block {
-    padding-top: 0;
-    padding-bottom: 0;
-  }
-
-  .card-footer {
-    padding: 0;
-    margin-left: 1.25rem;
-    background: transparent;
-  }
-}
+@import "font-awesome.min";
 
 .status {
   &.text-success, &.text-danger, &.text-primary {

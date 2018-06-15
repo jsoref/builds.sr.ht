@@ -22,14 +22,25 @@ def tags(tags):
     return results
 
 status_map = {
-    JobStatus.success: "status-text text-success",
-    JobStatus.failed: "status-text text-danger",
-    JobStatus.running: "status-text text-info",
-    TaskStatus.success: "status-text text-success",
-    TaskStatus.failed: "status-text text-danger",
-    TaskStatus.running: "status-text text-primary",
-    TaskStatus.pending: "status-text text-black",
-    TaskStatus.skipped: "status-text text-muted",
+    JobStatus.success: "text-success",
+    JobStatus.failed: "text-danger",
+    JobStatus.running: "text-info",
+    TaskStatus.success: "text-success",
+    TaskStatus.failed: "text-danger",
+    TaskStatus.running: "text-primary",
+    TaskStatus.pending: "text-info",
+    TaskStatus.skipped: "text-muted",
+}
+
+icon_map = {
+    JobStatus.success: "fa-check",
+    JobStatus.failed: "fa-times",
+    JobStatus.running: "fa-circle-o-notch fa-spin",
+    TaskStatus.success: "fa-check",
+    TaskStatus.failed: "fa-times",
+    TaskStatus.running: "fa-circle-o-notch fa-spin",
+    TaskStatus.pending: "fa-circle-thin",
+    TaskStatus.skipped: "fa-minus",
 }
 
 def jobs_page(jobs, sidebar, **kwargs):
@@ -51,6 +62,7 @@ def jobs_page(jobs, sidebar, **kwargs):
     return render_template("jobs.html",
         jobs=jobs,
         status_map=status_map,
+        icon_map=icon_map,
         sort_tasks=lambda tasks: sorted(tasks, key=lambda t: t.id),
         total_pages=total_pages,
         page=page+1,
@@ -116,5 +128,6 @@ def job_by_id(job_id):
     return render_template("job.html",
             job=job,
             status_map=status_map,
+            icon_map=icon_map,
             logs=logs,
             sort_tasks=lambda tasks: sorted(tasks, key=lambda t: t.id))

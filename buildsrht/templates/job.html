@@ -18,9 +18,12 @@
     <div class="col-md-3">
       <h2>
         #{{ job.id }}
-        <small
-          class="status-lg {{ status_map.get(job.status) or "" }}"
-        >[{{ job.status.value }}]</small>
+        <span class="pull-right">
+          <i
+            class="fa {{ status_map.get(job.status) or "" }} {{
+              icon_map.get(job.status) }}"
+          ></i> {{ job.status.value }}
+        </span>
       </h2>
       <dl>
         {% if job.note %}
@@ -45,9 +48,6 @@
       <h4>Tasks</h4>
       <table class="table table-sm">
         <tr class="text-muted">
-          <td>
-            build setup
-          </td>
           <td></td>
           <td>
             <a href="#setup">view log »</a>
@@ -55,12 +55,12 @@
         </tr>
       {% for task in sort_tasks(job.tasks) %}
         <tr>
-          <td>{{ task.name }}</td>
           <td>
-            <span
-              class="status {{ status_map.get(task.status) }}"
-              title="{{ task.status.value }}"
-            >[{{task.status.value}}]</span>
+            <span title="{{ task.status.value }}">
+              <span class="{{ status_map.get(task.status) }}">
+                <i class="fa {{ icon_map.get(task.status) or "" }}"></i>
+              </span> {{task.name}}
+            </span>
           </td>
           <td>
             <a href="#task-{{ task.name }}">view log »</a>
