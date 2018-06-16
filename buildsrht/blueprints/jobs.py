@@ -47,7 +47,7 @@ icon_map = {
 }
 
 def jobs_page(jobs, sidebar, **kwargs):
-    jobs = jobs.order_by(Job.updated.desc())
+    jobs = jobs.order_by(Job.created.desc())
     page = request.args.get("page")
     total_jobs = jobs.count()
     total_pages = jobs.count() // 10 + 1
