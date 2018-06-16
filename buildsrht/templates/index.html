@@ -1,27 +1,17 @@
 <div class="sidebar">
-  <h2>builds</h2>
   <p>
-    Welcome back, {{ current_user.username }}!
+    Welcome back, {{ current_user.username }}! This is the
+    {{cfg("sr.ht", "site-name")}} build service. Documentation for its use is
+    <a href="https://man.sr.ht/builds.sr.ht">available here</a>.
   </p>
-  <p>
-    You can create build jobs here by passing a
-    <a href="https://man.sr.ht/builds.sr.ht/#build-manifests">
-      manifest
-    </a>
-    into the
-    <a href="https://man.sr.ht/builds.sr.ht/api.md">
-      API
-    </a>, or through various
-    <a href="https://man.sr.ht/builds.sr.ht/api.md">
-      integrations
-    </a> with other services.
-  </p>
-  <h3>Secrets</h3>
-  <p>
-  builds.sr.ht provides tools for managing secrets like SSH keys that are
-  available to build guests.
-  </p>
-  <a class="btn btn-default btn-block" href="/secrets">Manage secrets</a>
+  <a class="btn btn-primary btn-block" href="/submit">
+    Submit manifest
+    <i class="fa fa-caret-right"></i>
+  </a>
+  <a class="btn btn-default btn-block" href="/secrets">
+    Manage secrets
+    <i class="fa fa-caret-right"></i>
+  </a>
   {#
   <h3>Stored Manifests</h3>
   <p>

@@ -26,11 +26,11 @@
             >{{ tag['name'] }}</a>{% endfor %}
           </small>
           <small class="pull-right">
+            <span style="margin-left: 0.5rem">{{ job.updated | humanize }}</span>
             <span class="{{ status_map.get(job.status) or "" }}">
               <i class="fa {{ icon_map.get(job.status) or "" }}"></i>
               {{ job.status.value }}
             </span>
-            <span style="margin-left: 0.5rem">{{ job.updated | humanize }}</span>
           </small>
         </h3>
         {% if job.status != JobStatus.pending and job.status != JobStatus.queued %}
@@ -54,10 +54,11 @@
       <div class="col-md-4">
       {% if page != 1 %}
         <a
+          class="btn btn-default"
           href="?page={{ page - 1 }}{{ '&search=' + search if search else '' }}"
         >
           <i class="fa fa-caret-left"></i>
-          previous
+          prev
         </a>
       {% endif %}
       </div>
@@ -67,6 +68,7 @@
       <div class="col-md-4 text-right">
       {% if page != total_pages %}
         <a
+          class="btn btn-default"
           href="?page={{ page + 1 }}{{ '&search=' + search if search else '' }}"
         >
           next

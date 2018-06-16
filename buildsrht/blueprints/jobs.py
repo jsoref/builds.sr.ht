@@ -1,10 +1,13 @@
-from flask import Blueprint, render_template, request, abort
+from flask import Blueprint, render_template, request, abort, redirect
 from flask_login import current_user
 from srht.database import db
-from buildsrht.types import Job, JobStatus, TaskStatus, User
+from srht.validation import Validation
+from buildsrht.types import Job, JobStatus, Task, TaskStatus, User
 from buildsrht.decorators import loginrequired
-from buildsrht.runner import run_build
+from buildsrht.manifest import Manifest
+from buildsrht.runner import queue_build
 import requests
+import yaml
 
 jobs = Blueprint("jobs", __name__)
 
@@ -77,6 +80,34 @@ def index():
         return render_template("index-logged-out.html")
     return jobs_page(Job.query.filter(Job.owner_id == current_user.id), "index.html")
 
+@loginrequired
+@jobs.route("/submit")
+def submit_GET():
+    return render_template("submit.html")
+
+@loginrequired
+@jobs.route("/submit", methods=["POST"])
+def submit_POST():
+    valid = Validation(request)
+    _manifest = valid.require("manifest", friendly_name="Manifest")
+    if not valid.ok:
+        return render_template("submit.html", **valid.kwargs)
+    try:
+        manifest = Manifest(yaml.safe_load(_manifest))
+    except Exception as ex:
+        valid.error(str(ex), field="manifest")
+        return render_template("submit.html", **valid.kwargs)
+    job = Job(current_user, _manifest)
+    job.note = "Submitted on the web"
+    db.session.add(job)
+    db.session.flush()
+    for task in manifest.tasks:
+        t = Task(job, task.name)
+        db.session.add(t)
+        db.session.flush() # assigns IDs for ordering purposes
+    queue_build(job, manifest) # commits the session
+    return redirect("/job/" + str(job.id))
+
 @jobs.route("/jobs/~<username>")
 def user(username):
     user = User.query.filter(User.username == username).first()
@@ -108,13 +139,15 @@ def job_by_id(job_id):
     if not job:
         abort(404)
     logs = list()
-    # TODO: cache this shit
-    r = requests.get("http://{}/logs/{}/log".format(job.runner, job.id))
-    if r.status_code == 200:
-        logs.append({
-            "name": None,
-            "log": r.text.splitlines()
-        })
+    try:
+        r = requests.get("http://{}/logs/{}/log".format(job.runner, job.id))
+        if r.status_code == 200:
+            logs.append({
+                "name": None,
+                "log": r.text.splitlines()
+            })
+    except:
+        pass
     for task in sorted(job.tasks, key=lambda t: t.id):
         if task.status == TaskStatus.pending:
             continue

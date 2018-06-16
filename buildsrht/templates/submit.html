@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+{% block content %} 
+<section class="row">
+  <div class="col-md-4">
+    <p>
+      You can submit ad-hoc build manifests on this page, which is useful for
+      debugging and research. However, you may prefer to submit builds via
+      <a href="https://man.sr.ht/builds.sr.ht/api.md">the API</a>
+      or one of the
+      <a href="https://man.sr.ht/builds.sr.ht/#integrations">integrations</a>.
+    </p>
+  </div>
+  <form class="col-md-8" action="/submit" method="POST">
+    <div class="form-group {{valid.cls("manifest")}}">
+      <textarea
+        rows="15"
+        class="form-control"
+        placeholder="Enter or paste build manifest..."
+        name="manifest"
+      >{{manifest if manifest else ""}}</textarea>
+      {{valid.summary("manifest")}}
+    </div>
+    <div class="form-group">
+      <a
+        class="pull-right"
+        href="https://man.sr.ht/builds.sr.ht/manifest.md"
+        target="_blank"
+      >Build manifest reference <i class="fa fa-caret-right"></i></a>
+      <button type="submit" class="btn btn-primary">
+        Submit
+        <i class="fa fa-caret-right"></i>
+      </button>
+    </div>
+  </form>
+</section>
+{% endblock %}
