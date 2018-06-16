@@ -11,10 +11,10 @@
     </p>
   </div>
   <form class="col-md-8" action="/submit" method="POST">
-    <div class="form-group {{valid.cls("manifest")}}">
+    <div class="form-group">
       <textarea
         rows="15"
-        class="form-control"
+        class="form-control {{valid.cls("manifest")}}"
         placeholder="Enter or paste build manifest..."
         name="manifest"
       >{{manifest if manifest else ""}}</textarea>
