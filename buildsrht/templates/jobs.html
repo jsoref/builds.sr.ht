@@ -26,8 +26,8 @@
                href="/jobs/~{{ job.owner.username }}{{ tag['url'] }}"
             >{{ tag['name'] }}</a>{% endfor %}
           </small>
-          <small class="pull-right">
-            <span class="d-none d-md-inline">
+          <small class="pull-right d-none d-md-inline">
+            <span>
               {{ job.updated | humanize }}
             </span>
             <span class="{{ status_map.get(job.status) or "" }}">
@@ -48,6 +48,13 @@
             </span> {{task.name}}
           </span>
         {% endfor %}
+        <p class="d-md-none">
+          <span class="{{ status_map.get(job.status) or "" }}">
+            <i class="fa {{ icon_map.get(job.status) or "" }}"></i>
+            {{ job.status.value }}
+          </span>
+          {{ job.updated | humanize }}
+        </p>
       </div>
       {% endfor %}
     </div>
