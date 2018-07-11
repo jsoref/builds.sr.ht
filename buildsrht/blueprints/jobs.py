@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, abort, redirect
 from flask_login import current_user
 from srht.database import db
+from srht.flask import paginate_query
 from srht.validation import Validation
 from buildsrht.types import Job, JobStatus, Task, TaskStatus, User
 from buildsrht.decorators import loginrequired
@@ -48,30 +49,11 @@ icon_map = {
 
 def jobs_page(jobs, sidebar, **kwargs):
     jobs = jobs.order_by(Job.created.desc())
-    page = request.args.get("page")
-    total_jobs = jobs.count()
-    total_pages = jobs.count() // 10 + 1
-    if total_jobs % 10 == 0:
-        total_pages -= 1
-    if page is not None:
-        try:
-            page = int(page) - 1
-            jobs = jobs.offset(page * 10)
-        except:
-            page = 0
-    else:
-        page = 0
-    jobs = jobs.limit(10).all()
+    jobs, pagination = paginate_query(jobs)
     return render_template("jobs.html",
-        jobs=jobs,
-        status_map=status_map,
-        icon_map=icon_map,
+        jobs=jobs, status_map=status_map, icon_map=icon_map, tags=tags,
         sort_tasks=lambda tasks: sorted(tasks, key=lambda t: t.id),
-        total_pages=total_pages,
-        page=page+1,
-        tags=tags,
-        sidebar=sidebar,
-        **kwargs
+        sidebar=sidebar, **pagination, **kwargs
     )
 
 @jobs.route("/")
