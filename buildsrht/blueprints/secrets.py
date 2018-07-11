@@ -5,8 +5,8 @@ from cryptography.hazmat.primitives import serialization
 import pgpy
 
 from srht.database import db
+from srht.flask import loginrequired
 from srht.validation import Validation
-from buildsrht.decorators import loginrequired
 from buildsrht.types import Secret, SecretType
 
 secrets = Blueprint('secrets', __name__)

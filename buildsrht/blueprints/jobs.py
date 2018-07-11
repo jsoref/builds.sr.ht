@@ -1,10 +1,9 @@
 from flask import Blueprint, render_template, request, abort, redirect
 from flask_login import current_user
 from srht.database import db
-from srht.flask import paginate_query
+from srht.flask import paginate_query, loginrequired
 from srht.validation import Validation
 from buildsrht.types import Job, JobStatus, Task, TaskStatus, User
-from buildsrht.decorators import loginrequired
 from buildsrht.manifest import Manifest
 from buildsrht.runner import queue_build
 import requests

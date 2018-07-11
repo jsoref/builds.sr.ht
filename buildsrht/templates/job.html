@@ -39,9 +39,9 @@
           </a>
         </dt>
         <dt>Created</dt>
-        <dd>{{ job.created | humanize }}</dt>
+        <dd>{{ job.created | date }}</dt>
         <dt>Updated</dt>
-        <dd>{{ job.updated | humanize }}</dt>
+        <dd>{{ job.updated | date }}</dt>
         <dt>Build manifest</dt>
         <dd><a href="/api/jobs/{{ job.id }}/manifest">view manifest »</a></dt>
       </dl>
@@ -92,7 +92,7 @@
       {% endfor %}
       {% if job.status.value == "success" or job.status.value == "failed" %}
       <div class="alert {{ "alert-success" if job.status.value == "success" else "alert-danger" }}">
-        Build complete: <strong>{{ job.status.value }}</strong> {{ job.updated | humanize }}
+        Build complete: <strong>{{ job.status.value }}</strong> {{ job.updated | date }}
       </div>
       {% endif %}
       <a id="bottom"></a>
