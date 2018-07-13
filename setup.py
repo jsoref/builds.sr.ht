@@ -13,10 +13,11 @@ setup(
   name = 'buildsrht',
   packages = [
       'buildsrht',
-      'buildsrht.types',
-      'buildsrht.blueprints',
       'buildsrht.alembic',
-      'buildsrht.alembic.versions'
+      'buildsrht.alembic.versions',
+      'buildsrht.blueprints',
+      'buildsrht.runner',
+      'buildsrht.types',
   ],
   version = ver,
   description = 'builds.sr.ht website and runner',
