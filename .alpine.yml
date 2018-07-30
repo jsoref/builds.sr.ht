@@ -1,0 +1,15 @@
+image: alpine
+repositories:
+  sr.ht: >
+    https://mirror.sr.ht/alpine/sr.ht
+    https://mirror.sr.ht/alpine/sr.ht/alpine%40sr.ht.rsa.pub
+    alpine@sr.ht.rsa.pub
+packages:
+- htop
+- vim
+- py3-beautifulsoup4@testing
+- py3-flask-login@testing
+- py3-srht@sr.ht
+tasks:
+    - test: |
+        apk -V

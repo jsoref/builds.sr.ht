@@ -1,6 +1,4 @@
-#!/usr/bin/env bash
-set -e
-
+#!/bin/sh -e
 self=$(readlink -f $0)
 self=$(dirname "$self")
 
@@ -37,7 +35,7 @@ function boot() {
 			-device virtio-rng-pci \
             -kernel /base/$guest_kernel \
             -initrd /base/$guest_initrd \
-            -append "root=/dev/vda rw console=ttyS0 $cmdline")
+            -append "root=${guest_root:-/dev/vda} rw console=ttyS0 $cmdline")
     echo $id > /tmp/qemu-$port.id
 }
 

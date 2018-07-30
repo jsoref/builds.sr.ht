@@ -1,0 +1,48 @@
+#!/bin/sh
+guest_kernel=kernel
+guest_initrd=initrd
+guest_root=/dev/vda3
+cmdline="modules=sd-mod,usb-storage,ext4 quiet rootfstype=ext4"
+poweroff_cmd="sudo poweroff"
+
+function install() {
+    port=$1
+    shift 1
+    guest_ssh -p $port build@localhost \
+		"sudo apk update && sudo apk upgrade && sudo apk add $@"
+}
+
+function add_repository() {
+	port=$1
+	name=$2
+	src=$3
+	repo=$(echo $src | cut -d' ' -f1)
+	key=$(echo $src | cut -d' ' -f2)
+	keyname=$(echo $src | cut -d' ' -f3)
+	guest_ssh -p $port build@localhost \
+		"curl -s '$key' | sudo tee /etc/apk/keys/'$keyname'"
+	printf '@%s %s\n' "$name" "$repo" \
+		| guest_ssh -p $port build@localhost \
+		"sudo tee -a /etc/apk/repositories"
+	guest_ssh -p $port build@localhost ls -la /etc/apk/keys
+}
+
+function sanity_check() {
+    boot 8022 &
+    qemu=$!
+    sleep 20
+    echo "Testing sudo..."
+    guest_ssh -p 8022 build@localhost sudo ls -a
+    echo "Testing networking..."
+    guest_ssh -p 8022 build@localhost curl http://example.org
+    echo "Testing apk..."
+    guest_ssh -p 8022 build@localhost sudo apk update
+    guest_ssh -p 8022 build@localhost sudo apk upgrade
+    guest_ssh -p 8022 build@localhost sudo apk add htop
+    echo "Testing git..."
+    guest_ssh -p 8022 build@localhost git --version
+    echo "Everything works!"
+    guest_ssh -p 8022 build@localhost sudo poweroff || true
+    wait $qemu
+    cleanup 8022
+}
