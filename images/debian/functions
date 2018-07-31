@@ -4,7 +4,7 @@ guest_initrd=initrd
 poweroff_cmd="sudo systemctl poweroff"
 cmdline="loglevel=3 net.ifnames=0 biosdevname=0"
 
-function install() {
+install() {
 	port=$1
 	shift 1
 	guest_ssh -p $port build@localhost sudo env DEBIAN_FRONTEND=noninteractive \
@@ -15,7 +15,7 @@ function install() {
 		apt-get install -y "$@"
 }
 
-function add_repository() {
+add_repository() {
 	port=$1
 	name=$2
 	src=$3
@@ -35,7 +35,7 @@ function add_repository() {
 	guest_ssh -p "$port" build@localhost sudo apt-get update
 }
 
-function sanity_check() {
+sanity_check() {
 	boot 8023 &
 	qemu=$!
 	sleep 5

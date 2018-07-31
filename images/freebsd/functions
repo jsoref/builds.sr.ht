@@ -2,14 +2,14 @@
 diskboot=yes
 poweroff_cmd="sudo poweroff"
 
-function install() {
+install() {
     port=$1
     shift 1
     guest_ssh -p $port build@localhost \
 		"sudo pkg update && sudo pkg upgrade -y && sudo pkg install -y $@"
 }
 
-function sanity_check() {
+sanity_check() {
     boot 8022 &
     qemu=$!
     sleep 20

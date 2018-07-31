@@ -3,13 +3,13 @@ guest_kernel=kernel
 guest_initrd=initrd
 poweroff_cmd="sudo systemctl poweroff"
 
-function install() {
+install() {
     port=$1
     shift 1
     guest_ssh -p $port build@localhost EDITOR=true yay --noconfirm -Syu "$@"
 }
 
-function add_repository() {
+add_repository() {
     port=$1
     name=$2
     src=$3
@@ -22,7 +22,7 @@ function add_repository() {
     guest_ssh -p $port build@localhost sudo pacman -Sy
 }
 
-function sanity_check() {
+sanity_check() {
     boot 8022 &
     qemu=$!
     sleep 5

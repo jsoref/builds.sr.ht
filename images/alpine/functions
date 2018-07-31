@@ -5,14 +5,14 @@ guest_root=/dev/vda3
 cmdline="modules=sd-mod,usb-storage,ext4 quiet rootfstype=ext4"
 poweroff_cmd="sudo poweroff"
 
-function install() {
+install() {
     port=$1
     shift 1
     guest_ssh -p $port build@localhost \
 		"sudo apk update && sudo apk upgrade && sudo apk add $@"
 }
 
-function add_repository() {
+add_repository() {
 	port=$1
 	name=$2
 	src=$3
@@ -27,7 +27,7 @@ function add_repository() {
 	guest_ssh -p $port build@localhost ls -la /etc/apk/keys
 }
 
-function sanity_check() {
+sanity_check() {
     boot 8022 &
     qemu=$!
     sleep 20
