@@ -1,0 +1,30 @@
+#!/bin/sh
+diskboot=yes
+poweroff_cmd="sudo poweroff"
+
+function install() {
+    port=$1
+    shift 1
+    guest_ssh -p $port build@localhost \
+		"sudo pkg update && sudo pkg upgrade -y && sudo pkg install -y $@"
+}
+
+function sanity_check() {
+    boot 8022 &
+    qemu=$!
+    sleep 20
+    echo "Testing sudo..."
+    guest_ssh -p 8022 build@localhost sudo ls -a
+    echo "Testing networking..."
+    guest_ssh -p 8022 build@localhost curl http://example.org
+    echo "Testing apk..."
+    guest_ssh -p 8022 build@localhost sudo pkg update
+    guest_ssh -p 8022 build@localhost sudo pkg upgrade -y
+    guest_ssh -p 8022 build@localhost sudo pkg install -y htop
+    echo "Testing git..."
+    guest_ssh -p 8022 build@localhost git --version
+    echo "Everything works!"
+    guest_ssh -p 8022 build@localhost sudo poweroff || true
+    wait $qemu
+    cleanup 8022
+}

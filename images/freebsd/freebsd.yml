@@ -1,0 +1,7 @@
+image: freebsd
+packages:
+- htop
+- vim
+tasks:
+  - setup: |
+      pkg -v

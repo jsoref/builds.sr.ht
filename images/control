@@ -20,6 +20,14 @@ function guest_ssh() {
 
 function boot() {
     port=$1
+	if [ -n "$diskboot" ]
+	then
+		extraargs=""
+	else
+		extraargs="-kernel /base/$guest_kernel \
+            -initrd /base/$guest_initrd \
+            -append \"root=${guest_root:-/dev/vda} rw console=ttyS0 $cmdline\""
+	fi
     id=$(docker run -d \
         -v "$self/$base":/base:ro \
         --mount type=tmpfs,destination=/var/tmp \
@@ -32,10 +40,8 @@ function boot() {
             -enable-kvm \
             -nographic \
             -drive file="/base/root.img.qcow2",media=disk,snapshot=on,if=virtio \
-			-device virtio-rng-pci \
-            -kernel /base/$guest_kernel \
-            -initrd /base/$guest_initrd \
-            -append "root=${guest_root:-/dev/vda} rw console=ttyS0 $cmdline")
+			-device virtio-rng-pci
+            $extraargs)
     echo $id > /tmp/qemu-$port.id
 }
 
