@@ -1,8 +1,5 @@
 #!/bin/sh
-guest_kernel=kernel
-guest_initrd=initrd
-guest_root=/dev/vda3
-cmdline="modules=sd-mod,usb-storage,ext4 quiet rootfstype=ext4"
+diskboot=yes
 poweroff_cmd="sudo poweroff"
 
 install() {

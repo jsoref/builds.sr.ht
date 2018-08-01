@@ -1,0 +1,78 @@
+#!/bin/sh -xe
+# This script should be run from a fresh Alpine installation
+# It will output root.img.qcow2, which is the sr.ht Alpine image
+
+qemu-img create -f qcow2 root.img.qcow2 16G
+modprobe nbd
+qemu-nbd --connect=/dev/nbd0 root.img.qcow2
+trap 'qemu-nbd --disconnect /dev/nbd0' EXIT
+
+# Basic install
+setup-hostname -n build
+setup-interfaces -i <<EOF
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet dhcp
+    hostname build
+EOF
+setup-dns -d example.org -n 1.1.1.1
+setup-timezone -z UTC
+setup-sshd -c openssh
+setup-ntp -c openntpd
+setup-apkrepos -f
+
+# Alpine copies our installed packages to the new disk
+# Note, this fucks shit up, only do this from bootstrap media
+cat >/etc/apk/world <<EOF
+acct
+alpine-base
+alpine-sdk
+bash
+git
+linux-pam
+linux-vanilla
+openssh
+shadow
+syslinux
+EOF
+
+sed -i /sbin/setup-disk -e 's/die "$i is not a suitable for partitioning"/true/'
+
+ERASE_DISKS=/dev/nbd0 setup-disk -m sys /dev/nbd0
+
+# These get lost during that process
+sudo apk add qemu-img rsync
+
+# Extra sr.ht changes
+mount /dev/nbd0p3 /mnt
+sed -e 's/#PermitEmptyPasswords no/PermitEmptyPasswords yes/' -i /mnt/etc/ssh/sshd_config
+
+echo -- "build:x:1000:1000::/home/build:/bin/ash" >> /mnt/etc/passwd
+cat >>/mnt/etc/group <<EOF
+build:!:1000:
+sudo:x:1001:build
+EOF
+sed -i /mnt/etc/group -e 's/^kvm.*/kvm:x:34:kvm,build/'
+echo -- "build::17742::::::" >>/mnt/etc/shadow
+echo '%sudo ALL=(ALL) NOPASSWD: ALL' >> /mnt/etc/sudoers
+
+mkdir -p /mnt/home/build
+chown 1000:1000 /mnt/home/build
+
+rm -f /mnt/etc/motd
+
+umount /mnt
+
+mount /dev/nbd0p1 /mnt
+
+cat >>/mnt/extlinux.conf <<EOF
+DEFAULT vanilla
+LABEL vanilla
+	LINUX vmlinuz-vanilla
+	INITRD initramfs-vanilla
+	APPEND root=/dev/vda3 rw modules=sd-mod,usb-storage,ext4 quiet rootfstype=ext4
+EOF
+
+umount /mnt
