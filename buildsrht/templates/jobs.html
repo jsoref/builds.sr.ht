@@ -9,7 +9,7 @@
     {% if breadcrumbs %}
     <h3>
     {% for crumb in breadcrumbs %}<a
-     href="/jobs/~{{ user.username if user else current_user.username }}{{ crumb['url'] }}"
+     href="/~{{ user.username if user else current_user.username }}{{ crumb['url'] }}"
     >{{ crumb['name'] }}</a>{% if not loop.last %}/{% endif %}{% endfor %}
     </h3>
     {% endif %}
@@ -18,12 +18,12 @@
       {% for job in jobs %}
       <div class="event">
         <h3>
-          <a href="/job/{{ job.id }}">#{{ job.id }}</a>
+          <a href="/~{{ job.owner.username }}/job/{{ job.id }}">#{{ job.id }}</a>
           <small>
             <a
-              href="/jobs/~{{ job.owner.username }}"
+              href="/~{{ job.owner.username }}"
             >~{{ job.owner.username }}</a>{% for tag in tags(job.tags) %}/<a
-               href="/jobs/~{{ job.owner.username }}{{ tag['url'] }}"
+               href="/~{{ job.owner.username }}{{ tag['url'] }}"
             >{{ tag['name'] }}</a>{% endfor %}
           </small>
           <small class="pull-right d-none d-md-inline">

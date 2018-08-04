@@ -89,7 +89,7 @@ def submit_POST():
     queue_build(job, manifest) # commits the session
     return redirect("/job/" + str(job.id))
 
-@jobs.route("/jobs/~<username>")
+@jobs.route("/~<username>")
 def user(username):
     user = User.query.filter(User.username == username).first()
     if not user:
@@ -101,7 +101,7 @@ def user(username):
         { "name": "~" + user.username, "link": "" }
     ])
 
-@jobs.route("/jobs/~<username>/<path:path>")
+@jobs.route("/~<username>/<path:path>")
 def tag(username, path):
     user = User.query.filter(User.username == username).first()
     if not user:
@@ -114,8 +114,9 @@ def tag(username, path):
         { "name": "~" + user.username, "url": "" }
     ] + tags(path))
 
-@jobs.route("/job/<int:job_id>")
-def job_by_id(job_id):
+@jobs.route("/~<username>/job/<int:job_id>")
+def job_by_id(username, job_id):
+    # TODO: maybe we want per-user job IDs
     job = Job.query.get(job_id)
     if not job:
         abort(404)
