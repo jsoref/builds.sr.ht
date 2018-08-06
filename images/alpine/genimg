@@ -67,7 +67,7 @@ umount /mnt
 
 mount /dev/nbd0p1 /mnt
 
-cat >>/mnt/extlinux.conf <<EOF
+cat >/mnt/extlinux.conf <<EOF
 DEFAULT vanilla
 LABEL vanilla
 	LINUX vmlinuz-vanilla
