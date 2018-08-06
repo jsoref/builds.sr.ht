@@ -87,7 +87,7 @@ def submit_POST():
         db.session.add(t)
         db.session.flush() # assigns IDs for ordering purposes
     queue_build(job, manifest) # commits the session
-    return redirect("/job/" + str(job.id))
+    return redirect("/~" + current_user.username + "/job/" + str(job.id))
 
 @jobs.route("/~<username>")
 def user(username):
