@@ -81,10 +81,12 @@ function _wait_boot() {
 	echo "Waiting for VM to come up..."
 	while ! guest_ssh -p "$port" build@localhost true 2>&1 >/dev/null
 	do
+		sleep 5
 		attempts=$((attempts + 1))
-		if [ "$attempts" -eq 5 ]
+		if [ "$attempts" -eq 10 ]
 		then
 			echo "Giving up."
+			cleanup "$port"
 			exit 1
 		fi
 		echo "Attempt $attempt..."
