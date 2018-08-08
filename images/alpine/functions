@@ -1,6 +1,10 @@
 #!/bin/sh
-diskboot=yes
 poweroff_cmd="sudo poweroff"
+
+boot() {
+	# The Alpine image has a bootloader installed
+	_boot
+}
 
 install() {
     port=$1

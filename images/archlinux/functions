@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
-guest_kernel=kernel
-guest_initrd=initrd
 poweroff_cmd="sudo systemctl poweroff"
+
+boot() {
+	_boot \
+		-kernel $wd/kernel -initrd $wd/initrd \
+		-append "root=/dev/vda rw console=ttyS0"
+}
 
 install() {
     port=$1
@@ -23,7 +27,7 @@ add_repository() {
 }
 
 sanity_check() {
-    boot 8022 &
+    cmd_boot 8022 qemu &
     qemu=$!
     sleep 5
     echo "Testing sudo..."

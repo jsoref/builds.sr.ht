@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
-guest_kernel=kernel
-guest_initrd=initrd
 poweroff_cmd="sudo systemctl poweroff"
-cmdline="loglevel=3 net.ifnames=0 biosdevname=0"
+
+boot() {
+	_boot \
+		-kernel $wd/kernel -initrd $wd/initrd \
+		-append "root=/dev/vda rw console=ttyS0 loglevel=3 net.ifnames=0 biosdevname=0"
+}
 
 install() {
 	port=$1

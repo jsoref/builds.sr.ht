@@ -1,20 +1,26 @@
-#!/usr/bin/env bash
-if [ $EUID != 0 ]
-then
-    echo "Must be run as root"
-    exit 1
-fi
-set -xe
+#!/bin/sh -ex
+root=root
 
-root=root.x86_64
-bootstrap_date=$(date +'%Y.%m.01')
-bootstrap=archlinux-bootstrap-$bootstrap_date-x86_64.tar.gz
+cleaned_up=0
+cleanup() {
+	[ "$cleaned_up" -eq 1 ] && return
+	cleaned_up=1
+	# The order here is important if you don't want to hose your mounts
+	umount -Rf "$root" || true
+	qemu-nbd --disconnect /dev/nbd0 || true
+	rm -rf "$root" || true
+}
 
-if [ ! -f $bootstrap ]
-then
-	curl -O http://mirror.rackspace.com/archlinux/iso/$bootstrap_date/$bootstrap
-fi
-tar xf $bootstrap
+qemu-img create -f qcow2 root.img.qcow2 16G
+modprobe nbd
+qemu-nbd --connect=/dev/nbd0 root.img.qcow2
+trap cleanup EXIT
+
+mkdir -p "$root"
+mkfs.ext4 /dev/nbd0
+mount /dev/nbd0 "$root"
+
+pacstrap root base base-devel git openssh
 
 function run_root() {
     local cmd="$@"
@@ -31,7 +37,6 @@ function run_normal() {
 echo 'Server = http://lug.mtu.edu/archlinux/$repo/os/$arch' >> $root/etc/pacman.d/mirrorlist
 echo 'nameserver 8.8.8.8' >> $root/etc/resolv.conf
 
-mount $root $root --bind
 mount --bind /proc $root/proc
 mount --bind /sys $root/sys
 mount --bind /dev $root/dev
@@ -40,12 +45,8 @@ mount --bind /dev/shm $root/dev/shm
 mount --bind /run $root/run
 
 cp mkinitcpio.conf $root/etc
+cp pacman.conf $root/etc
 
-run_root pacman -Syy
-run_root pacman-key --init
-run_root pacman-key --populate archlinux
-run_root pacman -Syu --force --noconfirm pacman-mirrorlist
-sed -e '#HoldPkg.*/HoldPkg linux/' -i $root/etc/pacman.conf
 [ ! -f $root/etc/pacman.d/mirrorlist.pacnew ] && mv $root/etc/pacman.d/mirrorlist $root/etc/pacman.d/mirrorlist.pacnew
 sed -e 's/^#//g' -i $root/etc/pacman.d/mirrorlist.pacnew
 cat - $root/etc/pacman.d/mirrorlist.pacnew <<EOF > $root/etc/pacman.d/mirrorlist
@@ -54,21 +55,23 @@ Server = http://mirror.us.leaseweb.net/archlinux/\$repo/os/\$arch
 Server = http://lug.mtu.edu/archlinux/\$repo/os/\$arch
 Server = http://mirrors.kernel.org/archlinux/\$repo/os/\$arch
 EOF
-run_root pacman -Sy
-run_root pacman -Syu --force --noconfirm \
-    base-devel \
-    git \
-    openssh \
-    linux \
-    mkinitcpio \
-    systemd-sysvcompat \
-    dhcpcd
 
 sed -i 's/#en_US.UTF-8/en_US.UTF-8/' $root/etc/locale.gen
 run_root locale-gen
 
-run_root systemctl enable dhcpcd
+cat >"$root"/etc/systemd/network/25-ens3.network <<EOF
+[Match]
+Name=ens3
+
+[Network]
+Address=10.0.2.15/24
+Gateway=10.0.2.2
+EOF
+
+run_root systemctl enable systemd-networkd.service
 run_root systemctl enable systemd-timesyncd.service
+
+run_root mkinitcpio -p linux
 
 run_root groupadd sudo
 run_root useradd -mG sudo,kvm build
@@ -76,8 +79,6 @@ run_root passwd -d build
 echo '%sudo ALL=(ALL) NOPASSWD: ALL' >> $root/etc/sudoers
 echo 'source /etc/profile.d/perlbin.sh' > $root/home/build/.bashrc
 echo 'export EDITOR=true' > $root/home/build/.bashrc
-
-sed -e 's/#IgnorePkg.*/IgnorePkg = linux mkinitcpio/' -i $root/etc/pacman.conf
 
 sed -e 's/#PermitEmptyPasswords no/PermitEmptyPasswords yes/' -i $root/etc/ssh/sshd_config
 run_root systemctl enable sshd
@@ -89,9 +90,10 @@ run_normal tar xf yay.tar.gz
 run_normal 'cd yay && makepkg -si --noconfirm --skippgpcheck'
 run_normal rm -r yay yay.tar.gz
 
-pkill gpg-agent
-umount -R $root
+pkill gpg-agent || true
 cp $root/boot/vmlinuz-linux ./kernel
 cp $root/boot/initramfs-linux.img ./initrd
-virt-make-fs --format=qcow2 --size=+8G $root root.img.qcow2
-rm -rf $root
+
+run_root pacman --noconfirm -Rsc linux-firmware linux mkinitcpio go
+
+cleanup

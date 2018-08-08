@@ -1,0 +1,27 @@
+image: alpine
+packages:
+  - docker
+  - qemu-img
+  - rsync
+  - shadow
+sources:
+  - https://git.sr.ht/~sircmpwn/builds.sr.ht
+secrets:
+  - fa00a8d3-7b63-42d5-8060-3bb31c3e3018
+tasks:
+  - docker: |
+      docker version
+      sudo dockerd -D &
+      pid=$!
+      ps aux | grep docker
+      kill -9 $!
+      exit 1
+  - qemu: |
+      cd builds.sr.ht/images/qemu
+      groups
+      ls -l /var/run/docker.sock
+      docker build -f Dockerfile -t qemu .
+  - genimg: |
+      cd builds.sr.ht/images/alpine
+      sudo ./genimg
+# TODO: sanity check & deploy
