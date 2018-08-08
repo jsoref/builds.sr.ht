@@ -72,7 +72,7 @@ function cmd_boot() {
 		exit 1
 	fi
 
-	echo $(boot) > /tmp/qemu-$port.id
+	echo $(boot) > /tmp/$means-$port.id
 }
 
 function cmd_cleanup() {
@@ -80,12 +80,21 @@ function cmd_cleanup() {
     # Power off
     if [ $# == 1 ]
     then
-        cid=$(cat /tmp/qemu-$port.id)
+        cid=$(cat /tmp/docker-$port.id)
         if [ "$cid" != "" ]
         then
             guest_ssh -p $port build@localhost $poweroff_cmd || true
             sleep 2
             docker kill $cid && sleep 2 || true
+            rm /tmp/docker-$port.id
+        fi
+        cid=$(cat /tmp/qemu-$port.id)
+        if [ "$cid" != "" ]
+        then
+            guest_ssh -p $port build@localhost $poweroff_cmd || true
+            sleep 2
+			kill $cid || true
+			kill -9 $cid || true
             rm /tmp/qemu-$port.id
         fi
     fi

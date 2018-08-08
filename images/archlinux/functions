@@ -27,9 +27,10 @@ add_repository() {
 }
 
 sanity_check() {
+	echo "Booting..."
     cmd_boot 8022 qemu &
     qemu=$!
-    sleep 5
+    sleep 10
     echo "Testing sudo..."
     guest_ssh -p 8022 build@localhost sudo ls -a
     echo "Testing networking..."
