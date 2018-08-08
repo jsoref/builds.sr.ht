@@ -45,7 +45,6 @@ mount --bind /dev/shm $root/dev/shm
 mount --bind /run $root/run
 
 cp mkinitcpio.conf $root/etc
-cp pacman.conf $root/etc
 
 [ ! -f $root/etc/pacman.d/mirrorlist.pacnew ] && mv $root/etc/pacman.d/mirrorlist $root/etc/pacman.d/mirrorlist.pacnew
 sed -e 's/^#//g' -i $root/etc/pacman.d/mirrorlist.pacnew
