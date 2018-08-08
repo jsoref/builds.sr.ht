@@ -75,6 +75,22 @@ function cmd_boot() {
 	echo $(boot) > /tmp/$means-$port.id
 }
 
+function _wait_boot() {
+	port=$1
+	attempts=0
+	echo "Waiting for VM to come up..."
+	while ! guest_ssh -p "$port" build@localhost true 2>&1 >/dev/null
+	do
+		attempts=$((attempts + 1))
+		if [ "$attempts" -eq 5 ]
+		then
+			echo "Giving up."
+			exit 1
+		fi
+		echo "Attempt $attempt..."
+	done
+}
+
 function cmd_cleanup() {
     port=$1
     # Power off
