@@ -44,5 +44,5 @@ sanity_check() {
     echo "Everything works!"
     guest_ssh -p 8022 build@localhost sudo systemctl poweroff || true
     wait $qemu
-    cleanup 8022
+    cmd_cleanup 8022
 }

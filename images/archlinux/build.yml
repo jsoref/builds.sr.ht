@@ -2,6 +2,7 @@ image: archlinux
 repositories:
   sr.ht: https://mirror.sr.ht/archlinux/sr.ht/#1ED4E14494433AE3FD302CAB74B4BCCEA60D0437
 packages:
+  - arch-install-scripts
   - qemu-headless
   - procps-ng
   - rsync
@@ -16,6 +17,7 @@ tasks:
   - genimg: |
       cd builds.sr.ht
       cd images/archlinux
+      sudo cp pacman.conf /etc
       sudo ./genimg
   - sanity-check: |
       cd builds.sr.ht
