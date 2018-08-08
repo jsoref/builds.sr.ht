@@ -93,6 +93,6 @@ pkill gpg-agent || true
 cp $root/boot/vmlinuz-linux ./kernel
 cp $root/boot/initramfs-linux.img ./initrd
 
-run_root pacman --noconfirm -Rsc linux-firmware go
+run_root pacman --noconfirm -Rsc go
 
 cleanup
