@@ -42,8 +42,8 @@ sed -i /sbin/setup-disk -e 's/die "$i is not a suitable for partitioning"/true/'
 
 ERASE_DISKS=/dev/nbd0 setup-disk -m sys /dev/nbd0
 
-# These get lost during that process
-sudo apk add qemu-img rsync
+# This gets lost during that process (TODO FIX)
+sudo apk add qemu-img
 
 # Extra sr.ht changes
 mount /dev/nbd0p3 /mnt

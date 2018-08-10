@@ -90,7 +90,7 @@ function _wait_boot() {
 			cleanup "$port"
 			exit 1
 		fi
-		echo "Attempt $attempt..."
+		echo "Attempt $attempts..."
 	done
 }
 
