@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 poweroff_cmd="sudo systemctl poweroff"
 
 boot() {
