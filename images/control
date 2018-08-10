@@ -8,14 +8,14 @@ shift 2
 
 if [ ! -d $self/$base ]
 then
-    echo "Unknown base image $base"
-    exit 1
+	echo "Unknown base image $base"
+	exit 1
 fi
 
 ssh_opts="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 
 function guest_ssh() {
-    ssh $ssh_opts "$@"
+	ssh $ssh_opts "$@"
 }
 
 function _docker_boot() {
@@ -32,11 +32,12 @@ function _docker_boot() {
 		-nographic \
 		-device virtio-rng-pci \
 		-drive file="$wd/root.img.qcow2",media=disk,snapshot=on,if=virtio \
-		"$@"
+		"$@" > /tmp/docker-$port.id
 }
 
 function _qemu_boot() {
 	qemu-system-x86_64 \
+		-pidfile /tmp/qemu-$port.id \
 		-m ${MEMORY:-2048} \
 		-net nic,model=virtio -net user,hostfwd=tcp::$port-:22 \
 		-cpu host \
@@ -44,8 +45,7 @@ function _qemu_boot() {
 		-nographic \
 		-device virtio-rng-pci \
 		-drive file="$wd/root.img.qcow2",media=disk,snapshot=on,if=virtio \
-		"$@" &
-	echo $?
+		"$@"
 }
 
 function _boot() {
@@ -54,7 +54,7 @@ function _boot() {
 }
 
 function cmd_boot() {
-    port=$1
+	port=$1
 	if [ "$#" -gt 1 ]
 	then
 		means=$2
@@ -73,7 +73,7 @@ function cmd_boot() {
 		exit 1
 	fi
 
-	echo $(boot) > /tmp/$means-$port.id
+	boot
 }
 
 function _wait_boot() {
@@ -95,54 +95,54 @@ function _wait_boot() {
 }
 
 function cmd_cleanup() {
-    port=$1
-    # Power off
-    if [ $# == 1 ]
-    then
+	port=$1
+	# Power off
+	if [ $# == 1 ]
+	then
 		if [ -e /tmp/docker-$port.id ]
 		then
 			cid=$(cat /tmp/docker-$port.id)
-            guest_ssh -p $port build@localhost $poweroff_cmd || true
-            sleep 2
-            docker kill $cid && sleep 2 || true
-            rm /tmp/docker-$port.id
-        fi
+			guest_ssh -p $port build@localhost $poweroff_cmd || true
+			sleep 2
+			docker kill $cid && sleep 2 || true
+			rm /tmp/docker-$port.id
+		fi
 		if [ -e /tmp/qemu-$port.id ]
 		then
 			cid=$(cat /tmp/qemu-$port.id)
-            guest_ssh -p $port build@localhost $poweroff_cmd || true
-            sleep 2
+			guest_ssh -p $port build@localhost $poweroff_cmd || true
+			sleep 2
 			kill $cid || true
 			kill -9 $cid || true
-            rm /tmp/qemu-$port.id
-        fi
-    fi
+			rm /tmp/qemu-$port.id
+		fi
+	fi
 }
 
 . $self/$base/functions
 
 case "$cmd" in
-    boot)
+	boot)
 		cmd_boot "$@"
-        ;;
-    cleanup)
-        cmd_cleanup "$@"
-        ;;
-    sanity-check)
-        sanity_check "$@"
-        ;;
-    install)
-        install "$@"
-        ;;
-    add-repo)
-        add_repository "$@"
-        ;;
-    ssh)
-        port=$1
-        shift
-        guest_ssh -p "$port" build@localhost "$@"
-        ;;
-    *)
-        echo "Unknown command $cmd"
-        ;;
+		;;
+	cleanup)
+		cmd_cleanup "$@"
+		;;
+	sanity-check)
+		sanity_check "$@"
+		;;
+	install)
+		install "$@"
+		;;
+	add-repo)
+		add_repository "$@"
+		;;
+	ssh)
+		port=$1
+		shift
+		guest_ssh -p "$port" build@localhost "$@"
+		;;
+	*)
+		echo "Unknown command $cmd"
+		;;
 esac
