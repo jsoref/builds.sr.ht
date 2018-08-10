@@ -44,7 +44,8 @@ function _qemu_boot() {
 		-nographic \
 		-device virtio-rng-pci \
 		-drive file="$wd/root.img.qcow2",media=disk,snapshot=on,if=virtio \
-		"$@"
+		"$@" &
+	echo $?
 }
 
 function _boot() {
