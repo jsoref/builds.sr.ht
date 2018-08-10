@@ -7,9 +7,9 @@ boot() {
 }
 
 install() {
-    port=$1
-    shift 1
-    guest_ssh -p $port build@localhost \
+	port=$1
+	shift 1
+	guest_ssh -p $port build@localhost \
 		"sudo apk update && sudo apk upgrade && sudo apk add $@"
 }
 
@@ -32,17 +32,17 @@ sanity_check() {
 	echo "Booting..."
 	cmd_boot 8022 qemu &
 	_wait_boot 8022
-    echo "Testing sudo..."
-    guest_ssh -p 8022 build@localhost sudo ls -a
-    echo "Testing networking..."
-    guest_ssh -p 8022 build@localhost curl http://example.org
-    echo "Testing apk..."
-    guest_ssh -p 8022 build@localhost sudo apk update
-    guest_ssh -p 8022 build@localhost sudo apk upgrade
-    guest_ssh -p 8022 build@localhost sudo apk add htop
-    echo "Testing git..."
-    guest_ssh -p 8022 build@localhost git --version
-    echo "Everything works!"
-    guest_ssh -p 8022 build@localhost sudo poweroff || true
-    cleanup 8022
+	echo "Testing sudo..."
+	guest_ssh -p 8022 build@localhost sudo ls -a
+	echo "Testing networking..."
+	guest_ssh -p 8022 build@localhost curl http://example.org
+	echo "Testing apk..."
+	guest_ssh -p 8022 build@localhost sudo apk update
+	guest_ssh -p 8022 build@localhost sudo apk upgrade
+	guest_ssh -p 8022 build@localhost sudo apk add htop
+	echo "Testing git..."
+	guest_ssh -p 8022 build@localhost git --version
+	echo "Everything works!"
+	guest_ssh -p 8022 build@localhost sudo poweroff || true
+	cmd_cleanup 8022
 }
