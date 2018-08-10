@@ -98,17 +98,17 @@ function cmd_cleanup() {
     # Power off
     if [ $# == 1 ]
     then
-        cid=$(cat /tmp/docker-$port.id)
-        if [ "$cid" != "" ]
-        then
+		if [ -e /tmp/docker-$port.id ]
+		then
+			cid=$(cat /tmp/docker-$port.id)
             guest_ssh -p $port build@localhost $poweroff_cmd || true
             sleep 2
             docker kill $cid && sleep 2 || true
             rm /tmp/docker-$port.id
         fi
-        cid=$(cat /tmp/qemu-$port.id)
-        if [ "$cid" != "" ]
-        then
+		if [ -e /tmp/qemu-$port.id ]
+		then
+			cid=$(cat /tmp/qemu-$port.id)
             guest_ssh -p $port build@localhost $poweroff_cmd || true
             sleep 2
 			kill $cid || true
