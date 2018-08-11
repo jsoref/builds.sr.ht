@@ -20,7 +20,7 @@ modprobe nbd max_part=16
 qemu-nbd --connect=/dev/nbd0 root.img.qcow2
 trap cleanup EXIT
 
-dd if=/usr/share/syslinux/mbr/mbr.bin of=/dev/nbd0 bs=1 count=440
+dd if=/usr/lib/syslinux/mbr/mbr.bin of=/dev/nbd0 bs=1 count=440
 sfdisk --no-reread /dev/nbd0 <<EOF
 1M,100M,L,*
 ,2048M,S
