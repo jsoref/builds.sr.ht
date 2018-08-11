@@ -1,4 +1,4 @@
-#!/bin/sh -xeu
+#!/bin/sh -eux
 echo "$release" >/dev/null # fail on -u if release unset
 
 cleanup() {
@@ -18,10 +18,6 @@ modprobe nbd max_part=16
 qemu-nbd --connect=/dev/nbd0 root.img.qcow2
 trap cleanup EXIT
 
-# Disk layout:
-# partition 1: boot (100M)
-# partition 2: swap (2G)
-# partition 3: root (remainder)
 dd if=/usr/share/syslinux/mbr.bin of=/dev/nbd0 bs=1 count=440
 sfdisk --no-reread /dev/nbd0 <<EOF
 1M,100M,L,*
@@ -56,10 +52,9 @@ mount --bind /run /mnt/run
 mount --bind /sys /mnt/sys
 
 run_root() {
-	local cmd="$@"
 	chroot /mnt /usr/bin/env \
 		PATH=/sbin:/usr/sbin:/bin:/usr/bin \
-		/bin/sh -c "$cmd"
+		/bin/sh -c "$*"
 }
 
 run_root setup-hostname -n build
@@ -69,7 +64,7 @@ iface lo inet loopback
 
 auto eth0
 iface eth0 inet static
-    hostname build
+	hostname build
 	address 10.0.2.15
 	netmask 255.255.255.0
 	gateway 10.0.2.2
@@ -78,7 +73,7 @@ run_root setup-dns -d example.org -n 1.1.1.1
 run_root setup-timezone -z UTC
 run_root setup-apkrepos -f
 
-extlinux --install /mnt/boot
+extlinux -i /mnt/boot
 
 run_root rc-update add ntpd default
 run_root rc-update add sshd default

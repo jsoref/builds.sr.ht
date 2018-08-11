@@ -1,54 +1,72 @@
-#!/usr/bin/env bash
-if [ $EUID != 0 ]
-then
-    echo "Must be run as root"
-    exit 1
-fi
-set -xe
+#!/bin/sh -eux
+echo "$release" >/dev/null # fail on -u if release unset
 
 root=root
 
-debootstrap --include=gnupg2 --arch=amd64 $release $root
-
-function run_root() {
-    local cmd="$@"
-    chroot $root /usr/bin/env \
-        PATH=/sbin:/usr/sbin:/bin:/usr/bin \
-        LANG=C.UTF-8 \
-        bash -c "$cmd"
+cleanup() {
+	# The order here is important if you don't want to hose your mounts
+	umount /mnt/dev/pts 2>/dev/null || true
+	umount /mnt/dev/shm 2>/dev/null || true
+	umount /mnt/dev 2>/dev/null || true
+	umount /mnt/proc 2>/dev/null || true
+	umount /mnt/run 2>/dev/null || true
+	umount /mnt/sys 2>/dev/null || true
+	umount /mnt 2>/dev/null || true 
+	qemu-nbd --disconnect /dev/nbd0 || true
 }
 
-function run_normal() {
-    local cmd="$@"
-    chroot --userspec=$SUDO_UID:$SUDO_GID \
-        $root /usr/bin/env \
-        PATH=/sbin:/usr/sbin:/bin:/usr/bin \
-        LANG=C.UTF-8 \
-        bash -c "cd /home/build && $cmd"
-}
+qemu-img create -f qcow2 root.img.qcow2 16G
+modprobe nbd max_part=16
+qemu-nbd --connect=/dev/nbd0 root.img.qcow2
+trap cleanup EXIT
 
-echo 'nameserver 8.8.8.8' >> $root/etc/resolv.conf
-
-mount $root $root --bind
-mount --bind /proc $root/proc
-mount --bind /sys $root/sys
-mount --bind /dev $root/dev
-mount --bind /dev/pts $root/dev/pts
-mount --bind /dev/shm $root/dev/shm
-mount --bind /run $root/run
-
-cat <<EOF > $root/etc/network/interfaces
-auto lo
-iface lo inet loopback
-auto eth0
-iface eth0 inet dhcp
+#dd if=/usr/share/syslinux/mbr/mbr.bin of=/dev/nbd0 bs=1 count=440
+dd if=/usr/lib/syslinux/bios/mbr.bin of=/dev/nbd0 bs=1 count=440
+sfdisk --no-reread /dev/nbd0 <<EOF
+1M,100M,L,*
+,2048M,S
+,,L
 EOF
 
-echo debuild > $root/etc/hostname
+mkfs.ext4 /dev/nbd0p1
+mkswap /dev/nbd0p2
+mkfs.ext4 /dev/nbd0p3
 
-cat <<EOF > $root/etc/hosts
+mount /dev/nbd0p3 /mnt
+mkdir /mnt/boot
+mount /dev/nbd0p1 /mnt/boot
+
+debootstrap --include=gnupg2 --arch=amd64 $release /mnt
+
+mount --bind /dev /mnt/dev
+mount --bind /dev/pts /mnt/dev/pts
+mount --bind /dev/shm /mnt/dev/shm
+mount --bind /proc /mnt/proc
+mount --bind /run /mnt/run
+mount --bind /sys /mnt/sys
+
+function run_root() {
+	chroot /mnt /usr/bin/env \
+		PATH=/sbin:/usr/sbin:/bin:/usr/bin \
+		sh -c "$*"
+}
+
+echo 'nameserver 8.8.8.8' >> /mnt/etc/resolv.conf
+cat > /mnt/etc/network/interfaces <<EOF
+auto lo
+iface lo inet loopback
+
+auto ens3
+iface ens3 inet static
+	hostname build
+	address 10.0.2.15
+	netmask 255.255.255.0
+	gateway 10.0.2.2
+EOF
+echo build > /mnt/etc/hostname
+cat > /mnt/etc/hosts <<EOF 
 127.0.0.1 localhost
-127.0.0.1 debuild
+127.0.0.1 build
 EOF
 
 run_root apt-key update
@@ -56,22 +74,37 @@ run_root apt-get update
 run_root apt-get -y install locales
 run_root apt-get -y install linux-image-amd64
 run_root apt-get -y install \
-	build-essential git ssh sudo dirmngr apt-transport-https
+	build-essential git ssh sudo dirmngr apt-transport-https extlinux
 
+extlinux -i /mnt/boot
+
+run_root ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 run_root systemctl enable systemd-timesyncd.service
 
 run_root useradd -mG sudo build
 run_root passwd -d build
-echo '%sudo ALL=(ALL) NOPASSWD: ALL' >> $root/etc/sudoers
+echo '%sudo ALL=(ALL) NOPASSWD: ALL' >> /mnt/etc/sudoers
 
-echo "PermitEmptyPasswords yes" >> $root/etc/ssh/sshd_config
-echo ssh >> $root/etc/securetty
+echo "PermitEmptyPasswords yes" >> /mnt/etc/ssh/sshd_config
+echo ssh >> /mnt/etc/securetty
 run_root systemctl enable ssh
 
 run_root update-initramfs -u
 
-umount -R $root
-cp $root/boot/vmlinuz-* ./kernel
-cp $root/boot/initrd* ./initrd
-virt-make-fs --format=qcow2 --size=+4G $root root.img.qcow2
-rm -rf $root
+linuxver=$(ls /mnt/boot | grep vmlinuz | cut -d- -f2-)
+
+cat >/mnt/boot/extlinux.conf <<EOF
+default debian
+label debian
+	linux vmlinuz-$linuxver
+	initrd initrd.img-$linuxver
+	append root=/dev/vda3 rw quiet
+EOF
+
+cat >>/mnt/etc/fstab <<EOF
+/dev/vda1 /boot ext4 rw,relatime,data=ordered 0 0
+/dev/vda2 swap swap defaults 0 0
+/dev/vda3 / ext4 rw,relatime,data=ordered 0 0
+EOF
+
+sync

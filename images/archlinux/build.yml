@@ -15,9 +15,7 @@ secrets:
   - fa00a8d3-7b63-42d5-8060-3bb31c3e3018
 tasks:
   - genimg: |
-      cd builds.sr.ht
-      cd images/archlinux
-      sudo cp pacman.conf /etc
+      cd builds.sr.ht/images/archlinux
       sudo ./genimg
   - sanity-check: |
       cd builds.sr.ht

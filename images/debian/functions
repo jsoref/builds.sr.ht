@@ -2,9 +2,7 @@
 poweroff_cmd="sudo systemctl poweroff"
 
 boot() {
-	_boot \
-		-kernel $wd/kernel -initrd $wd/initrd \
-		-append "root=/dev/vda rw console=ttyS0 loglevel=3 net.ifnames=0 biosdevname=0"
+	_boot
 }
 
 install() {
@@ -39,22 +37,19 @@ add_repository() {
 }
 
 sanity_check() {
-	boot 8023 &
-	qemu=$!
-	sleep 5
-	# This script is set -e so any failure will cause the sanity check to exit non-zero
-	# Does sudo work?
-	guest_ssh -p 8023 build@localhost sudo ls -a
-	# Does apt work?
-	guest_ssh -p 8023 build@localhost sudo apt-get update
-	# Does apt-get install work?
-	install 8023 curl
-	# Does networking work?
-	guest_ssh -p 8023 build@localhost curl http://example.org
-	# Does git work?
-	guest_ssh -p 8023 build@localhost git --version
-	# Shut down
-	guest_ssh -p 8023 build@localhost sudo systemctl poweroff || true
-	wait $qemu
-	cleanup 8023
+	echo "Booting..."
+	cmd_boot 8022 qemu &
+	trap 'cmd_cleanup 8022' EXIT
+	_wait_boot 8022
+	echo "Testing sudo..."
+	guest_ssh -p 8022 build@localhost sudo ls -a
+	echo "Testing apt..."
+	guest_ssh -p 8022 build@localhost sudo apt-get update
+	install 8022 curl
+	echo "Testing networking..."
+	guest_ssh -p 8022 build@localhost curl http://example.org
+	echo "Testing git..."
+	guest_ssh -p 8022 build@localhost git --version
+	echo "Everything works!"
+	guest_ssh -p 8022 build@localhost sudo systemctl poweroff || true
 }
