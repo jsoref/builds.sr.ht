@@ -45,8 +45,8 @@ apk add -U -X http://dl-cdn.alpinelinux.org/alpine/$release/main/ \
 	--arch=x86_64 \
 	--root=/mnt \
 	--initdb \
-	acct alpine-base alpine-conf alpine-sdk linux-virt bash git openssh sudo \
-	syslinux
+	acct alpine-base alpine-conf alpine-sdk linux-vanilla git openssh \
+	sudo syslinux bash
 
 mount --bind /dev /mnt/dev
 mount --bind /dev/pts /mnt/dev/pts
