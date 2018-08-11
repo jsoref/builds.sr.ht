@@ -121,4 +121,11 @@ cat >>/mnt/etc/fstab <<EOF
 /dev/vda3 / ext4 rw,relatime,data=ordered 0 0
 EOF
 
+pkg_version() {
+	name=$(run_root apk list $1 | cut -d' ' -f1)
+	echo ${name##$1-}
+}
+
+run_root apk add linux-vanilla=$(pkg_version linux-vanilla)
+
 sync
