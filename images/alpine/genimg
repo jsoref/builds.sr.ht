@@ -71,7 +71,15 @@ iface eth0 inet static
 EOF
 run_root setup-dns -d example.org -n 1.1.1.1
 run_root setup-timezone -z UTC
-run_root setup-apkrepos -f
+if [ "$release" = "edge" ]; then
+	cat >"$root"/etc/apk/repositories <<EOF
+http://dl-cdn.alpinelinux.org/alpine/$release/main
+http://dl-cdn.alpinelinux.org/alpine/$release/community
+http://dl-cdn.alpinelinux.org/alpine/$release/testing
+EOF
+else
+	run_root setup-apkrepos -f
+fi
 
 extlinux -i /mnt/boot
 
