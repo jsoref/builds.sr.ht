@@ -87,7 +87,7 @@ function _wait_boot() {
 		if [ "$attempts" -eq 10 ]
 		then
 			echo "Giving up."
-			cleanup "$port"
+			cmd_cleanup "$port"
 			exit 1
 		fi
 		echo "Attempt $attempts..."
