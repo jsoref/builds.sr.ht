@@ -1,10 +1,7 @@
 #!/bin/sh -ex
 root=root
 
-cleaned_up=0
 cleanup() {
-	[ "$cleaned_up" -eq 1 ] && return
-	cleaned_up=1
 	# The order here is important if you don't want to hose your mounts
 	umount -Rf "$root" || true
 	qemu-nbd --disconnect /dev/nbd0 || true
@@ -92,5 +89,3 @@ cp $root/boot/vmlinuz-linux ./kernel
 cp $root/boot/initramfs-linux.img ./initrd
 
 run_root pacman --noconfirm -Rsc go
-
-cleanup

@@ -1,34 +1,34 @@
 image: alpine
 packages:
-  - rsync
+  - e2fsprogs
   - qemu-img
   - qemu-system-x86_64
+  - rsync
+  - sfdisk
 sources:
   - https://git.sr.ht/~sircmpwn/builds.sr.ht
 environment:
+  release: edge
   slaves:
     - deploy@ritsu.runners.sr.ht
 secrets:
   - fa00a8d3-7b63-42d5-8060-3bb31c3e3018
 tasks:
   - genimg: |
-      cd builds.sr.ht/images/alpine
+      cd builds.sr.ht/images/alpine/$release
       sudo ./genimg
-      # World was corrupted during genimg
-      # TODO: Avoid that <_<
-      sudo apk add qemu-system-x86_64 rsync
   - sanity-check: |
       cd builds.sr.ht
-      MEMORY=1024 ./images/control alpine sanity-check
+      MEMORY=1024 ./images/control alpine/$release sanity-check
   - deploy: |
-      cd builds.sr.ht/images/alpine
+      cd builds.sr.ht/images/alpine/$release
       sshopts="-o StrictHostKeyChecking=no"
       for server in "${slaves[@]}"
       do
         rsync \
           --rsh="ssh $sshopts" -rzP root.img.qcow2 \
-          ${server}:/var/lib/images/alpine/new_root.img.qcow2
+          ${server}:/var/lib/images/alpine/$release/new_root.img.qcow2
         ssh $sshopts $server \
-          mv /var/lib/images/alpine/new_root.img.qcow2 \
-             /var/lib/images/alpine/root.img.qcow2
+          mv /var/lib/images/alpine/$release/new_root.img.qcow2 \
+             /var/lib/images/alpine/$release/root.img.qcow2
       done
