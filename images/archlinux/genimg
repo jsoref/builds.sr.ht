@@ -19,12 +19,12 @@ mount /dev/nbd0 "$root"
 
 pacstrap root base base-devel git openssh
 
-function run_root() {
+run_root() {
     local cmd="$@"
     chroot $root /bin/bash -c "$cmd"
 }
 
-function run_normal() {
+run_normal() {
     local cmd="$@"
     chroot --userspec=$SUDO_UID:$SUDO_GID \
         $root \
