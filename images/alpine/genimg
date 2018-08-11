@@ -9,7 +9,9 @@ cleanup() {
 	umount -f /mnt/proc 2>/dev/null || true
 	umount -f /mnt/run 2>/dev/null || true
 	umount -f /mnt/sys 2>/dev/null || true
+	umount -f /mnt/boot 2>/dev/null || true
 	umount -f /mnt 2>/dev/null || true 
+	swapoff /dev/nbd0p2 || true
 	qemu-nbd --disconnect /dev/nbd0 || true
 }
 
@@ -42,7 +44,7 @@ apk add -U -X http://dl-cdn.alpinelinux.org/alpine/$release/main/ \
 	--root=/mnt \
 	--initdb \
 	acct alpine-base alpine-conf alpine-sdk linux-vanilla git openssh \
-	sudo syslinux bash
+	sudo syslinux tzdata bash
 
 mount --bind /dev /mnt/dev
 mount --bind /dev/pts /mnt/dev/pts
@@ -123,7 +125,7 @@ cat >>/mnt/etc/fstab <<EOF
 EOF
 
 pkg_version() {
-	name=$(run_root apk list $1 | cut -d' ' -f1)
+	name=$(run_root apk list $1 | grep installed | cut -d' ' -f1)
 	echo ${name##$1-}
 }
 
