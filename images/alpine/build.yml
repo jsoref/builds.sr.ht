@@ -26,8 +26,8 @@ tasks:
       for server in "${slaves[@]}"
       do
         rsync \
-          --rsh="ssh $sshopts" -rzP new_root.img.qcow2 \
-          ${server}:/var/lib/images/alpine
+          --rsh="ssh $sshopts" -rzP root.img.qcow2 \
+          ${server}:/var/lib/images/alpine/new_root.img.qcow2
         ssh $sshopts $server \
           mv /var/lib/images/alpine/new_root.img.qcow2 \
              /var/lib/images/alpine/root.img.qcow2

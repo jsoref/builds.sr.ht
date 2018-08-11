@@ -14,8 +14,11 @@ auto lo
 iface lo inet loopback
 
 auto eth0
-iface eth0 inet dhcp
+iface eth0 inet static
     hostname build
+	address 10.0.2.15
+	netmask 255.255.255.0
+	gateway 10.0.2.2
 EOF
 setup-dns -d example.org -n 1.1.1.1
 setup-timezone -z UTC
