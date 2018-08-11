@@ -71,8 +71,9 @@ iface eth0 inet static
 EOF
 run_root setup-dns -d example.org -n 1.1.1.1
 run_root setup-timezone -z UTC
-if [ "$release" = "edge" ]; then
-	cat >"$root"/etc/apk/repositories <<EOF
+if [ "$release" = "edge" ]
+then
+	cat >/mnt/etc/apk/repositories <<EOF
 http://dl-cdn.alpinelinux.org/alpine/$release/main
 http://dl-cdn.alpinelinux.org/alpine/$release/community
 http://dl-cdn.alpinelinux.org/alpine/$release/testing
