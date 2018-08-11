@@ -1,4 +1,4 @@
-image: alpine
+image: alpine/edge
 packages:
   - e2fsprogs
   - qemu-img
@@ -17,6 +17,10 @@ tasks:
   - genimg: |
       cd builds.sr.ht/images/alpine/$release
       sudo ./genimg
+  - kvm: |
+      sudo modprobe kvm-intel
+      sleep 1
+      sudo chown build:build /dev/kvm
   - sanity-check: |
       cd builds.sr.ht
       MEMORY=1024 ./images/control alpine/$release sanity-check
