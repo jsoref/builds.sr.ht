@@ -49,8 +49,8 @@ _qemu_boot() {
 }
 
 _boot() {
-	[ "$means" == "docker" ] && _docker_boot "$@"
-	[ "$means" == "qemu" ] && _qemu_boot "$@"
+	[ "$means" = "docker" ] && _docker_boot "$@"
+	[ "$means" = "qemu" ] && _qemu_boot "$@"
 }
 
 cmd_boot() {
@@ -62,10 +62,10 @@ cmd_boot() {
 		means="docker"
 	fi
 
-	if [ "$means" == "docker" ]
+	if [ "$means" = "docker" ]
 	then
 		wd="/base"
-	elif [ "$means" == "qemu" ]
+	elif [ "$means" = "qemu" ]
 	then
 		wd="$self/$base"
 	else
@@ -97,7 +97,7 @@ _wait_boot() {
 cmd_cleanup() {
 	port=$1
 	# Power off
-	if [ $# == 1 ]
+	if [ "$#" -eq 1 ]
 	then
 		if [ -e /tmp/docker-$port.id ]
 		then
