@@ -32,7 +32,7 @@ class Trigger:
         })
         return attrs
 
-class Task():
+class Task:
     def __init__(self, yml):
         if not isinstance(yml, dict) or len(yml) != 1:
             raise Exception("Expected task to be a string: string")
@@ -48,7 +48,7 @@ class Task():
     def __repr__(self):
         return "<Task {}>".format(self.name)
 
-class Manifest():
+class Manifest:
     def __init__(self, yml):
         self.yaml = yml
         image = self.yaml.get("image")

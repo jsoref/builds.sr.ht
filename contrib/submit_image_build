@@ -1,0 +1,50 @@
+#!/usr/bin/env python3
+from buildsrht.manifest import Manifest
+from getopt import getopt
+import json
+import os
+import requests
+import sys
+import yaml
+
+opts, args = getopt(sys.argv[1:], "n:p:t:u:")
+usage = f"Usage: {sys.argv[0]} -t token [-n note] [-u builds url] [-p images path] image"
+
+if len(args) != 1:
+    print(usage)
+    sys.exit(1)
+
+opts = { key: value for (key, value) in opts }
+
+if not "-t" in opts:
+    print(usage)
+    sys.exit(1)
+
+note = opts.get("-n")
+path = opts.get("-p", "/var/lib/images")
+token = opts.get("-t")
+url = opts.get("-u", "https://builds.sr.ht")
+image = args[0]
+
+if "/" in image:
+    [image, release] = image.split("/")
+else:
+    release = None
+
+with open(os.path.join(path, image, "build.yml")) as f:
+    manifest = Manifest(yaml.safe_load(f.read()))
+
+if release:
+    if not manifest.environment:
+        manifest.environment = dict()
+    manifest.environment["release"] = release
+
+url = f"{url}/api/jobs"
+
+print(requests.post(url, json={
+    "manifest": manifest.to_yaml(),
+    "note": note,
+    "tags": [image] + ([release] if release else [])
+}, headers={
+    "Authorization": f"token {token}"
+}).json())
