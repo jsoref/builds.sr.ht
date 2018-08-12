@@ -1,0 +1,33 @@
+#!/bin/sh -eux
+
+cleanup() {
+	cat /tmp/bsdinstall_log || true
+	# The order here is important if you don't want to hose your mounts
+	umount -f /mnt/dev/pts 2>/dev/null || true
+	umount -f /mnt/dev/shm 2>/dev/null || true
+	umount -f /mnt/dev 2>/dev/null || true
+	umount -f /mnt/proc 2>/dev/null || true
+	umount -f /mnt/run 2>/dev/null || true
+	umount -f /mnt/sys 2>/dev/null || true
+	umount -f /mnt/boot 2>/dev/null || true
+	umount -f /mnt 2>/dev/null || true 
+	pkill nbd
+	ggatec destroy -f -u 0
+}
+
+rm -f /tmp/bsdinstall_log
+qemu-img create -f qcow2 root.img.qcow2 16G
+qemu-nbd root.img.qcow2 &
+nbd-client 127.0.0.1
+trap cleanup EXIT
+
+# Download distributions
+# This is _supposed_ to be done automatically, but seems it is not
+BSDINSTALL_DISTSITE=https://download.freebsd.org/ftp/releases/amd64/11.2-RELEASE/
+mkdir -p /usr/freebsd-dist
+for pkg in kernel.txz base.txz ports.txz
+do
+	curl -L "${BSDINSTALL_DISTSITE}${pkg}" > /usr/freebsd-dist/"$pkg"
+done
+
+bsdinstall script install

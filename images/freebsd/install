@@ -1,0 +1,17 @@
+PARTITIONS=ggate0
+DISTRIBUTIONS="kernel.txz base.txz ports.txz"
+BSDINSTALL_DISTSITE=https://download.freebsd.org/ftp/releases/amd64/11.2-RELEASE/
+
+#!/bin/sh
+echo 'ifconfig_em0="inet 10.0.2.15 netmask 255.255.255.0"' >>/etc/rc.conf
+echo 'defaultrouter="10.0.2.2"' >>/etc/rc.conf
+pkg install git bash sudo curl
+
+adduser -u 1000 -w none build
+pw groupadd sudo
+pw groupmod sudo -M build
+
+ln -sf /usr/share/zoneinf/UTC /etc/localtime
+echo "nameserver 1.1.1.1" > /etc/resolv.conf
+
+echo "%sudo ALL=(ALL) NOPASSWD: ALL" >> /usr/local/etc/sudoers
