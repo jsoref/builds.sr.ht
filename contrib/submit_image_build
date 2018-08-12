@@ -41,10 +41,13 @@ if release:
 
 url = f"{url}/api/jobs"
 
-print(requests.post(url, json={
+r = requests.post(url, json={
     "manifest": manifest.to_yaml(),
     "note": note,
     "tags": [image] + ([release] if release else [])
 }, headers={
     "Authorization": f"token {token}"
-}).json())
+})
+
+print(r.json())
+sys.exit(r.status_code != 200)
