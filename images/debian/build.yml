@@ -1,13 +1,14 @@
 image: debian/stretch
 packages:
   - debootstrap
+  - e2fsprogs
   - qemu-system-x86
-  - libguestfs-tools
-  - procps
   - rsync
+  - extlinux # temporary
 sources:
   - https://git.sr.ht/~sircmpwn/builds.sr.ht
 environment:
+  release: stretch
   slaves:
     - deploy@mio.runners.sr.ht
 secrets:
@@ -15,24 +16,22 @@ secrets:
 tasks:
   - genimg: |
       cd builds.sr.ht
-      cd images/debian/stretch
+      cd images/debian/$release
       sudo ./genimg
   - sanity-check: |
       cd builds.sr.ht
       # Debian does not have a kvm group so we just gotta do it this way
-      sudo chmod 666 /dev/kvm
-      MEMORY=1024 ./images/control debian/stretch sanity-check
+      sudo chown build:build /dev/kvm
+      MEMORY=1024 ./images/control debian/$release sanity-check
   - deploy: |
-      cd builds.sr.ht/images/debian/stretch
+      cd builds.sr.ht/images/debian/$release
       sshopts="-o StrictHostKeyChecking=no"
       for server in "${slaves[@]}"
       do
         rsync \
-          --rsh="ssh $sshopts" \
-          -rzP initrd kernel root.img.qcow2 \
-          ${server}:/var/lib/images/debian/stretch-new
+          --rsh="ssh $sshopts" -rzP root.img.qcow2 \
+          ${server}:/var/lib/images/debian/$release/new_root.img.qcow2
         ssh $sshopts $server \
-          mv /var/lib/images/debian/stretch-new/{initrd,kernel,root.img.qcow2} \
-             /var/lib/images/debian/stretch/
-        ssh $sshopts $server rm -rf /var/lib/images/debian/stretch-new
+          mv /var/lib/images/debian/$release/new_root.img.qcow2 \
+             /var/lib/images/debian/$release/root.img.qcow2
       done
