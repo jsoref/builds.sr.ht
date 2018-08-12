@@ -14,11 +14,11 @@ fi
 
 ssh_opts="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 
-function guest_ssh() {
+guest_ssh() {
 	ssh $ssh_opts "$@"
 }
 
-function _docker_boot() {
+_docker_boot() {
 	docker run -d \
 		-v "$self/$base":/base:ro \
 		--mount type=tmpfs,destination=/var/tmp \
@@ -35,7 +35,7 @@ function _docker_boot() {
 		"$@" > /tmp/docker-$port.id
 }
 
-function _qemu_boot() {
+_qemu_boot() {
 	qemu-system-x86_64 \
 		-pidfile /tmp/qemu-$port.id \
 		-m ${MEMORY:-2048} \
@@ -48,12 +48,12 @@ function _qemu_boot() {
 		"$@"
 }
 
-function _boot() {
+_boot() {
 	[ "$means" == "docker" ] && _docker_boot "$@"
 	[ "$means" == "qemu" ] && _qemu_boot "$@"
 }
 
-function cmd_boot() {
+cmd_boot() {
 	port=$1
 	if [ "$#" -gt 1 ]
 	then
@@ -76,7 +76,7 @@ function cmd_boot() {
 	boot
 }
 
-function _wait_boot() {
+_wait_boot() {
 	port=$1
 	attempts=0
 	echo "Waiting for VM to come up..."
@@ -94,7 +94,7 @@ function _wait_boot() {
 	done
 }
 
-function cmd_cleanup() {
+cmd_cleanup() {
 	port=$1
 	# Power off
 	if [ $# == 1 ]
