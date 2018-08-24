@@ -10,7 +10,7 @@ boot() {
 install() {
 	port=$1
 	shift 1
-	guest_ssh -p $port build@localhost EDITOR=true yay --noconfirm -Syu "$@"
+	guest_ssh -p $port build@localhost EDITOR=true yay --needed --noconfirm -Syu "$@"
 }
 
 add_repository() {
