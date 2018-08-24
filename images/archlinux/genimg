@@ -42,6 +42,7 @@ mount --bind /dev/shm $root/dev/shm
 mount --bind /run $root/run
 
 cp mkinitcpio.conf $root/etc
+cp pacman.conf $root/etc
 
 cat >$root/etc/pacman.d/mirrorlist <<EOF 
 Server = http://mirror.rackspace.com/archlinux/\$repo/os/\$arch
