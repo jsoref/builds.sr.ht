@@ -14,6 +14,7 @@ secrets:
 tasks:
   - genimg: |
       cd builds.sr.ht/images/archlinux
+      sudo sed -e 's/IgnorePkg.*/#IgnorePkg/' -i /etc/pacman.conf
       sudo ./genimg
   - sanity-check: |
       cd builds.sr.ht
