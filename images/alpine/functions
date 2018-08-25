@@ -9,8 +9,8 @@ boot() {
 install() {
 	port=$1
 	shift 1
-	guest_ssh -p $port build@localhost \
-		"sudo apk update && sudo apk upgrade && sudo apk add $@"
+	guest_ssh -p $port build@localhost sudo apk update
+	guest_ssh -p $port build@localhost sudo apk add "$@"
 }
 
 add_repository() {

@@ -11,8 +11,6 @@ install() {
 	guest_ssh -p $port build@localhost sudo env DEBIAN_FRONTEND=noninteractive \
 		apt-get update -y
 	guest_ssh -p $port build@localhost sudo env DEBIAN_FRONTEND=noninteractive \
-		apt-get upgrade -y
-	guest_ssh -p $port build@localhost sudo env DEBIAN_FRONTEND=noninteractive \
 		apt-get install -y "$@"
 }
 
