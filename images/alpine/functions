@@ -32,7 +32,6 @@ add_repository() {
 			| guest_ssh -p $port build@localhost \
 			"sudo tee -a /etc/apk/repositories"
 	fi
-	guest_ssh -p $port build@localhost cat /etc/apk/repositories
 }
 
 sanity_check() {
