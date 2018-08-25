@@ -22,10 +22,17 @@ add_repository() {
 	keyname=$(echo $src | cut -d' ' -f3)
 	guest_ssh -p $port build@localhost \
 		"curl -s '$key' | sudo tee /etc/apk/keys/'$keyname'"
-	printf '@%s %s\n' "$name" "$repo" \
-		| guest_ssh -p $port build@localhost \
-		"sudo tee -a /etc/apk/repositories"
-	guest_ssh -p $port build@localhost ls -la /etc/apk/keys
+	if [ "${name#@}" = "${name}" ]
+	then
+		printf '%s\n' "$repo" \
+			| guest_ssh -p $port build@localhost \
+			"sudo tee -a /etc/apk/repositories"
+	else
+		printf '%s %s\n' "$name" "$repo" \
+			| guest_ssh -p $port build@localhost \
+			"sudo tee -a /etc/apk/repositories"
+	fi
+	guest_ssh -p $port build@localhost cat /etc/apk/repositories
 }
 
 sanity_check() {
