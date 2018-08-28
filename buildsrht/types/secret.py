@@ -31,7 +31,7 @@ class Secret(Base):
     secret_type = sa.Column(
             sau.ChoiceType(SecretType, impl=sa.String()),
             nullable=False)
-    secret = sa.Column(sa.Unicode(16384), nullable=False)
+    secret = sa.Column(sa.LargeBinary(16384), nullable=False)
     path = sa.Column(sa.Unicode(512))
     mode = sa.Column(sa.Integer())
 

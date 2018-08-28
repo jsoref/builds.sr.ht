@@ -27,7 +27,6 @@ def secrets_POST():
     valid = Validation(request)
 
     name = valid.optional("name")
-    _secret = valid.require("secret", friendly_name="Secret")
     secret_type = valid.require("secret_type", friendly_name="Secret Type")
     valid.expect(not name or 3 < len(name) < 512,
             "Name must be between 3 and 512 characters", field="name")
@@ -38,6 +37,24 @@ def secrets_POST():
             valid.error("{} is not a valid secret type".format(secret_type),
                     field="secret_type")
 
+    if secret_type == SecretType.plaintext_file:
+        _secret = valid.optional("secret")
+        secret_file = valid.optional("file-file", max_file_size=16384)
+        for f in ["secret", "file-file"]:
+            valid.expect(bool(_secret) ^ bool(secret_file),
+                    "Either secret text or file have to be provided", field=f)
+        if _secret:
+            _secret = _secret.replace(r'\r\n', r'\n')
+            if not _secret.endswith(r'\n'):
+                _secret += '\n'
+        else:
+            _secret = secret_file
+    else:
+        _secret = valid.require("secret", friendly_name="Secret")
+
+    if isinstance(_secret, str):
+        _secret = secret.encode('utf-8')
+
     if not valid.ok:
         return render_template("secrets.html", **valid.kwargs)
 
@@ -46,7 +63,7 @@ def secrets_POST():
     if secret_type == SecretType.ssh_key:
         try:
             serialization.load_pem_private_key(
-                    _secret.encode(),
+                    _secret,
                     password=None,
                     backend=default_backend())
         except Exception as ex:
@@ -54,7 +71,7 @@ def secrets_POST():
                     field="secret")
     elif secret_type == SecretType.pgp_key:
         try:
-            key, _ = pgpy.PGPKey.from_blob(_secret.encode())
+            key, _ = pgpy.PGPKey.from_blob(_secret)
             if key.is_protected:
                 valid.error("PGP key cannot be passphrase protected.",
                         field="secret")

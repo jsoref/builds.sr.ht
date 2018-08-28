@@ -94,7 +94,7 @@ def resolve_secrets(ctx):
             ctx.ssh("mkdir", "-p", "/home/build/.ssh",
                     stdout=subprocess.DEVNULL)
             ctx.ssh("tee", path,
-                    input=secret.secret.encode(),
+                    input=secret.secret,
                     stdout=subprocess.DEVNULL)
             ctx.ssh("chmod", "600", path)
             if not ssh_key_used:
@@ -104,14 +104,14 @@ def resolve_secrets(ctx):
         elif secret.secret_type == SecretType.pgp_key:
             # TODO: make this the default key similar to the SSH thing?
             ctx.ssh("gpg", "--import",
-                    input=secret.secret.encode(),
+                    input=secret.secret,
                     stdout=ctx.log,
                     stderr=ctx.log)
         elif secret.secret_type == SecretType.plaintext_file:
             path = secret.path.replace("~", "/home/build")
             ctx.ssh("mkdir", "-p", os.path.dirname(path))
             ctx.ssh("tee", path,
-                    input=secret.secret.encode(),
+                    input=secret.secret,
                     stdout=subprocess.DEVNULL)
             ctx.ssh("chmod", oct(secret.mode)[2:], path)
         ctx.log.write("Loaded secret {}\n".format(str(s)).encode())
