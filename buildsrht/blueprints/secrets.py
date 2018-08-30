@@ -53,7 +53,7 @@ def secrets_POST():
         _secret = valid.require("secret", friendly_name="Secret")
 
     if isinstance(_secret, str):
-        _secret = secret.encode('utf-8')
+        _secret = _secret.encode()
 
     if not valid.ok:
         return render_template("secrets.html", **valid.kwargs)
