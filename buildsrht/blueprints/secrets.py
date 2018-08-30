@@ -44,8 +44,8 @@ def secrets_POST():
             valid.expect(bool(_secret) ^ bool(secret_file),
                     "Either secret text or file have to be provided", field=f)
         if _secret:
-            _secret = _secret.replace(r'\r\n', r'\n')
-            if not _secret.endswith(r'\n'):
+            _secret = _secret.replace('\r\n', '\n')
+            if not _secret.endswith('\n'):
                 _secret += '\n'
         else:
             _secret = secret_file
