@@ -38,6 +38,7 @@ setup(
       'buildsrht': [
           'templates/*.html',
           'static/*',
+          'static/icons/*',
       ]
   }
 )
