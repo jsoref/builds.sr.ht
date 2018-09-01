@@ -31,7 +31,7 @@
               {{ job.updated | date }}
             </span>
             <span class="{{ status_map.get(job.status) or "" }}">
-              <i class="fa {{ icon_map.get(job.status) or "" }}"></i>
+              {{icon(icon_map.get(job.status), cls=status_map.get(job.status, ""))}}
               {{ job.status.value }}
             </span>
           </small>
@@ -43,14 +43,13 @@
         {% endif %}
         {% for task in sort_tasks(job.tasks) %}
           <span class="status" title="{{ task.status.value }}">
-            <span class="{{ status_map.get(task.status) }}">
-              <i class="fa {{ icon_map.get(task.status) or "" }}"></i>
-            </span> {{task.name}}
+            {{icon(icon_map.get(task.status), cls=status_map.get(task.status, ""))}}
+            {{task.name}}
           </span>
         {% endfor %}
         <p class="d-md-none">
           <span class="{{ status_map.get(job.status) or "" }}">
-            <i class="fa {{ icon_map.get(job.status) or "" }}"></i>
+            {{icon(icon_map.get(job.status), cls=status_map.get(job.status, ""))}}
             {{ job.status.value }}
           </span>
           {{ job.updated | date }}

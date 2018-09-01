@@ -27,23 +27,23 @@ def tags(tags):
 status_map = {
     JobStatus.success: "text-success",
     JobStatus.failed: "text-danger",
-    JobStatus.running: "text-info",
+    JobStatus.running: "text-info icon-spin",
     TaskStatus.success: "text-success",
     TaskStatus.failed: "text-danger",
-    TaskStatus.running: "text-primary",
+    TaskStatus.running: "text-primary icon-spin",
     TaskStatus.pending: "text-info",
     TaskStatus.skipped: "text-muted",
 }
 
 icon_map = {
-    JobStatus.success: "fa-check",
-    JobStatus.failed: "fa-times",
-    JobStatus.running: "fa-circle-o-notch fa-spin",
-    TaskStatus.success: "fa-check",
-    TaskStatus.failed: "fa-times",
-    TaskStatus.running: "fa-circle-o-notch fa-spin",
-    TaskStatus.pending: "fa-circle-thin",
-    TaskStatus.skipped: "fa-minus",
+    JobStatus.success: "check",
+    JobStatus.failed: "times",
+    JobStatus.running: "circle-notch",
+    TaskStatus.success: "check",
+    TaskStatus.failed: "times",
+    TaskStatus.running: "circle-notch",
+    TaskStatus.pending: "circle",
+    TaskStatus.skipped: "minus",
 }
 
 def jobs_page(jobs, sidebar, **kwargs):

@@ -19,10 +19,8 @@
       <h2>
         #{{ job.id }}
         <span class="pull-right">
-          <i
-            class="fa {{ status_map.get(job.status) or "" }} {{
-              icon_map.get(job.status) }}"
-          ></i> {{ job.status.value }}
+          {{icon(icon_map.get(job.status), cls=status_map.get(job.status, ""))}}
+          {{ job.status.value }}
         </span>
       </h2>
       <dl>
@@ -57,9 +55,8 @@
         <tr>
           <td>
             <span title="{{ task.status.value }}">
-              <span class="{{ status_map.get(task.status) }}">
-                <i class="fa {{ icon_map.get(task.status) or "" }}"></i>
-              </span> {{task.name}}
+              {{icon(icon_map.get(task.status), cls=status_map.get(task.status, ""))}}
+              {{task.name}}
             </span>
           </td>
           <td>
