@@ -6,7 +6,7 @@ import shlex
 import subprocess
 import time
 
-control_cmd = cfg("builds.sr.ht", "controlcmd")
+control_cmd = cfg("builds.sr.ht::worker", "controlcmd")
 
 def boot(ctx):
     print(shlex.split(control_cmd) + [

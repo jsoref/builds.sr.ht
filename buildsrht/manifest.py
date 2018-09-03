@@ -1,4 +1,3 @@
-from srht.config import cfg
 from enum import Enum
 import subprocess
 import uuid

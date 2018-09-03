@@ -1,8 +1,6 @@
 from celery import Celery
 from redis import Redis
-from srht.config import cfg, load_config, loaded
-if not loaded():
-    load_config("builds")
+from srht.config import cfg
 from srht.database import DbSession, db
 from buildsrht.manifest import Manifest
 import os
@@ -24,7 +22,7 @@ def run_build(job_id, manifest):
     global redis
     redis = Redis()
 
-    db = DbSession(cfg("sr.ht", "connection-string"))
+    db = DbSession(cfg("builds.sr.ht", "connection-string"))
     from buildsrht.types import Job, JobStatus, TaskStatus
     db.init()
     from buildsrht.runner.context import BuildContext
@@ -32,14 +30,14 @@ def run_build(job_id, manifest):
     from buildsrht.runner.triggers import process_triggers
 
     job = Job.query.filter(Job.id == job_id).one_or_none()
-    job.runner = cfg("builds.sr.ht", "runner")
+    job.runner = cfg("builds.sr.ht::worker", "name")
     job.status = JobStatus.running
     db.session.commit()
 
     manifest = Manifest(manifest)
     context = BuildContext(job, manifest)
 
-    buildlogs = cfg("builds.sr.ht", "buildlogs")
+    buildlogs = cfg("builds.sr.ht::worker", "buildlogs")
     logs = os.path.join(buildlogs, str(job.id))
     os.makedirs(logs)
     for task in manifest.tasks:
@@ -89,7 +87,7 @@ def run_build(job_id, manifest):
         raise ex
     finally:
         print("Cleaning up VM")
-        control_cmd = cfg("builds.sr.ht", "controlcmd")
+        control_cmd = cfg("builds.sr.ht::worker", "controlcmd")
         subprocess.run(shlex.split(control_cmd) + [
             manifest.image, "cleanup", str(context.port)
         ])
