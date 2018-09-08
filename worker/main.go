@@ -24,6 +24,10 @@ func (ctx *WorkerContext) run_build(
 		fmt.Println(err)
 		return
 	}
+	if err := job.SetStatus("running"); err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	var manifest Manifest
 	ms.Decode(_manifest, &manifest)

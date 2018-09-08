@@ -48,3 +48,13 @@ func GetJob(db *sql.DB, id int) (*Job, error) {
 	}
 	return &job, nil
 }
+
+func (job *Job) SetStatus(status string) error {
+	_, err := job.db.Exec(`UPDATE "job" SET "status" = $2 WHERE id = $1`,
+		job.Id, status)
+	if err != nil {
+		return err
+	}
+	job.Status = status
+	return nil
+}
