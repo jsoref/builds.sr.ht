@@ -34,13 +34,26 @@
   </form>
   <script src="/static/ace.js"></script>
   <script>
-    var editor = ace.edit(document.getElementById("manifest"), {
+    var manifest = document.getElementById("manifest");
+    var form = document.querySelector("form");
+    var input = document.createElement("input");
+    input.type = "hidden";
+    input.value = manifest.value;
+    input.name = "manifest";
+    form.appendChild(input);
+    var editor = ace.edit(manifest, {
       mode: "ace/mode/yaml",
     });
+    editor.on("change", e => {
+      input.value = editor.getValue();
+    });
+    document.querySelector(".ace-tm").className += " " + manifest.className;
   </script>
   <style>
     .ace-tm {
       height: 400px;
+      font-size: 0.9rem;
+      border-radius: 0;
     }
   </style>
 </section>
