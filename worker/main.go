@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"os"
 	"os/signal"
@@ -8,9 +9,16 @@ import (
 	ms "github.com/mitchellh/mapstructure"
 	celery "github.com/shicky/gocelery"
 	ini "github.com/vaughan0/go-ini"
+	_ "github.com/lib/pq"
 )
 
-func run_build(job_id int, _manifest map[string]interface{}) {
+type WorkerContext struct {
+	db *sql.DB
+}
+
+func (ctx *WorkerContext) run_build(
+	job_id int, _manifest map[string]interface{}) {
+
 	var manifest Manifest
 	ms.Decode(_manifest, &manifest)
 	fmt.Println(job_id, manifest)
@@ -31,19 +39,24 @@ func main() {
 		panic(err)
 	}
 
+	pgcs := conf(config, "builds.sr.ht", "connection-string")
+	db, err := sql.Open("postgres", pgcs)
+	if err != nil {
+		panic(err)
+	}
+
 	redis := conf(config, "builds.sr.ht", "redis")
 
 	broker := celery.NewRedisCeleryBroker(redis)
 	backend := celery.NewRedisCeleryBackend(redis)
 
-	fmt.Println("Connecting to celery...")
 	client, err := celery.NewCeleryClient(broker, backend, 4)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Connected.")
 
-	client.Register("buildsrht.runner.run_build", run_build)
+	ctx := &WorkerContext{db}
+	client.Register("buildsrht.runner.run_build", ctx.run_build)
 
 	fmt.Println("Starting worker...")
 	client.StartWorker()
