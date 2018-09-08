@@ -6,28 +6,34 @@ import (
 	"os"
 	"os/signal"
 
+	_ "github.com/lib/pq"
 	ms "github.com/mitchellh/mapstructure"
 	celery "github.com/shicky/gocelery"
 	ini "github.com/vaughan0/go-ini"
-	_ "github.com/lib/pq"
 )
 
 type WorkerContext struct {
-	db *sql.DB
+	Db *sql.DB
 }
 
 func (ctx *WorkerContext) run_build(
 	job_id int, _manifest map[string]interface{}) {
 
+	job, err := GetJob(ctx.Db, job_id)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
 	var manifest Manifest
 	ms.Decode(_manifest, &manifest)
-	fmt.Println(job_id, manifest)
+	fmt.Println(job, manifest)
 }
 
 func main() {
 	var (
 		config ini.File = nil
-		err error
+		err    error
 	)
 	for _, path := range []string{"../config.ini", "/etc/sr.ht/config.ini"} {
 		config, err = ini.LoadFile(path)
