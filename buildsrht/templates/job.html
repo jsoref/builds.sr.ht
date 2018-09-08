@@ -44,12 +44,21 @@
         <dd><a href="/api/jobs/{{ job.id }}/manifest">view manifest »</a></dt>
       </dl>
       {% if current_user and job.status.value in ["success", "failed"] %}
-      <form class="form-group" method="POST" action="/submit">
+      <form style="margin-bottom: 0.5rem" method="POST" action="/submit">
         <button class="btn btn-primary btn-block">
           Resubmit build
           {{ icon("caret-right") }}
         </button>
         <input type="hidden" name="manifest" value="{{job.manifest}}" />
+      </form>
+      <form>
+        <a
+          href="{{ url_for("jobs.resubmit_GET", job_id=job.id) }}"
+          class="btn btn-default btn-block"
+        >
+          Edit &amp; resubmit
+          {{ icon("caret-right") }}
+        </a>
       </form>
       {% endif %}
       <h4>Tasks</h4>

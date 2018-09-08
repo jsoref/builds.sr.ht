@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, abort, redirect
+from flask import Blueprint, render_template, request, abort, redirect, session
 from flask_login import current_user
 from srht.database import db
 from srht.flask import paginate_query, loginrequired
@@ -66,7 +66,19 @@ def index():
 @loginrequired
 @jobs.route("/submit")
 def submit_GET():
-    return render_template("submit.html")
+    manifest = session.get("manifest")
+    if manifest:
+        del session["manifest"]
+    return render_template("submit.html", manifest=manifest)
+
+@loginrequired
+@jobs.route("/resubmit/<int:job_id>")
+def resubmit_GET(job_id):
+    job = Job.query.filter(Job.id == job_id).one_or_none()
+    if not job:
+        abort(404)
+    session["manifest"] = job.manifest
+    return redirect("/submit")
 
 @loginrequired
 @jobs.route("/submit", methods=["POST"])
