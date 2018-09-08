@@ -9,7 +9,13 @@ import subprocess
 
 redis = None
 
-runner = Celery('builds', broker=cfg("builds.sr.ht", "redis"))
+runner = Celery('builds', broker=cfg("builds.sr.ht", "redis"), config_source={
+    "CELERY_TASK_SERIALIZER": "json",
+    "CELERY_ACCEPT_CONTENT": ["json"],
+    "CELERY_RESULT_SERIALIZER": "json",
+    "CELERY_ENABLE_UTC": True,
+    "CELERY_TASK_PROTOCOL": 1
+})
 
 def queue_build(job, manifest):
     from buildsrht.types import JobStatus
