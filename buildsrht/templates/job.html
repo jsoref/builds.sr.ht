@@ -6,7 +6,7 @@
 {% endblock %}
 {% block head %}
 {% if job.status.value == "pending" or job.status.value == "queued" %}
-<meta id="refresh" http-equiv="refresh" content="30">
+<meta id="refresh" http-equiv="refresh" content="10">
 {% endif %}
 {% if job.status.value == "running" %}
 <meta id="refresh" http-equiv="refresh" content="5">
@@ -43,6 +43,15 @@
         <dt>Build manifest</dt>
         <dd><a href="/api/jobs/{{ job.id }}/manifest">view manifest »</a></dt>
       </dl>
+      {% if current_user and job.status.value in ["success", "failed"] %}
+      <form class="form-group" method="POST" action="/submit">
+        <button class="btn btn-primary btn-block">
+          Resubmit build
+          {{ icon("caret-right") }}
+        </button>
+        <input type="hidden" name="manifest" value="{{job.manifest}}" />
+      </form>
+      {% endif %}
       <h4>Tasks</h4>
       <table class="table table-sm">
         <tr class="text-muted">
