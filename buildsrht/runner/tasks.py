@@ -143,10 +143,7 @@ def clone_git_repos(ctx):
         if repo_name.endswith(".git"):
             repo_name = repo_name[:-4]
         print(repo)
-        result = ctx.ssh("git", "clone",
-                "--recursive",
-                "--shallow-submodules",
-                repo,
+        result = ctx.ssh("git", "clone", "--recursive", repo,
             stdout=ctx.log, stderr=subprocess.STDOUT)
         if result.returncode != 0:
             raise Exception("git clone failed for {}".format(repo))
