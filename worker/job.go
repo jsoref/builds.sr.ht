@@ -32,16 +32,8 @@ func GetJob(db *sql.DB, id int) (*Job, error) {
 	var job Job
 	job.db = db
 	if err := row.Scan(
-		&job.Id,
-		&job.Created,
-		&job.Updated,
-		&job.Manifest,
-		&job.OwnerId,
-		&job.JobGroupId,
-		&job.Note,
-		&job.Status,
-		&job.Runner,
-		&job.Tags,
+		&job.Id, &job.Created, &job.Updated, &job.Manifest, &job.OwnerId,
+		&job.JobGroupId, &job.Note, &job.Status, &job.Runner, &job.Tags,
 		&job.Secrets); err != nil {
 
 		return nil, err
