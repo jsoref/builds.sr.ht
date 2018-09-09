@@ -67,6 +67,9 @@ tasks:
       ssh $sshopts $repo_server repo-add -n -R \
         $repo_path/sr.ht.db.tar.gz \
         $repo_path/${project}-images-$pkgver-$pkgrel-any.pkg.tar.xz
+      ssh $sshopts $repo_server repo-add -n -R \
+        $repo_path/sr.ht.db.tar.gz \
+        $repo_path/${project}-worker-$pkgver-$pkgrel-any.pkg.tar.xz
       ssh $sshopts $master sudo /usr/local/bin/update-srht ${project}
       for server in "${slaves[@]}"
       do
