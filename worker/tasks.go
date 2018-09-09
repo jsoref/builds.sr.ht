@@ -9,11 +9,11 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/go-redis/redis"
 	"github.com/pkg/errors"
-	"golang.org/x/sys/unix"
 )
 
 func (ctx *JobContext) Boot(r *redis.Client) func() {
@@ -277,7 +277,7 @@ func (ctx *JobContext) InstallPackages() error {
 }
 
 func (ctx *JobContext) RunTasks() error {
-	for _, task := range ctx.Manifest.Tasks {
+	for i, task := range ctx.Manifest.Tasks {
 		var (
 			err   error
 			logfd *os.File
@@ -309,13 +309,18 @@ func (ctx *JobContext) RunTasks() error {
 			if !ok {
 				goto fail
 			}
-			status, ok := exiterr.Sys().(unix.WaitStatus)
+			status, ok := exiterr.Sys().(syscall.WaitStatus)
 			if !ok {
 				goto fail
 			}
 			if status.ExitStatus() == 255 {
-				ctx.Log.Println("TODO: Mark remaining tasks as skipped")
 				ctx.Job.SetTaskStatus(name, "success")
+				for i++; i < len(ctx.Manifest.Tasks); i++ {
+					for name, _ = range ctx.Manifest.Tasks[i] {
+						break
+					}
+					ctx.Job.SetTaskStatus(name, "skipped")
+				}
 				break
 			}
 			err = errors.Wrap(err, "Running task on guest")
