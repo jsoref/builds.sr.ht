@@ -76,7 +76,7 @@ func (wctx *WorkerContext) RunBuild(
 	}
 
 	tasks := []func() error{
-		ctx.SanityCheck,
+		ctx.Settle,
 		ctx.SendTasks,
 		ctx.SendEnv,
 		// TODO: secrets

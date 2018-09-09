@@ -47,7 +47,7 @@ func (ctx *JobContext) Boot(r *redis.Client) func() {
 	}
 }
 
-func (ctx *JobContext) SanityCheck() error {
+func (ctx *JobContext) Settle() error {
 	log.Println("Waiting for guest to settle")
 	timeout, _ := context.WithTimeout(ctx.Context, 60*time.Second)
 	done := make(chan error, 1)
@@ -75,7 +75,7 @@ func (ctx *JobContext) SanityCheck() error {
 
 			select {
 			case <-timeout.Done():
-				done <- fmt.Errorf("Sanity check timed out after %d attempts",
+				done <- fmt.Errorf("Settle timed out after %d attempts",
 					attempt)
 				return
 			case <-time.After(1 * time.Second):
