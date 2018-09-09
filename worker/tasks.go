@@ -46,7 +46,7 @@ func (ctx *JobContext) Boot(r *redis.Client) func() {
 
 func (ctx *JobContext) SanityCheck() error {
 	log.Println("Waiting for VM to settle")
-	timeout, _ := context.WithTimeout(ctx.Context, 60 * time.Second)
+	timeout, _ := context.WithTimeout(ctx.Context, 60*time.Second)
 	done := make(chan error, 1)
 	attempt := 0
 	go func() {
@@ -55,16 +55,16 @@ func (ctx *JobContext) SanityCheck() error {
 			check := ctx.SSH("echo", "hello world")
 			pipe, _ := check.StdoutPipe()
 			if err := check.Start(); err != nil {
-				done <-err
+				done <- err
 				return
 			}
 			stdout, _ := ioutil.ReadAll(pipe)
 			if err := check.Wait(); err == nil {
 				if string(stdout) == "hello world\n" {
-					done <-nil
+					done <- nil
 					return
 				} else {
-					done <-fmt.Errorf("Unexpected sanity check output: %s",
+					done <- fmt.Errorf("Unexpected sanity check output: %s",
 						string(stdout))
 					return
 				}
@@ -72,7 +72,7 @@ func (ctx *JobContext) SanityCheck() error {
 
 			select {
 			case <-timeout.Done():
-				done <-fmt.Errorf("Sanity check timed out after %d attempts",
+				done <- fmt.Errorf("Sanity check timed out after %d attempts",
 					attempt)
 				return
 			case <-time.After(1 * time.Second):

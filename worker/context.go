@@ -15,7 +15,7 @@ import (
 )
 
 type WorkerContext struct {
-	Db     *sql.DB
+	Db    *sql.DB
 	Redis *redis.Client
 }
 
@@ -48,16 +48,16 @@ func (wctx *WorkerContext) RunBuild(
 	}
 
 	ctx := &JobContext{
-		Context: context.TODO(),
-		Db: wctx.Db,
-		Job: job,
+		Context:  context.TODO(),
+		Db:       wctx.Db,
+		Job:      job,
 		Manifest: &manifest,
 	}
 
 	cleanup := ctx.Boot(wctx.Redis)
 	defer cleanup()
 
-	tasks := []func()error{
+	tasks := []func() error{
 		ctx.SanityCheck,
 		ctx.SendTasks,
 		// TODO: env
