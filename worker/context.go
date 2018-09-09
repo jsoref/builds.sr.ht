@@ -46,14 +46,16 @@ func (wctx *WorkerContext) RunBuild(
 		defer func() {
 			if err := recover(); err != nil {
 				log.Printf("run_build panic: %v", err)
-				if job != nil {
-					if ctx != nil &&
-						ctx.Context.Err() == context.DeadlineExceeded {
-
+				if job != nil && ctx != nil {
+					if ctx.Context.Err() == context.DeadlineExceeded {
 						job.SetStatus("timeout")
+					} else if ctx.Context.Err() == context.Canceled {
+						job.SetStatus("cancelled")
 					} else {
 						job.SetStatus("failed")
 					}
+				} else if job != nil {
+					job.SetStatus("failed")
 				}
 			}
 		}()

@@ -107,6 +107,17 @@ def submit_POST():
     queue_build(job, manifest) # commits the session
     return redirect("/~" + current_user.username + "/job/" + str(job.id))
 
+@loginrequired
+@jobs.route("/cancel/<int:job_id>", methods=["POST"])
+def cancel(job_id):
+    job = Job.query.filter(Job.id == job_id).one_or_none()
+    if not job:
+        abort(404)
+    if job.owner_id != current_user.id:
+        abort(401)
+    requests.post(f"http://{job.runner}:8080/job/{job.id}/cancel")
+    return redirect("/~" + current_user.username + "/job/" + str(job.id))
+
 @jobs.route("/~<username>")
 def user(username):
     user = User.query.filter(User.username == username).first()

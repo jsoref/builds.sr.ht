@@ -64,6 +64,7 @@ func main() {
 	client.Register("buildsrht.runner.run_build", ctx.RunBuild)
 
 	log.Println("Starting worker...")
+	go HttpServer()
 	client.StartWorker()
 	log.Println("Waiting for tasks.")
 
