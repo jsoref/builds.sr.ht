@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"log"
 	"os/exec"
+	"strconv"
 	"time"
 
 	"github.com/go-redis/redis"
@@ -13,11 +15,12 @@ import (
 )
 
 type WorkerContext struct {
-	Db *sql.DB
+	Db     *sql.DB
 	Redis *redis.Client
 }
 
 type JobContext struct {
+	Context  context.Context
 	Db       *sql.DB
 	Job      *Job
 	Manifest *Manifest
@@ -45,6 +48,7 @@ func (wctx *WorkerContext) RunBuild(
 	}
 
 	ctx := &JobContext{
+		Context: context.TODO(),
 		Db: wctx.Db,
 		Job: job,
 		Manifest: &manifest,
@@ -52,6 +56,9 @@ func (wctx *WorkerContext) RunBuild(
 
 	cleanup := ctx.Boot(wctx.Redis)
 	defer cleanup()
+	if err := ctx.SanityCheck(); err != nil {
+		panic(err)
+	}
 
 	time.Sleep(10 * time.Second)
 }
@@ -62,5 +69,13 @@ func (ctx *JobContext) Control(args ...string) *exec.Cmd {
 }
 
 func (ctx *JobContext) SSH(args ...string) *exec.Cmd {
-	return nil
+	sport := strconv.Itoa(ctx.Port)
+	return exec.CommandContext(ctx.Context, "ssh",
+		append([]string{"-q",
+			"-p", sport,
+			"-o", "UserKnownHostsFile=/dev/null",
+			"-o", "StrictHostKeyChecking=no",
+			"-o", "LogLevel=quiet",
+			"build@localhost",
+		}, args...)...)
 }
