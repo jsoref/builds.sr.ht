@@ -22,18 +22,24 @@ func HttpServer() {
 			w.Write([]byte("405 method not allowed"))
 			return
 		}
-		jobsMutex.Lock()
-		defer jobsMutex.Unlock()
-		if job, ok := jobs[jobId]; ok {
-			job.Cancel()
-			job.Job.SetStatus("cancelled")
-		} else {
+		switch op {
+		case "cancel":
+			jobsMutex.Lock()
+			defer jobsMutex.Unlock()
+			if job, ok := jobs[jobId]; ok {
+				job.Cancel()
+				job.Job.SetStatus("cancelled")
+			} else {
+				w.WriteHeader(404)
+				w.Write([]byte("404 not found"))
+				return
+			}
+			w.WriteHeader(200)
+			w.Write([]byte("cancelled"))
+		default:
 			w.WriteHeader(404)
 			w.Write([]byte("404 not found"))
-			return
 		}
-		w.WriteHeader(200)
-		w.Write([]byte("cancelled"))
 	})
 	http.ListenAndServe(":8080", nil)
 }
