@@ -126,6 +126,58 @@ func (ctx *JobContext) SendTasks() error {
 	return nil
 }
 
+func (ctx *JobContext) SendEnv() error {
+	const home = "/home/build"
+	log.Println("Sending build environment")
+	envpath := path.Join(home, ".buildenv")
+	env := `#!/bin/sh
+function complete-build() {
+	exit 255
+}
+`
+	for key, value := range ctx.Manifest.Environment {
+		switch v := value.(type) {
+		case string:
+			env += fmt.Sprintf("%s=%s\n", key, v)
+		case []interface{}:
+			env += key + "=("
+			for i, _item := range v {
+				switch item := _item.(type) {
+				case string:
+					env += fmt.Sprintf("\"%s\"", item)
+				}
+				if i != len(v) - 1 {
+					env += " "
+				}
+			}
+			env += ")\n"
+		default:
+			panic(fmt.Errorf("Unknown environment type %T", value))
+		}
+	}
+
+	cmd := ctx.SSH("tee", envpath)
+	pipe, err := cmd.StdinPipe()
+	if err != nil {
+		return err
+	}
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	if _, err := pipe.Write([]byte(env)); err != nil {
+		return err
+	}
+	pipe.Close()
+	if err := cmd.Wait(); err != nil {
+		return err
+	}
+	if err := ctx.SSH("chmod", "755", envpath).Run(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (ctx *JobContext) RunTasks() error {
 	for _, task := range ctx.Manifest.Tasks {
 		var (

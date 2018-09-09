@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"path"
 	"strconv"
-	"time"
 
 	"github.com/go-redis/redis"
 	"github.com/pkg/errors"
@@ -79,7 +78,7 @@ func (wctx *WorkerContext) RunBuild(
 	tasks := []func() error{
 		ctx.SanityCheck,
 		ctx.SendTasks,
-		// TODO: env
+		ctx.SendEnv,
 		// TODO: secrets
 		// TODO: custom repos
 		// TODO: git repos
@@ -91,8 +90,6 @@ func (wctx *WorkerContext) RunBuild(
 			panic(err)
 		}
 	}
-
-	time.Sleep(10 * time.Second)
 
 	job.SetStatus("success")
 }
