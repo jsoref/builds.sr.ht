@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -25,7 +26,8 @@ type JobContext struct {
 	Db       *sql.DB
 	Job      *Job
 	LogDir   string
-	Log      *os.File
+	LogFile  *os.File
+	Log      *log.Logger
 	Manifest *Manifest
 	Port     int
 }
@@ -67,17 +69,21 @@ func (wctx *WorkerContext) RunBuild(
 		Manifest: &manifest,
 	}
 
-	cleanup := ctx.Boot(wctx.Redis)
-	defer cleanup()
-
 	ctx.LogDir = path.Join(
 		conf("builds.sr.ht::worker", "buildlogs"), strconv.Itoa(job_id))
 	if err := os.MkdirAll(ctx.LogDir, 0755); err != nil {
 		panic(errors.Wrap(err, "Make log directory"))
 	}
-	if ctx.Log, err = os.Create(path.Join(ctx.LogDir, "log")); err != nil {
+	if ctx.LogFile, err = os.Create(path.Join(ctx.LogDir, "log")); err != nil {
 		panic(errors.Wrap(err, "Make top-level log"))
 	}
+	defer ctx.LogFile.Close()
+
+	ctx.Log = log.New(io.MultiWriter(ctx.LogFile, os.Stdout),
+		"[#"+strconv.Itoa(job.Id)+"] ", log.LstdFlags)
+
+	cleanup := ctx.Boot(wctx.Redis)
+	defer cleanup()
 
 	tasks := []func() error{
 		ctx.Settle,

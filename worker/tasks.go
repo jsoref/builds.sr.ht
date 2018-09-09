@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -30,7 +29,7 @@ func (ctx *JobContext) Boot(r *redis.Client) func() {
 	}
 
 	ctx.Port = int(port)
-	log.Printf("Booting image %s on port %d", ctx.Manifest.Image, port)
+	ctx.Log.Printf("Booting image %s on port %d", ctx.Manifest.Image, port)
 	sport := strconv.Itoa(int(port))
 
 	boot := ctx.Control(ctx.Manifest.Image, "boot", sport)
@@ -41,14 +40,14 @@ func (ctx *JobContext) Boot(r *redis.Client) func() {
 	}
 
 	return func() {
-		log.Printf("Cleaning up build on port %d", port)
+		ctx.Log.Printf("Cleaning up build on port %d", port)
 		cleanup := ctx.Control(ctx.Manifest.Image, "cleanup", sport)
 		cleanup.Run()
 	}
 }
 
 func (ctx *JobContext) Settle() error {
-	log.Println("Waiting for guest to settle")
+	ctx.Log.Println("Waiting for guest to settle")
 	timeout, _ := context.WithTimeout(ctx.Context, 60*time.Second)
 	done := make(chan error, 1)
 	attempt := 0
@@ -92,7 +91,7 @@ set -xe
 `
 
 func (ctx *JobContext) SendTasks() error {
-	log.Println("Sending tasks")
+	ctx.Log.Println("Sending tasks")
 	const home = "/home/build"
 	taskdir := path.Join(home, ".tasks")
 	if err := ctx.SSH("mkdir", "-p", taskdir).Run(); err != nil {
@@ -104,7 +103,7 @@ func (ctx *JobContext) SendTasks() error {
 			break
 		}
 		taskpath := path.Join(taskdir, name)
-		if err := ctx.Tee(taskpath, []byte(preamble + script)); err != nil {
+		if err := ctx.Tee(taskpath, []byte(preamble+script)); err != nil {
 			return err
 		}
 		if err := ctx.SSH("chmod", "755", taskpath).Run(); err != nil {
@@ -116,7 +115,7 @@ func (ctx *JobContext) SendTasks() error {
 
 func (ctx *JobContext) SendEnv() error {
 	const home = "/home/build"
-	log.Println("Sending build environment")
+	ctx.Log.Println("Sending build environment")
 	envpath := path.Join(home, ".buildenv")
 	env := `#!/bin/sh
 function complete-build() {
@@ -134,7 +133,7 @@ function complete-build() {
 				case string:
 					env += fmt.Sprintf("\"%s\"", item)
 				}
-				if i != len(v) - 1 {
+				if i != len(v)-1 {
 					env += " "
 				}
 			}
@@ -155,16 +154,16 @@ function complete-build() {
 }
 
 func (ctx *JobContext) SendSecrets() error {
-	log.Println("Sending secrets")
+	ctx.Log.Println("Sending secrets")
 	sshKeys := 0
 	for _, uuid := range ctx.Manifest.Secrets {
-		fmt.Fprintf(ctx.Log, "Resolving secret %s\n", uuid)
+		ctx.Log.Printf("Resolving secret %s\n", uuid)
 		secret, err := GetSecret(ctx.Db, uuid)
 		if err != nil {
 			return err
 		}
 		if secret.UserId != ctx.Job.OwnerId {
-			fmt.Fprintf(ctx.Log, "Warning: access denied for secret %s\n", uuid)
+			ctx.Log.Printf("Warning: access denied for secret %s\n", uuid)
 			continue
 		}
 		switch secret.SecretType {
@@ -191,8 +190,8 @@ func (ctx *JobContext) SendSecrets() error {
 		case "pgp_key":
 			gpg := ctx.SSH("gpg", "--import")
 			pipe, err := gpg.StdinPipe()
-			gpg.Stdout = ctx.Log
-			gpg.Stderr = ctx.Log
+			gpg.Stdout = ctx.LogFile
+			gpg.Stderr = ctx.LogFile
 			if err != nil {
 				return err
 			}
@@ -225,7 +224,7 @@ func (ctx *JobContext) RunTasks() error {
 			break
 		}
 
-		log.Printf("Running task %s\n", name)
+		ctx.Log.Printf("Running task %s\n", name)
 		ctx.Job.SetTaskStatus(name, "running")
 
 		if err = os.Mkdir(path.Join(ctx.LogDir, name), 0755); err != nil {
@@ -233,8 +232,7 @@ func (ctx *JobContext) RunTasks() error {
 		}
 
 		ssh = ctx.SSH(path.Join(".", ".tasks", name))
-		if logfd, err = os.Create(path.Join(ctx.LogDir, name, "log"));
-			err != nil {
+		if logfd, err = os.Create(path.Join(ctx.LogDir, name, "log")); err != nil {
 
 			err = errors.Wrap(err, "Creating log file")
 			goto fail
@@ -252,7 +250,7 @@ func (ctx *JobContext) RunTasks() error {
 				goto fail
 			}
 			if status.ExitStatus() == 255 {
-				log.Println("TODO: Mark remaining tasks as skipped")
+				ctx.Log.Println("TODO: Mark remaining tasks as skipped")
 				ctx.Job.SetTaskStatus(name, "success")
 				break
 			}
@@ -262,7 +260,7 @@ func (ctx *JobContext) RunTasks() error {
 
 		ctx.Job.SetTaskStatus(name, "success")
 		continue
-fail:
+	fail:
 		ctx.Job.SetTaskStatus(name, "failed")
 		return err
 	}
