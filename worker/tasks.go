@@ -188,6 +188,24 @@ func (ctx *JobContext) SendSecrets() error {
 				}
 			}
 			sshKeys++
+		case "pgp_key":
+			gpg := ctx.SSH("gpg", "--import")
+			pipe, err := gpg.StdinPipe()
+			gpg.Stdout = ctx.Log
+			gpg.Stderr = ctx.Log
+			if err != nil {
+				return err
+			}
+			if err := gpg.Start(); err != nil {
+				return err
+			}
+			if _, err := pipe.Write(secret.Secret); err != nil {
+				return err
+			}
+			pipe.Close()
+			if err := gpg.Wait(); err != nil {
+				return err
+			}
 		default:
 			return fmt.Errorf("Unknown secret type %s", secret.SecretType)
 		}
