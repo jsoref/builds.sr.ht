@@ -205,8 +205,26 @@ func (ctx *JobContext) SendSecrets() error {
 			if err := gpg.Wait(); err != nil {
 				return err
 			}
+		// TODO: file secrets
 		default:
 			return fmt.Errorf("Unknown secret type %s", secret.SecretType)
+		}
+	}
+	return nil
+}
+
+func (ctx *JobContext) ConfigureRepos() error {
+	if ctx.Manifest.Repositories == nil || len(ctx.Manifest.Repositories) == 0 {
+		return nil
+	}
+	for name, source := range ctx.Manifest.Repositories {
+		ctx.Log.Printf("Adding repository %s\n", name)
+		ctrl := ctx.Control(ctx.Manifest.Image, "add-repo",
+			strconv.Itoa(ctx.Port), name, source)
+		ctrl.Stdout = ctx.LogFile
+		ctrl.Stderr = ctx.LogFile
+		if err := ctrl.Run(); err != nil {
+			return err
 		}
 	}
 	return nil

@@ -90,7 +90,7 @@ func (wctx *WorkerContext) RunBuild(
 		ctx.SendTasks,
 		ctx.SendEnv,
 		ctx.SendSecrets,
-		// TODO: custom repos
+		ctx.ConfigureRepos,
 		// TODO: git repos
 		// TODO: packages
 		ctx.RunTasks,
