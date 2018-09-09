@@ -60,6 +60,12 @@ func (wctx *WorkerContext) RunBuild(
 	tasks := []func()error{
 		ctx.SanityCheck,
 		ctx.SendTasks,
+		// TODO: env
+		// TODO: secrets
+		// TODO: custom repos
+		// TODO: git repos
+		// TODO: packages
+		// TODO: run tasks
 	}
 	for _, task := range tasks {
 		if err := task(); err != nil {

@@ -109,10 +109,7 @@ func (ctx *JobContext) SendTasks() error {
 		if err := cmd.Start(); err != nil {
 			return err
 		}
-		if _, err := pipe.Write([]byte(preamble)); err != nil {
-			return err
-		}
-		if _, err := pipe.Write([]byte(script)); err != nil {
+		if _, err := pipe.Write([]byte(preamble + script)); err != nil {
 			return err
 		}
 		pipe.Close()
