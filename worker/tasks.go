@@ -178,6 +178,47 @@ function complete-build() {
 	return nil
 }
 
+func (ctx *JobContext) SendSecrets() error {
+	log.Println("Sending secrets")
+	sshKeys := 0
+	for _, uuid := range ctx.Manifest.Secrets {
+		fmt.Fprintf(ctx.Log, "Resolving secret %s\n", uuid)
+		secret, err := GetSecret(ctx.Db, uuid)
+		if err != nil {
+			return err
+		}
+		if secret.UserId != ctx.Job.OwnerId {
+			fmt.Fprintf(ctx.Log, "Warning: access denied for secret %s\n", uuid)
+			continue
+		}
+		switch secret.SecretType {
+		case "ssh_key":
+			sshdir := path.Join("/", "home", "build", ".ssh")
+			keypath := path.Join(sshdir, uuid)
+			if err := ctx.SSH("mkdir", "-p", sshdir).Run(); err != nil {
+				return err
+			}
+			if err := ctx.Tee(keypath, secret.Secret); err != nil {
+				return err
+			}
+			if err := ctx.SSH("chmod", "600", keypath).Run(); err != nil {
+				return err
+			}
+			if sshKeys == 0 {
+				if err := ctx.SSH("ln", "-s",
+					keypath, path.Join(sshdir, "id_rsa")).Run(); err != nil {
+
+					return err
+				}
+			}
+			sshKeys++
+		default:
+			return fmt.Errorf("Unknown secret type %s", secret.SecretType)
+		}
+	}
+	return nil
+}
+
 func (ctx *JobContext) RunTasks() error {
 	for _, task := range ctx.Manifest.Tasks {
 		var (

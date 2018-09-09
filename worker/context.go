@@ -25,6 +25,7 @@ type JobContext struct {
 	Db       *sql.DB
 	Job      *Job
 	LogDir   string
+	Log      *os.File
 	Manifest *Manifest
 	Port     int
 }
@@ -74,12 +75,15 @@ func (wctx *WorkerContext) RunBuild(
 	if err := os.MkdirAll(ctx.LogDir, 0755); err != nil {
 		panic(errors.Wrap(err, "Make log directory"))
 	}
+	if ctx.Log, err = os.Create(path.Join(ctx.LogDir, "log")); err != nil {
+		panic(errors.Wrap(err, "Make top-level log"))
+	}
 
 	tasks := []func() error{
 		ctx.Settle,
 		ctx.SendTasks,
 		ctx.SendEnv,
-		// TODO: secrets
+		ctx.SendSecrets,
 		// TODO: custom repos
 		// TODO: git repos
 		// TODO: packages
@@ -109,4 +113,20 @@ func (ctx *JobContext) SSH(args ...string) *exec.Cmd {
 			"-o", "LogLevel=quiet",
 			"build@localhost",
 		}, args...)...)
+}
+
+func (ctx *JobContext) Tee(path string, data []byte) error {
+	tee := ctx.SSH("tee", path)
+	pipe, err := tee.StdinPipe()
+	if err != nil {
+		return err
+	}
+	if err := tee.Start(); err != nil {
+		return err
+	}
+	if _, err := pipe.Write(data); err != nil {
+		return err
+	}
+	pipe.Close()
+	return tee.Wait()
 }

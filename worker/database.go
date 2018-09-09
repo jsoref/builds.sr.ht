@@ -21,6 +21,19 @@ type Job struct {
 	Secrets    bool
 }
 
+type Secret struct {
+	Id         int
+	UserId     int
+	Created    time.Time
+	Updated    time.Time
+	Uuid       string
+	Name       *string
+	SecretType string
+	Secret     []byte
+	Path       *string
+	Mode       *int
+}
+
 func GetJob(db *sql.DB, id int) (*Job, error) {
 	row := db.QueryRow(`
 		SELECT
@@ -39,6 +52,24 @@ func GetJob(db *sql.DB, id int) (*Job, error) {
 		return nil, err
 	}
 	return &job, nil
+}
+
+func GetSecret(db *sql.DB, uuid string) (*Secret, error) {
+	row := db.QueryRow(`
+		SELECT
+			"id", "user_id", "created", "updated", "uuid",
+			"name", "secret_type", "secret", "path", "mode"
+		FROM "secret" WHERE "uuid" = $1;
+	`, uuid)
+	var secret Secret
+	if err := row.Scan(
+		&secret.Id, &secret.UserId, &secret.Created, &secret.Updated,
+		&secret.Uuid, &secret.Name, &secret.SecretType, &secret.Secret,
+		&secret.Path, &secret.Mode); err != nil {
+
+		return nil, err
+	}
+	return &secret, nil
 }
 
 func (job *Job) SetRunner(runner string) error {
