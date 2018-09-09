@@ -35,7 +35,7 @@ type JobContext struct {
 func (wctx *WorkerContext) RunBuild(
 	job_id int, _manifest map[string]interface{}) {
 
-	var job *Job = nil
+	var job *Job
 
 	if !debug {
 		defer func() {

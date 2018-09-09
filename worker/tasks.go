@@ -33,9 +33,9 @@ func (ctx *JobContext) Boot(r *redis.Client) func() {
 	sport := strconv.Itoa(int(port))
 
 	boot := ctx.Control(ctx.Manifest.Image, "boot", sport)
-	boot.Stdout = os.Stdout
-	boot.Stderr = os.Stderr
-	if err := boot.Start(); err != nil {
+	boot.Stdout = ctx.LogFile
+	boot.Stderr = ctx.LogFile
+	if err := boot.Run(); err != nil {
 		panic(err)
 	}
 
