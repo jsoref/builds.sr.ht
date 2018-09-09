@@ -73,7 +73,8 @@ func (wctx *WorkerContext) RunBuild(
 		panic(errors.Wrap(err, "job.SetStatus"))
 	}
 
-	goctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+	timeout, _ := time.ParseDuration(conf("builds.sr.ht::worker", "timeout"))
+	goctx, cancel := context.WithTimeout(context.Background(), timeout)
 
 	ctx = &JobContext{
 		Cancel:   cancel,
