@@ -56,8 +56,15 @@ func (wctx *WorkerContext) RunBuild(
 
 	cleanup := ctx.Boot(wctx.Redis)
 	defer cleanup()
-	if err := ctx.SanityCheck(); err != nil {
-		panic(err)
+
+	tasks := []func()error{
+		ctx.SanityCheck,
+		ctx.SendTasks,
+	}
+	for _, task := range tasks {
+		if err := task(); err != nil {
+			panic(err)
+		}
 	}
 
 	time.Sleep(10 * time.Second)

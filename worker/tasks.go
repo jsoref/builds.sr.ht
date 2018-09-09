@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 	"strconv"
 	"time"
 
@@ -44,7 +45,7 @@ func (ctx *JobContext) Boot(r *redis.Client) func() {
 }
 
 func (ctx *JobContext) SanityCheck() error {
-	log.Println("Running sanity check")
+	log.Println("Waiting for VM to settle")
 	timeout, _ := context.WithTimeout(ctx.Context, 60 * time.Second)
 	done := make(chan error, 1)
 	attempt := 0
@@ -60,7 +61,6 @@ func (ctx *JobContext) SanityCheck() error {
 			stdout, _ := ioutil.ReadAll(pipe)
 			if err := check.Wait(); err == nil {
 				if string(stdout) == "hello world\n" {
-					log.Printf("Sanity check passed.")
 					done <-nil
 					return
 				} else {
@@ -81,4 +81,47 @@ func (ctx *JobContext) SanityCheck() error {
 		}
 	}()
 	return <-done
+}
+
+const preamble = `#!/usr/bin/env bash
+. ~/.buildenv
+set -xe
+`
+
+func (ctx *JobContext) SendTasks() error {
+	log.Println("Sending tasks")
+	const home = "/home/build"
+	taskdir := path.Join(home, ".tasks")
+	if err := ctx.SSH("mkdir", "-p", taskdir).Run(); err != nil {
+		return err
+	}
+	for _, task := range ctx.Manifest.Tasks {
+		var name, script string
+		for name, script = range task {
+			break
+		}
+		taskpath := path.Join(taskdir, name)
+		cmd := ctx.SSH("tee", taskpath)
+		pipe, err := cmd.StdinPipe()
+		if err != nil {
+			return err
+		}
+		if err := cmd.Start(); err != nil {
+			return err
+		}
+		if _, err := pipe.Write([]byte(preamble)); err != nil {
+			return err
+		}
+		if _, err := pipe.Write([]byte(script)); err != nil {
+			return err
+		}
+		pipe.Close()
+		if err := cmd.Wait(); err != nil {
+			return err
+		}
+		if err := ctx.SSH("chmod", "755", taskpath).Run(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
