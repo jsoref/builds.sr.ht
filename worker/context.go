@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"log"
+	"os"
 	"os/exec"
+	"path"
 	"strconv"
 	"time"
 
@@ -23,6 +25,7 @@ type JobContext struct {
 	Context  context.Context
 	Db       *sql.DB
 	Job      *Job
+	LogDir   string
 	Manifest *Manifest
 	Port     int
 }
@@ -30,11 +33,18 @@ type JobContext struct {
 func (wctx *WorkerContext) RunBuild(
 	job_id int, _manifest map[string]interface{}) {
 
-	defer func() {
-		if err := recover(); err != nil {
-			log.Printf("run_build panic: %v", err)
-		}
-	}()
+	var job *Job = nil
+
+	if !debug {
+		defer func() {
+			if err := recover(); err != nil {
+				log.Printf("run_build panic: %v", err)
+				if job != nil {
+					job.SetStatus("failed")
+				}
+			}
+		}()
+	}
 
 	var manifest Manifest
 	ms.Decode(_manifest, &manifest)
@@ -42,6 +52,9 @@ func (wctx *WorkerContext) RunBuild(
 	job, err := GetJob(wctx.Db, job_id)
 	if err != nil {
 		panic(errors.Wrap(err, "GetJob"))
+	}
+	if err := job.SetRunner(conf("builds.sr.ht::worker", "name")); err != nil {
+		panic(errors.Wrap(err, "job.SetRunner"))
 	}
 	if err := job.SetStatus("running"); err != nil {
 		panic(errors.Wrap(err, "job.SetStatus"))
@@ -57,6 +70,12 @@ func (wctx *WorkerContext) RunBuild(
 	cleanup := ctx.Boot(wctx.Redis)
 	defer cleanup()
 
+	ctx.LogDir = path.Join(
+		conf("builds.sr.ht::worker", "buildlogs"), strconv.Itoa(job_id))
+	if err := os.MkdirAll(ctx.LogDir, 0755); err != nil {
+		panic(errors.Wrap(err, "Make log directory"))
+	}
+
 	tasks := []func() error{
 		ctx.SanityCheck,
 		ctx.SendTasks,
@@ -65,7 +84,7 @@ func (wctx *WorkerContext) RunBuild(
 		// TODO: custom repos
 		// TODO: git repos
 		// TODO: packages
-		// TODO: run tasks
+		ctx.RunTasks,
 	}
 	for _, task := range tasks {
 		if err := task(); err != nil {
@@ -74,6 +93,8 @@ func (wctx *WorkerContext) RunBuild(
 	}
 
 	time.Sleep(10 * time.Second)
+
+	job.SetStatus("success")
 }
 
 func (ctx *JobContext) Control(args ...string) *exec.Cmd {

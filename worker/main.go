@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"flag"
 	"log"
 	"os"
 	"os/signal"
@@ -13,9 +14,15 @@ import (
 	celery "github.com/shicky/gocelery"
 )
 
-var config ini.File = nil
+var (
+	config ini.File
+	debug  bool
+)
 
 func main() {
+	flag.BoolVar(&debug, "debug", false, "enable debug mode")
+	flag.Parse()
+
 	var err error
 	for _, path := range []string{"../config.ini", "/etc/sr.ht/config.ini"} {
 		config, err = ini.LoadFile(path)

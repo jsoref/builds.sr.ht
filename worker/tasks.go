@@ -6,11 +6,14 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"path"
 	"strconv"
 	"time"
 
 	"github.com/go-redis/redis"
+	"github.com/pkg/errors"
+	"golang.org/x/sys/unix"
 )
 
 func (ctx *JobContext) Boot(r *redis.Client) func() {
@@ -45,7 +48,7 @@ func (ctx *JobContext) Boot(r *redis.Client) func() {
 }
 
 func (ctx *JobContext) SanityCheck() error {
-	log.Println("Waiting for VM to settle")
+	log.Println("Waiting for guest to settle")
 	timeout, _ := context.WithTimeout(ctx.Context, 60*time.Second)
 	done := make(chan error, 1)
 	attempt := 0
@@ -119,6 +122,62 @@ func (ctx *JobContext) SendTasks() error {
 		if err := ctx.SSH("chmod", "755", taskpath).Run(); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func (ctx *JobContext) RunTasks() error {
+	for _, task := range ctx.Manifest.Tasks {
+		var (
+			err   error
+			logfd *os.File
+			name  string
+			ssh   *exec.Cmd
+		)
+		for name, _ = range task {
+			break
+		}
+
+		log.Printf("Running task %s\n", name)
+		ctx.Job.SetTaskStatus(name, "running")
+
+		if err = os.Mkdir(path.Join(ctx.LogDir, name), 0755); err != nil {
+			goto fail
+		}
+
+		ssh = ctx.SSH(path.Join(".", ".tasks", name))
+		if logfd, err = os.Create(path.Join(ctx.LogDir, name, "log"));
+			err != nil {
+
+			err = errors.Wrap(err, "Creating log file")
+			goto fail
+		}
+		ssh.Stdout = logfd
+		ssh.Stderr = logfd
+
+		if err = ssh.Run(); err != nil {
+			exiterr, ok := err.(*exec.ExitError)
+			if !ok {
+				goto fail
+			}
+			status, ok := exiterr.Sys().(unix.WaitStatus)
+			if !ok {
+				goto fail
+			}
+			if status.ExitStatus() == 255 {
+				log.Println("TODO: Mark remaining tasks as skipped")
+				ctx.Job.SetTaskStatus(name, "success")
+				break
+			}
+			err = errors.Wrap(err, "Running task on guest")
+			goto fail
+		}
+
+		ctx.Job.SetTaskStatus(name, "success")
+		continue
+fail:
+		ctx.Job.SetTaskStatus(name, "failed")
+		return err
 	}
 	return nil
 }

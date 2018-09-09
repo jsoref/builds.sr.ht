@@ -41,12 +41,30 @@ func GetJob(db *sql.DB, id int) (*Job, error) {
 	return &job, nil
 }
 
-func (job *Job) SetStatus(status string) error {
-	_, err := job.db.Exec(`UPDATE "job" SET "status" = $2 WHERE id = $1`,
-		job.Id, status)
-	if err != nil {
-		return err
+func (job *Job) SetRunner(runner string) error {
+	_, err := job.db.Exec(`UPDATE "job" SET "runner" = $2 WHERE "id" = $1`,
+		job.Id, runner)
+	if err == nil {
+		_runner := runner
+		job.Runner = &_runner
 	}
-	job.Status = status
-	return nil
+	return err
+}
+
+func (job *Job) SetStatus(status string) error {
+	_, err := job.db.Exec(`UPDATE "job" SET "status" = $2 WHERE "id" = $1`,
+		job.Id, status)
+	if err == nil {
+		job.Status = status
+	}
+	return err
+}
+
+func (job *Job) SetTaskStatus(name, status string) error {
+	_, err := job.db.Exec(`
+		UPDATE "task"
+		SET "status" = $3
+		WHERE "job_id" = $1 AND "name" = $2
+	`, job.Id, name, status)
+	return err
 }

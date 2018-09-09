@@ -10,4 +10,5 @@ require (
 	github.com/shicky/gocelery v0.0.0-20180807061531-b2f0dd7ec05b
 	github.com/streadway/amqp v0.0.0-20180806233856-70e15c650864 // indirect
 	github.com/vaughan0/go-ini v0.0.0-20130923145212-a98ad7ee00ec
+	golang.org/x/sys v0.0.0-20180909124046-d0be0721c37e
 )
