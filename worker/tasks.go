@@ -104,19 +104,7 @@ func (ctx *JobContext) SendTasks() error {
 			break
 		}
 		taskpath := path.Join(taskdir, name)
-		cmd := ctx.SSH("tee", taskpath)
-		pipe, err := cmd.StdinPipe()
-		if err != nil {
-			return err
-		}
-		if err := cmd.Start(); err != nil {
-			return err
-		}
-		if _, err := pipe.Write([]byte(preamble + script)); err != nil {
-			return err
-		}
-		pipe.Close()
-		if err := cmd.Wait(); err != nil {
+		if err := ctx.Tee(taskpath, []byte(preamble + script)); err != nil {
 			return err
 		}
 		if err := ctx.SSH("chmod", "755", taskpath).Run(); err != nil {
@@ -156,19 +144,7 @@ function complete-build() {
 		}
 	}
 
-	cmd := ctx.SSH("tee", envpath)
-	pipe, err := cmd.StdinPipe()
-	if err != nil {
-		return err
-	}
-	if err := cmd.Start(); err != nil {
-		return err
-	}
-	if _, err := pipe.Write([]byte(env)); err != nil {
-		return err
-	}
-	pipe.Close()
-	if err := cmd.Wait(); err != nil {
+	if err := ctx.Tee(envpath, []byte(env)); err != nil {
 		return err
 	}
 	if err := ctx.SSH("chmod", "755", envpath).Run(); err != nil {
