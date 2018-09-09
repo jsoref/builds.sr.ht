@@ -2,6 +2,7 @@ image: archlinux
 repositories:
   sr.ht: https://mirror.sr.ht/archlinux/sr.ht/#1ED4E14494433AE3FD302CAB74B4BCCEA60D0437
 packages:
+  - go
   - sassc
   - python-setuptools
   - python-srht
@@ -30,6 +31,8 @@ tasks:
   - build: |
       cd ${project}
       ./setup.py build
+      cd worker
+      go build
   - archive: |
       cd ${project}
       pkgver=$(git describe | sed -e 's/-/_/g')
