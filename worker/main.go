@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime"
 	"sync"
 
 	"github.com/go-redis/redis"
@@ -16,8 +17,9 @@ import (
 )
 
 var (
-	config ini.File
-	debug  bool
+	config  ini.File
+	debug   bool
+	workers int
 
 	jobs      map[int]*JobContext
 	jobsMutex sync.Mutex
@@ -25,6 +27,8 @@ var (
 
 func main() {
 	flag.BoolVar(&debug, "debug", false, "enable debug mode")
+	flag.IntVar(&workers, "workers", runtime.NumCPU(),
+		"configure number of workers")
 	flag.Parse()
 
 	var err error
@@ -50,7 +54,7 @@ func main() {
 	broker := celery.NewRedisCeleryBroker(clusterRedis)
 	backend := celery.NewRedisCeleryBackend(clusterRedis)
 
-	client, err := celery.NewCeleryClient(broker, backend, 4)
+	client, err := celery.NewCeleryClient(broker, backend, workers)
 	if err != nil {
 		panic(err)
 	}
