@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-redis/redis"
@@ -154,6 +155,9 @@ function complete-build() {
 }
 
 func (ctx *JobContext) SendSecrets() error {
+	if ctx.Manifest.Secrets == nil || len(ctx.Manifest.Secrets) == 0 {
+		return nil
+	}
 	ctx.Log.Println("Sending secrets")
 	sshKeys := 0
 	for _, uuid := range ctx.Manifest.Secrets {
@@ -205,7 +209,15 @@ func (ctx *JobContext) SendSecrets() error {
 			if err := gpg.Wait(); err != nil {
 				return err
 			}
-		// TODO: file secrets
+		case "plaintext_file":
+			if err := ctx.Tee(*secret.Path, secret.Secret); err != nil {
+				return err
+			}
+			if err := ctx.SSH("chmod", fmt.Sprintf("%o", *secret.Mode),
+				*secret.Path).Run(); err != nil {
+
+				return err
+			}
 		default:
 			return fmt.Errorf("Unknown secret type %s", secret.SecretType)
 		}
@@ -242,6 +254,21 @@ func (ctx *JobContext) CloneRepos() error {
 		if err := git.Run(); err != nil {
 			return errors.Wrap(err, "git clone")
 		}
+	}
+	return nil
+}
+
+func (ctx *JobContext) InstallPackages() error {
+	if ctx.Manifest.Packages == nil || len(ctx.Manifest.Packages) == 0 {
+		return nil
+	}
+	ctx.Log.Println("Installing packages")
+	ctrl := ctx.Control(ctx.Manifest.Image, "install",
+		strconv.Itoa(ctx.Port), strings.Join(ctx.Manifest.Packages, " "))
+	ctrl.Stdout = ctx.LogFile
+	ctrl.Stderr = ctx.LogFile
+	if err := ctrl.Run(); err != nil {
+		return err
 	}
 	return nil
 }
