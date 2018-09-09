@@ -25,7 +25,7 @@ func (ctx *JobContext) Boot(r *redis.Client) func() {
 		err = r.Set("builds.sr.ht.ssh-port", port, 0).Err()
 	}
 	if err != nil {
-		panic(err)
+		panic(errors.Wrap(err, "assign port"))
 	}
 
 	ctx.Port = int(port)
@@ -35,8 +35,8 @@ func (ctx *JobContext) Boot(r *redis.Client) func() {
 	boot := ctx.Control(ctx.Manifest.Image, "boot", sport)
 	boot.Stdout = ctx.LogFile
 	boot.Stderr = ctx.LogFile
-	if err := boot.Run(); err != nil {
-		panic(err)
+	if err := boot.Start(); err != nil {
+		panic(errors.Wrap(err, "boot"))
 	}
 
 	return func() {
@@ -225,6 +225,22 @@ func (ctx *JobContext) ConfigureRepos() error {
 		ctrl.Stderr = ctx.LogFile
 		if err := ctrl.Run(); err != nil {
 			return err
+		}
+	}
+	return nil
+}
+
+func (ctx *JobContext) CloneRepos() error {
+	if ctx.Manifest.Sources == nil || len(ctx.Manifest.Sources) == 0 {
+		return nil
+	}
+	ctx.Log.Println("Cloning repositories")
+	for _, url := range ctx.Manifest.Sources {
+		git := ctx.SSH("git", "clone", "--recursive", url)
+		git.Stdout = ctx.LogFile
+		git.Stderr = ctx.LogFile
+		if err := git.Run(); err != nil {
+			return errors.Wrap(err, "git clone")
 		}
 	}
 	return nil
