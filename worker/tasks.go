@@ -31,9 +31,9 @@ func (ctx *JobContext) Boot(r *redis.Client) func() {
 
 	ctx.Port = int(port)
 	ctx.Log.Printf("Booting image %s on port %d", ctx.Manifest.Image, port)
-	sport := strconv.Itoa(int(port))
 
-	boot := ctx.Control(ctx.Manifest.Image, "boot", sport)
+	boot := ctx.Control(ctx.Context,
+		ctx.Manifest.Image, "boot", strconv.Itoa(ctx.Port))
 	boot.Stdout = ctx.LogFile
 	boot.Stderr = ctx.LogFile
 	if err := boot.Start(); err != nil {
@@ -41,9 +41,12 @@ func (ctx *JobContext) Boot(r *redis.Client) func() {
 	}
 
 	return func() {
-		ctx.Log.Printf("Cleaning up build on port %d", port)
-		cleanup := ctx.Control(ctx.Manifest.Image, "cleanup", sport)
-		cleanup.Run()
+		ctx.Log.Printf("Tearing down build VM")
+		cleanup := ctx.Control(context.TODO(), ctx.Manifest.Image, "cleanup",
+			strconv.Itoa(ctx.Port))
+		if err := cleanup.Run(); err != nil {
+			fmt.Printf("Failed to destroy build VM: %v\n", err)
+		}
 	}
 }
 
@@ -231,7 +234,7 @@ func (ctx *JobContext) ConfigureRepos() error {
 	}
 	for name, source := range ctx.Manifest.Repositories {
 		ctx.Log.Printf("Adding repository %s\n", name)
-		ctrl := ctx.Control(ctx.Manifest.Image, "add-repo",
+		ctrl := ctx.Control(ctx.Context, ctx.Manifest.Image, "add-repo",
 			strconv.Itoa(ctx.Port), name, source)
 		ctrl.Stdout = ctx.LogFile
 		ctrl.Stderr = ctx.LogFile
@@ -263,7 +266,7 @@ func (ctx *JobContext) InstallPackages() error {
 		return nil
 	}
 	ctx.Log.Println("Installing packages")
-	ctrl := ctx.Control(ctx.Manifest.Image, "install",
+	ctrl := ctx.Control(ctx.Context, ctx.Manifest.Image, "install",
 		strconv.Itoa(ctx.Port), strings.Join(ctx.Manifest.Packages, " "))
 	ctrl.Stdout = ctx.LogFile
 	ctrl.Stderr = ctx.LogFile

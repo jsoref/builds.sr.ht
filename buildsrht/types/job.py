@@ -10,6 +10,8 @@ class JobStatus(Enum):
     running = 'running'
     success = 'success'
     failed = 'failed'
+    timeout = 'timeout'
+    cancelled = 'cancelled'
 
 class Job(Base):
     __tablename__ = 'job'

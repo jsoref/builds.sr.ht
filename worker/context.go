@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path"
 	"strconv"
+	"time"
 
 	"github.com/go-redis/redis"
 	"github.com/pkg/errors"
@@ -22,6 +23,7 @@ type WorkerContext struct {
 }
 
 type JobContext struct {
+	Cancel   context.CancelFunc
 	Context  context.Context
 	Db       *sql.DB
 	Job      *Job
@@ -35,14 +37,23 @@ type JobContext struct {
 func (wctx *WorkerContext) RunBuild(
 	job_id int, _manifest map[string]interface{}) {
 
-	var job *Job
+	var (
+		job *Job
+		ctx *JobContext
+	)
 
 	if !debug {
 		defer func() {
 			if err := recover(); err != nil {
 				log.Printf("run_build panic: %v", err)
 				if job != nil {
-					job.SetStatus("failed")
+					if ctx != nil &&
+						ctx.Context.Err() == context.DeadlineExceeded {
+
+						job.SetStatus("timeout")
+					} else {
+						job.SetStatus("failed")
+					}
 				}
 			}
 		}()
@@ -62,12 +73,19 @@ func (wctx *WorkerContext) RunBuild(
 		panic(errors.Wrap(err, "job.SetStatus"))
 	}
 
-	ctx := &JobContext{
-		Context:  context.TODO(),
+	goctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+
+	ctx = &JobContext{
+		Cancel:   cancel,
+		Context:  goctx,
 		Db:       wctx.Db,
 		Job:      job,
 		Manifest: &manifest,
 	}
+
+	jobsMutex.Lock()
+	jobs[job_id] = ctx
+	jobsMutex.Unlock()
 
 	ctx.LogDir = path.Join(
 		conf("builds.sr.ht::worker", "buildlogs"), strconv.Itoa(job_id))
@@ -101,12 +119,19 @@ func (wctx *WorkerContext) RunBuild(
 		}
 	}
 
+	jobsMutex.Lock()
+	delete(jobs, job_id)
+	jobsMutex.Unlock()
+
+	cancel()
 	job.SetStatus("success")
 }
 
-func (ctx *JobContext) Control(args ...string) *exec.Cmd {
+func (ctx *JobContext) Control(
+	context context.Context, args ...string) *exec.Cmd {
+
 	control := conf("builds.sr.ht::worker", "controlcmd")
-	return exec.Command(control, args...)
+	return exec.CommandContext(context, control, args...)
 }
 
 func (ctx *JobContext) SSH(args ...string) *exec.Cmd {

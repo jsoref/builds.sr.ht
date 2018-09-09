@@ -43,7 +43,9 @@
         <dt>Build manifest</dt>
         <dd><a href="/api/jobs/{{ job.id }}/manifest">view manifest »</a></dt>
       </dl>
-      {% if current_user and job.status.value in ["success", "failed"] %}
+      {% if current_user and job.status.value in [
+        "success", "failed", "timeout", "cancelled"
+      ] %}
       <form style="margin-bottom: 0.5rem" method="POST" action="/submit">
         <button class="btn btn-primary btn-block">
           Resubmit build

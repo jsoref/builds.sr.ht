@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"sync"
 
 	"github.com/go-redis/redis"
 	"github.com/vaughan0/go-ini"
@@ -17,6 +18,9 @@ import (
 var (
 	config ini.File
 	debug  bool
+
+	jobs      map[int]*JobContext
+	jobsMutex sync.Mutex
 )
 
 func main() {
@@ -33,6 +37,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	jobs = make(map[int]*JobContext, 1)
 
 	pgcs := conf("builds.sr.ht", "connection-string")
 	db, err := sql.Open("postgres", pgcs)
