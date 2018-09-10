@@ -257,6 +257,8 @@ func (ctx *JobContext) CloneRepos() error {
 			url = slice[0]
 			ref = slice[1]
 		}
+		repo_name := path.Base(url)
+		repo_name = strings.TrimSuffix(repo_name, ".git")
 		git := ctx.SSH("git", "clone", "--recursive", url)
 		git.Stdout = ctx.LogFile
 		git.Stderr = ctx.LogFile
@@ -264,8 +266,8 @@ func (ctx *JobContext) CloneRepos() error {
 			return errors.Wrap(err, "git clone")
 		}
 		if ref != "" {
-			git := ctx.SSH("sh", "-c", fmt.Sprintf(
-				"cd %s && git checkout %s", path.Base(url), ref))
+			git := ctx.SSH("git", "--git-dir", repo_name + "/.git",
+				"checkout", "-q", ref)
 			git.Stdout = ctx.LogFile
 			git.Stderr = ctx.LogFile
 			if err := git.Run(); err != nil {
