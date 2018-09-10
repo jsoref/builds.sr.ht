@@ -251,11 +251,26 @@ func (ctx *JobContext) CloneRepos() error {
 	}
 	ctx.Log.Println("Cloning repositories")
 	for _, url := range ctx.Manifest.Sources {
+		var ref string
+		slice := strings.Split(url, "#")
+		if len(slice) == 2 {
+			url = slice[0]
+			ref = slice[1]
+		}
 		git := ctx.SSH("git", "clone", "--recursive", url)
 		git.Stdout = ctx.LogFile
 		git.Stderr = ctx.LogFile
 		if err := git.Run(); err != nil {
 			return errors.Wrap(err, "git clone")
+		}
+		if ref != "" {
+			git := ctx.SSH("sh", "-c", fmt.Sprintf(
+				"cd %s && git checkout %s", path.Base(url), ref))
+			git.Stdout = ctx.LogFile
+			git.Stderr = ctx.LogFile
+			if err := git.Run(); err != nil {
+				return errors.Wrap(err, "git checkout")
+			}
 		}
 	}
 	return nil
