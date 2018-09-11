@@ -266,8 +266,8 @@ func (ctx *JobContext) CloneRepos() error {
 			return errors.Wrap(err, "git clone")
 		}
 		if ref != "" {
-			git := ctx.SSH("git", "--git-dir", repo_name + "/.git",
-				"checkout", "-q", ref)
+			git := ctx.SSH("sh", "-euxc",
+				fmt.Sprintf("'cd %s && git checkout -q %s'", repo_name, ref))
 			git.Stdout = ctx.LogFile
 			git.Stderr = ctx.LogFile
 			if err := git.Run(); err != nil {
