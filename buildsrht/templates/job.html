@@ -62,7 +62,9 @@
           {{ icon("caret-right") }}
         </a>
       </form>
-      {% elif current_user and job.status.value == "running" %}
+      {% elif (current_user and
+        current_user.id == job.owner_id and
+        job.status.value == "running") %}
       <form method="POST" action="{{ url_for("jobs.cancel", job_id=job.id) }}">
         <button class="btn btn-danger btn-block">
           Cancel build
