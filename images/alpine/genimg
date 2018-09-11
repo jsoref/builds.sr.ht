@@ -3,6 +3,7 @@ echo "$release" >/dev/null # fail on -u if release unset
 
 cleanup() {
 	# The order here is important if you don't want to hose your mounts
+	sync
 	umount -f /mnt/dev/pts 2>/dev/null || true
 	umount -f /mnt/dev/shm 2>/dev/null || true
 	umount -f /mnt/dev 2>/dev/null || true
