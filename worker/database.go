@@ -99,3 +99,14 @@ func (job *Job) SetTaskStatus(name, status string) error {
 	`, job.Id, name, status)
 	return err
 }
+
+func (job *Job) GetTaskStatus(name string) (string, error) {
+	row := job.db.QueryRow(`
+		SELECT "status" FROM "task" WHERE "job_id" = $1 AND "name" = $2
+	`, job.Id, name)
+	var status string
+	if err := row.Scan(&status); err != nil {
+		return "", err
+	}
+	return status, nil
+}

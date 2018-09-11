@@ -42,24 +42,23 @@ func (wctx *WorkerContext) RunBuild(
 		ctx *JobContext
 	)
 
-	if !debug {
-		defer func() {
-			if err := recover(); err != nil {
-				log.Printf("run_build panic: %v", err)
-				if job != nil && ctx != nil {
-					if ctx.Context.Err() == context.DeadlineExceeded {
-						job.SetStatus("timeout")
-					} else if ctx.Context.Err() == context.Canceled {
-						job.SetStatus("cancelled")
-					} else {
-						job.SetStatus("failed")
-					}
-				} else if job != nil {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Printf("run_build panic: %v", err)
+			if job != nil && ctx != nil {
+				if ctx.Context.Err() == context.DeadlineExceeded {
+					job.SetStatus("timeout")
+				} else if ctx.Context.Err() == context.Canceled {
+					job.SetStatus("cancelled")
+				} else {
 					job.SetStatus("failed")
 				}
+			} else if job != nil {
+				job.SetStatus("failed")
 			}
-		}()
-	}
+			ctx.ProcessTriggers()
+		}
+	}()
 
 	var manifest Manifest
 	ms.Decode(_manifest, &manifest)
@@ -103,6 +102,8 @@ func (wctx *WorkerContext) RunBuild(
 	ctx.Log = log.New(io.MultiWriter(ctx.LogFile, os.Stdout),
 		"[#"+strconv.Itoa(job.Id)+"] ", log.LstdFlags)
 
+	defer ctx.ProcessTriggers()
+
 	cleanup := ctx.Boot(wctx.Redis)
 	defer cleanup()
 
@@ -128,6 +129,7 @@ func (wctx *WorkerContext) RunBuild(
 
 	cancel()
 	job.SetStatus("success")
+	ctx.ProcessTriggers()
 }
 
 func (ctx *JobContext) Control(

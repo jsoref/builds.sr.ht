@@ -8,4 +8,5 @@ type Manifest struct {
 	Secrets      []string
 	Sources      []string
 	Tasks        []map[string]string
+	Triggers     []map[string]interface{}
 }

@@ -37,6 +37,7 @@ class Job(Base):
         self.manifest = manifest
 
     def to_dict(self):
+        # When updating this, also update worker/triggers.go
         return {
             "id": self.id,
             "status": self.status.value,

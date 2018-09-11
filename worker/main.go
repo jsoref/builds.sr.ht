@@ -18,7 +18,6 @@ import (
 
 var (
 	config  ini.File
-	debug   bool
 	workers int
 
 	jobs      map[int]*JobContext
@@ -26,7 +25,6 @@ var (
 )
 
 func main() {
-	flag.BoolVar(&debug, "debug", false, "enable debug mode")
 	flag.IntVar(&workers, "workers", runtime.NumCPU(),
 		"configure number of workers")
 	flag.Parse()
