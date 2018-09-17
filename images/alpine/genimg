@@ -45,7 +45,7 @@ apk add -U -X http://dl-cdn.alpinelinux.org/alpine/$release/main/ \
 	--root=/mnt \
 	--initdb \
 	acct alpine-base alpine-conf alpine-sdk linux-vanilla git openssh \
-	sudo syslinux tzdata bash
+	sudo syslinux tzdata haveged bash
 
 mount --bind /dev /mnt/dev
 mount --bind /dev/pts /mnt/dev/pts
@@ -90,6 +90,7 @@ extlinux -i /mnt/boot
 run_root rc-update add ntpd default
 run_root rc-update add sshd default
 run_root rc-update add crond default
+run_root rc-update add haveged default
 for i in hwclock modules sysctl hostname bootmisc networking syslog swap urandom
 do
 	run_root rc-update add $i boot
