@@ -213,6 +213,11 @@ func (ctx *JobContext) SendSecrets() error {
 				return errors.Wrap(err, "(gpg --import).Wait")
 			}
 		case "plaintext_file":
+			if err := ctx.SSH("mkdir", "-p",
+				path.Base(*secret.Path)).Run(); err != nil {
+
+				return errors.Wrap(err, "mkdir -p $(basename)")
+			}
 			if err := ctx.Tee(*secret.Path, secret.Secret); err != nil {
 				return errors.Wrap(err, "tee")
 			}
