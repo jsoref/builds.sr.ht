@@ -214,9 +214,9 @@ func (ctx *JobContext) SendSecrets() error {
 			}
 		case "plaintext_file":
 			if err := ctx.SSH("mkdir", "-p",
-				path.Base(*secret.Path)).Run(); err != nil {
+				path.Dir(*secret.Path)).Run(); err != nil {
 
-				return errors.Wrap(err, "mkdir -p $(basename)")
+				return errors.Wrap(err, "mkdir -p $(dirname)")
 			}
 			if err := ctx.Tee(*secret.Path, secret.Secret); err != nil {
 				return errors.Wrap(err, "tee")
