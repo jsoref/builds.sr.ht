@@ -167,7 +167,7 @@ func (ctx *JobContext) SendSecrets() error {
 		ctx.Log.Printf("Resolving secret %s\n", uuid)
 		secret, err := GetSecret(ctx.Db, uuid)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "GetSecret")
 		}
 		if secret.UserId != ctx.Job.OwnerId {
 			ctx.Log.Printf("Warning: access denied for secret %s\n", uuid)
@@ -178,19 +178,19 @@ func (ctx *JobContext) SendSecrets() error {
 			sshdir := path.Join("/", "home", "build", ".ssh")
 			keypath := path.Join(sshdir, uuid)
 			if err := ctx.SSH("mkdir", "-p", sshdir).Run(); err != nil {
-				return err
+				return errors.Wrap(err, "mkdir -p ~/.ssh")
 			}
 			if err := ctx.Tee(keypath, secret.Secret); err != nil {
-				return err
+				return errors.Wrap(err, "tee")
 			}
 			if err := ctx.SSH("chmod", "600", keypath).Run(); err != nil {
-				return err
+				return errors.Wrap(err, "chmod")
 			}
 			if sshKeys == 0 {
 				if err := ctx.SSH("ln", "-s",
 					keypath, path.Join(sshdir, "id_rsa")).Run(); err != nil {
 
-					return err
+					return errors.Wrap(err, "ln -s id_rsa")
 				}
 			}
 			sshKeys++
@@ -200,26 +200,26 @@ func (ctx *JobContext) SendSecrets() error {
 			gpg.Stdout = ctx.LogFile
 			gpg.Stderr = ctx.LogFile
 			if err != nil {
-				return err
+				return errors.Wrap(err, "(gpg --import).StdinPipe")
 			}
 			if err := gpg.Start(); err != nil {
-				return err
+				return errors.Wrap(err, "(gpg --import).Start")
 			}
 			if _, err := pipe.Write(secret.Secret); err != nil {
-				return err
+				return errors.Wrap(err, "pipe.Write(secret)")
 			}
 			pipe.Close()
 			if err := gpg.Wait(); err != nil {
-				return err
+				return errors.Wrap(err, "(gpg --import).Wait")
 			}
 		case "plaintext_file":
 			if err := ctx.Tee(*secret.Path, secret.Secret); err != nil {
-				return err
+				return errors.Wrap(err, "tee")
 			}
 			if err := ctx.SSH("chmod", fmt.Sprintf("%o", *secret.Mode),
 				*secret.Path).Run(); err != nil {
 
-				return err
+				return errors.Wrap(err, "chmod")
 			}
 		default:
 			return fmt.Errorf("Unknown secret type %s", secret.SecretType)
