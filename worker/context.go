@@ -157,6 +157,7 @@ func (ctx *JobContext) Tee(path string, data []byte) error {
 	if err != nil {
 		return err
 	}
+	tee.Stderr = ctx.LogFile
 	if err := tee.Start(); err != nil {
 		return err
 	}
