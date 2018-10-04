@@ -162,8 +162,15 @@ def job_by_id(username, job_id):
     for task in sorted(job.tasks, key=lambda t: t.id):
         if task.status == TaskStatus.pending:
             continue
-        r = requests.get("http://{}/logs/{}/{}/log".format(job.runner,
-            job.id, task.name))
+        try:
+            r = requests.get("http://{}/logs/{}/{}/log".format(job.runner,
+                job.id, task.name))
+        except:
+            logs.append({
+                "name": "error",
+                "log": "Error fetching logs for this job"
+            })
+            break
         if r.status_code == 200:
             logs.append({
                 "name": task.name,
