@@ -25,10 +25,10 @@ setup(
   url = 'https://git.sr.ht/~sircmpwn/builds.sr.ht',
   install_requires = [
       'srht',
-      'pgpy',
       'redis',
       'celery',
-      'yaml',
+      'flask_login',
+      'pyyaml',
       'markdown',
       'bleach'
   ],
