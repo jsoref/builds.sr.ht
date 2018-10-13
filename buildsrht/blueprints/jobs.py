@@ -89,6 +89,10 @@ def resubmit_GET(job_id):
 def submit_POST():
     valid = Validation(request)
     _manifest = valid.require("manifest", friendly_name="Manifest")
+    max_len = Job.manifest.prop.columns[0].type.length
+    valid.expect(not _manifest or len(_manifest) < max_len,
+            "Manifest must be less than {} bytes".format(max_len),
+            field="manifest")
     if not valid.ok:
         return render_template("submit.html", **valid.kwargs)
     try:
