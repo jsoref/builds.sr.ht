@@ -67,6 +67,7 @@ def secrets_POST():
                     password=None,
                     backend=default_backend())
         except Exception as ex:
+            print(ex)
             valid.error("Unable to load SSH key. Does it have a password?",
                     field="secret")
     elif secret_type == SecretType.pgp_key:

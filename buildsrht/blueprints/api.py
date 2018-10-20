@@ -7,9 +7,10 @@ from buildsrht.runner import queue_build
 from buildsrht.types import Job, JobStatus, Task
 from buildsrht.types import Trigger, TriggerType, TriggerCondition
 from buildsrht.manifest import Manifest
-import yaml
 import json
 import re
+import requests
+import yaml
 
 api = Blueprint('api', __name__)
 
@@ -109,4 +110,15 @@ def jobs_by_id_start_POST(token, job_id):
             ]
         }, 400
     queue_build(job, Manifest(yaml.safe_load(job.manifest)))
+    return { }
+
+@api.route("/api/jobs/<int:job_id>/cancel", methods=["POST"])
+@oauth("jobs:write")
+def jobs_by_id_cancel_POST(job_id):
+    job = Job.query.filter(Job.id == job_id).one_or_none()
+    if not job:
+        abort(404)
+    if job.owner_id != current_user.id:
+        abort(401)
+    requests.post(f"http://{job.runner}:8080/job/{job.id}/cancel")
     return { }
