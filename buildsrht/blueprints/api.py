@@ -19,6 +19,7 @@ api = Blueprint('api', __name__)
 def jobs_POST(token):
     valid = Validation(request)
     _manifest = valid.require("manifest", cls=str)
+    max_len = Job.manifest.prop.columns[0].type.length
     valid.expect(not _manifest or len(_manifest) < max_len,
             "Manifest must be less than {} bytes".format(max_len),
             field="manifest")
