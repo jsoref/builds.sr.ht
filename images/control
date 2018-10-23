@@ -124,6 +124,12 @@ cmd_cleanup() {
 	fi
 }
 
+if ! [ -e "$self/$base/functions" ]
+then
+	printf "%s" "Unknown base image '$base'" >&2
+	exit 1
+fi
+
 . $self/$base/functions
 
 case "$cmd" in
