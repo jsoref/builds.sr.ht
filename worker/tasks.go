@@ -36,7 +36,7 @@ func (ctx *JobContext) Boot(r *redis.Client) func() {
 		ctx.Manifest.Image, "boot", strconv.Itoa(ctx.Port))
 	boot.Stdout = ctx.LogFile
 	boot.Stderr = ctx.LogFile
-	if err := boot.Start(); err != nil {
+	if err := boot.Run(); err != nil {
 		panic(errors.Wrap(err, "boot"))
 	}
 

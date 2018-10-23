@@ -53,6 +53,9 @@ func (wctx *WorkerContext) RunBuild(
 				} else {
 					job.SetStatus("failed")
 				}
+				if ctx.Log != nil {
+					ctx.Log.Printf("Error: %v\n", err)
+				}
 			} else if job != nil {
 				job.SetStatus("failed")
 			}
