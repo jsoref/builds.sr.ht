@@ -1,4 +1,2 @@
-root/
-initrd
-kernel
-root.img.qcow2
+aarch64
+x86_64

@@ -51,6 +51,7 @@ class Manifest:
     def __init__(self, yml):
         self.yaml = yml
         image = self.yaml.get("image")
+        arch = self.yaml.get("arch")
         packages = self.yaml.get("packages")
         repos = self.yaml.get("repositories")
         sources = self.yaml.get("sources")
@@ -81,6 +82,7 @@ class Manifest:
             # Will throw exception on invalid UUIDs as well
             secrets = list(map(uuid.UUID, secrets))
         self.image = image
+        self.arch = arch or "x86_64"
         self.packages = packages
         self.repos = repos
         self.sources = sources
@@ -102,6 +104,7 @@ class Manifest:
     def to_dict(self):
         return {
             "image": self.image,
+            "arch": self.arch,
             "packages": self.packages,
             "repositories": self.repos,
             "sources": self.sources,

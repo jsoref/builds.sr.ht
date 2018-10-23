@@ -41,14 +41,19 @@ RUN cd qemu-3.0.0 && ./configure \
     --disable-glusterfs \
     --disable-tools \
     --disable-werror \
-    --target-list="x86_64-softmmu"
+    --target-list="x86_64-softmmu,i386-softmmu,aarch64-softmmu,arm-softmmu,ppc64-softmmu,s390x-softmmu"
 
 RUN cd qemu-3.0.0 && make && make install
 
 FROM scratch
 COPY --from=0 /bin/qemu-system-x86_64 /bin/
+COPY --from=0 /bin/qemu-system-i386 /bin/
+COPY --from=0 /bin/qemu-system-aarch64 /bin/
+COPY --from=0 /bin/qemu-system-arm /bin/
+COPY --from=0 /bin/qemu-system-ppc64 /bin/
+COPY --from=0 /bin/qemu-system-s390x /bin/
 COPY --from=0 /share/qemu/ /share/qemu/
-COPY --from=0 /lib/x86_64-linux-gnu/libnss_dns-2.24.so /lib/x86_64-linux-gnu/
+COPY --from=0 /lib/x86_64-linux-gnu/libnss_dns-2.27.so /lib/x86_64-linux-gnu/
 COPY --from=0 /lib/x86_64-linux-gnu/libnss_dns.so.2 /lib/x86_64-linux-gnu/
 COPY --from=0 /etc/nsswitch.conf /etc/
 

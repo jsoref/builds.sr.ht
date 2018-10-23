@@ -30,10 +30,12 @@ func (ctx *JobContext) Boot(r *redis.Client) func() {
 	}
 
 	ctx.Port = int(port)
-	ctx.Log.Printf("Booting image %s on port %d", ctx.Manifest.Image, port)
+	ctx.Log.Printf("Booting image %s (%s) on port %d",
+		ctx.Manifest.Image, ctx.Manifest.Arch, port)
 
 	boot := ctx.Control(ctx.Context,
-		ctx.Manifest.Image, "boot", strconv.Itoa(ctx.Port))
+		ctx.Manifest.Image, "boot",
+		ctx.Manifest.Arch, strconv.Itoa(ctx.Port))
 	boot.Stdout = ctx.LogFile
 	boot.Stderr = ctx.LogFile
 	if err := boot.Run(); err != nil {

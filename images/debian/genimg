@@ -55,8 +55,8 @@ cat > /mnt/etc/network/interfaces <<EOF
 auto lo
 iface lo inet loopback
 
-auto ens3
-iface ens3 inet static
+auto enp0s1
+iface enp0s1 inet static
 	hostname build
 	address 10.0.2.15
 	netmask 255.255.255.0
