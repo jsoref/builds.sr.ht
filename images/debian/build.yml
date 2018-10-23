@@ -2,13 +2,13 @@ image: debian/stretch
 packages:
   - debootstrap
   - e2fsprogs
-  - qemu-system-arm64
+  - qemu-system-x86
   - rsync
   - extlinux # temporary
 sources:
   - https://git.sr.ht/~sircmpwn/builds.sr.ht
 environment:
-  arch: x86_64
+  arch: amd64
   release: stretch
   slaves:
     - deploy@ritsu.runners.sr.ht
@@ -18,7 +18,7 @@ tasks:
   - genimg: |
       cd builds.sr.ht
       cd images/debian/$release
-      sudo ./genimg
+      sudo ./genimg $arch
   - sanity-check: |
       cd builds.sr.ht
       if [ -e /dev/kvm ]

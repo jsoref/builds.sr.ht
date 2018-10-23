@@ -26,6 +26,8 @@ cleanup() {
 	qemu-nbd --disconnect /dev/nbd0 || true
 }
 
+mkdir "$arch"
+
 qemu-img create -f qcow2 $arch/root.img.qcow2 16G
 modprobe nbd max_part=16
 qemu-nbd --connect=/dev/nbd0 $arch/root.img.qcow2
