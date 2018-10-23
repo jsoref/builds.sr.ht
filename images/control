@@ -49,8 +49,13 @@ _qemu_boot() {
 }
 
 _boot() {
-	[ "$means" = "docker" ] && _docker_boot "$@"
-	[ "$means" = "qemu" ] && _qemu_boot "$@"
+	if [ "$means" = "docker" ]
+	then
+		_docker_boot "$@"
+	elif [ "$means" = "qemu" ]
+	then
+		_qemu_boot "$@"
+	fi
 }
 
 cmd_boot() {

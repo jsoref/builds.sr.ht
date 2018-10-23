@@ -55,6 +55,7 @@ func (wctx *WorkerContext) RunBuild(
 				}
 				if ctx.Log != nil {
 					ctx.Log.Printf("Error: %v\n", err)
+					ctx.LogFile.Close()
 				}
 			} else if job != nil {
 				job.SetStatus("failed")
@@ -100,7 +101,6 @@ func (wctx *WorkerContext) RunBuild(
 	if ctx.LogFile, err = os.Create(path.Join(ctx.LogDir, "log")); err != nil {
 		panic(errors.Wrap(err, "Make top-level log"))
 	}
-	defer ctx.LogFile.Close()
 
 	ctx.Log = log.New(io.MultiWriter(ctx.LogFile, os.Stdout),
 		"[#"+strconv.Itoa(job.Id)+"] ", log.LstdFlags)
@@ -132,6 +132,7 @@ func (wctx *WorkerContext) RunBuild(
 
 	cancel()
 	job.SetStatus("success")
+	ctx.LogFile.Close()
 	ctx.ProcessTriggers()
 }
 
