@@ -8,6 +8,7 @@ packages:
 sources:
   - https://git.sr.ht/~sircmpwn/builds.sr.ht
 environment:
+  arch: x86_64
   release: edge
   slaves:
     - deploy@ritsu.runners.sr.ht
@@ -16,7 +17,7 @@ secrets:
 tasks:
   - genimg: |
       cd builds.sr.ht/images/alpine/$release
-      sudo ./genimg
+      sudo ./genimg $arch
   - kvm: |
       sudo modprobe kvm-intel
       sleep 1
@@ -30,9 +31,9 @@ tasks:
       for server in "${slaves[@]}"
       do
         rsync \
-          --rsh="ssh $sshopts" -rzP root.img.qcow2 \
-          ${server}:/var/lib/images/alpine/$release/new_root.img.qcow2
+          --rsh="ssh $sshopts" -rzP $arch/root.img.qcow2 \
+          ${server}:/var/lib/images/alpine/$release/$arch/new_root.img.qcow2
         ssh $sshopts $server \
-          mv /var/lib/images/alpine/$release/new_root.img.qcow2 \
-             /var/lib/images/alpine/$release/root.img.qcow2
+          mv /var/lib/images/alpine/$release/$arch/new_root.img.qcow2 \
+             /var/lib/images/alpine/$release/$arch/root.img.qcow2
       done

@@ -1,5 +1,6 @@
 #!/bin/sh -eux
 echo "$release" >/dev/null # fail on -u if release unset
+arch="${1:-x86_64}"
 
 cleanup() {
 	# The order here is important if you don't want to hose your mounts
@@ -16,12 +17,15 @@ cleanup() {
 	qemu-nbd --disconnect /dev/nbd0 || true
 }
 
-qemu-img create -f qcow2 root.img.qcow2 16G
+qemu-img create -f qcow2 "$arch"/root.img.qcow2 16G
 modprobe nbd max_part=16
-qemu-nbd --connect=/dev/nbd0 root.img.qcow2
+qemu-nbd --connect=/dev/nbd0 "$arch"/root.img.qcow2
 trap cleanup EXIT
 
-dd if=/usr/share/syslinux/mbr.bin of=/dev/nbd0 bs=1 count=440
+if [ "$arch" == "x86_64" ] || [ "$arch" == "i686" ]
+then
+	dd if=/usr/share/syslinux/mbr.bin of=/dev/nbd0 bs=1 count=440
+fi
 sfdisk --no-reread /dev/nbd0 <<EOF
 1M,100M,L,*
 ,2048M,S
@@ -41,7 +45,7 @@ swapon /dev/nbd0p2
 # TODO: Remove bash
 apk add -U -X http://dl-cdn.alpinelinux.org/alpine/$release/main/ \
 	--allow-untrusted \
-	--arch=x86_64 \
+	--arch="$arch" \
 	--root=/mnt \
 	--initdb \
 	acct alpine-base alpine-conf alpine-sdk linux-vanilla git openssh \

@@ -7,6 +7,7 @@ packages:
 sources:
   - https://git.sr.ht/~sircmpwn/builds.sr.ht
 environment:
+  arch: x86_64
   slaves:
     - deploy@ritsu.runners.sr.ht
 secrets:
@@ -18,7 +19,12 @@ tasks:
       sudo ./genimg
   - sanity-check: |
       cd builds.sr.ht
-      MEMORY=1024 ./images/control archlinux sanity-check
+      if [ -e /dev/kvm ]
+      then
+          MEMORY=1024 ./images/control archlinux sanity-check
+      else
+          echo "KVM unavailable, skipping sanity check"
+      fi
   - deploy: |
       cd builds.sr.ht/images/archlinux
       sshopts="-o StrictHostKeyChecking=no"
@@ -27,9 +33,9 @@ tasks:
         rsync \
           --rsh="ssh $sshopts" \
           -rzP initrd kernel root.img.qcow2 \
-          ${server}:/var/lib/images/archlinux-new
+          ${server}:/var/lib/images/archlinux/$arch-new
         ssh $sshopts $server \
-          mv /var/lib/images/archlinux-new/{initrd,kernel,root.img.qcow2} \
-             /var/lib/images/archlinux/
-        ssh $sshopts $server rm -rf /var/lib/images/archlinux-new
+          mv /var/lib/images/archlinux/$arch-new/{initrd,kernel,root.img.qcow2} \
+             /var/lib/images/archlinux/$arch
+        ssh $sshopts $server rm -rf /var/lib/images/archlinux/$arch-new
       done

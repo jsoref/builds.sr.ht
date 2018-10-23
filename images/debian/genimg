@@ -1,7 +1,18 @@
 #!/bin/sh -eux
 echo "$release" >/dev/null # fail on -u if release unset
-
-root=root
+arch=${1:-amd64}
+case $arch in
+	amd64)
+		iface=ens3
+		;;
+	aarch64)
+		iface=enp0s1
+		;;
+	*)
+		echo "unsupported architecture $arch"
+		exit 1
+		;;
+esac
 
 cleanup() {
 	# The order here is important if you don't want to hose your mounts
@@ -15,12 +26,16 @@ cleanup() {
 	qemu-nbd --disconnect /dev/nbd0 || true
 }
 
-qemu-img create -f qcow2 root.img.qcow2 16G
+qemu-img create -f qcow2 $arch/root.img.qcow2 16G
 modprobe nbd max_part=16
-qemu-nbd --connect=/dev/nbd0 root.img.qcow2
+qemu-nbd --connect=/dev/nbd0 $arch/root.img.qcow2
 trap cleanup EXIT
 
-dd if=/usr/lib/syslinux/mbr/mbr.bin of=/dev/nbd0 bs=1 count=440
+if [ "$arch" -eq "x86_64" ]
+then
+	dd if=/usr/lib/syslinux/mbr/mbr.bin of=/dev/nbd0 bs=1 count=440
+fi
+
 sfdisk --no-reread /dev/nbd0 <<EOF
 1M,100M,L,*
 ,2048M,S
@@ -35,7 +50,7 @@ mount /dev/nbd0p3 /mnt
 mkdir /mnt/boot
 mount /dev/nbd0p1 /mnt/boot
 
-debootstrap --include=gnupg2 --arch=amd64 $release /mnt
+debootstrap --include=gnupg2 --arch=$arch $release /mnt
 
 mount --bind /dev /mnt/dev
 mount --bind /dev/pts /mnt/dev/pts
@@ -55,8 +70,8 @@ cat > /mnt/etc/network/interfaces <<EOF
 auto lo
 iface lo inet loopback
 
-auto enp0s1
-iface enp0s1 inet static
+auto $iface
+iface $iface inet static
 	hostname build
 	address 10.0.2.15
 	netmask 255.255.255.0
@@ -71,7 +86,7 @@ EOF
 run_root apt-key update
 run_root apt-get update
 run_root apt-get -y install locales
-run_root apt-get -y install linux-image-amd64
+run_root apt-get -y install linux-image-$arch
 run_root apt-get -y install \
 	build-essential git ssh sudo dirmngr apt-transport-https extlinux
 

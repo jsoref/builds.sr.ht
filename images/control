@@ -18,13 +18,33 @@ guest_ssh() {
 	ssh $ssh_opts "$@"
 }
 
+cpu_opts() {
+	if [ "$(uname -m)" == "$1" ]
+	then
+		printf "%s" "-cpu host -enable-kvm"
+		return
+	fi
+	case "$1" in
+		aarch64)
+			printf "%s" "-M virt -cpu cortex-a53"
+			;;
+		x86_64)
+			printf "%s" "-cpu qemu64"
+			;;
+		*)
+			echo "Unsupported architecture $arch" >&2
+			exit 1
+			;;
+	esac
+}
+
 _docker_boot() {
 	docker run -d \
 		-v "$self/$base":/base:ro \
 		--mount type=tmpfs,destination=/var/tmp \
 		--device /dev/kvm \
 		-p 127.0.0.1:$port:$port \
-		qemu /bin/qemu-system-$arch \
+		qemu /bin/${qemu:-qemu-system-$arch} \
 		-m ${MEMORY:-2048} \
 		-net nic,model=virtio -net user,hostfwd=tcp::$port-:22 \
 		-nographic \
@@ -34,7 +54,7 @@ _docker_boot() {
 }
 
 _qemu_boot() {
-	qemu-system-$arch \
+	${qemu:-qemu-system-$arch} \
 		-pidfile /tmp/qemu-$port.id \
 		-m ${MEMORY:-2048} \
 		-net nic,model=virtio -net user,hostfwd=tcp::$port-:22 \
@@ -57,6 +77,12 @@ _boot() {
 cmd_boot() {
 	arch=$1
 	shift
+
+	if [ "$arch" == "default" ]
+	then
+		arch="$default_arch"
+	fi
+
 	port=$1
 	if [ "$#" -gt 1 ]
 	then

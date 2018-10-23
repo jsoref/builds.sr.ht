@@ -1,23 +1,24 @@
 #!/usr/bin/env bash
 poweroff_cmd="sudo systemctl poweroff"
+default_arch=amd64
 
 boot() {
 	case "$arch" in
-		x86_64)
-			_boot -cpu host -enable-kvm
+		amd64)
+			qemu=qemu-system-x86_64
+			_boot $(cpu_opts x86_64)
 			;;
 		aarch64)
 			driveopts="id=root,if=none"
 			_boot \
-				-M virt \
-				-cpu cortex-a53 \
+				$(cpu_opts aarch64) \
 				-device virtio-blk-pci,drive=root \
 				-kernel "$wd/$arch/vmlinuz" \
 				-initrd "$wd/$arch/initrd.img" \
 				-append "root=/dev/vda3"
 			;;
 		*)
-			echo "" >&2
+			echo "Unsupported architecture $arch" >&2
 			exit 1
 			;;
 	esac
@@ -54,7 +55,7 @@ add_repository() {
 
 sanity_check() {
 	echo "Booting..."
-	cmd_boot 8022 qemu &
+	cmd_boot amd64 8022 qemu &
 	trap 'cmd_cleanup 8022' EXIT
 	_wait_boot 8022
 	echo "Testing sudo..."

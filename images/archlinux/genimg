@@ -1,5 +1,6 @@
 #!/bin/sh -eux
 root=root
+arch=x86_64
 
 cleanup() {
 	# The order here is important if you don't want to hose your mounts
@@ -8,9 +9,11 @@ cleanup() {
 	rm -rf "$root" || true
 }
 
-qemu-img create -f qcow2 root.img.qcow2 16G
+mkdir -p "$arch"
+
+qemu-img create -f qcow2 $arch/root.img.qcow2 16G
 modprobe nbd
-qemu-nbd --connect=/dev/nbd0 root.img.qcow2
+qemu-nbd --connect=/dev/nbd0 $arch/root.img.qcow2
 trap cleanup EXIT
 
 mkdir -p "$root"
@@ -86,7 +89,7 @@ run_normal 'cd yay && makepkg -si --noconfirm --skippgpcheck'
 run_normal rm -r yay yay.tar.gz
 
 pkill gpg-agent || true
-cp $root/boot/vmlinuz-linux ./kernel
-cp $root/boot/initramfs-linux.img ./initrd
+cp $root/boot/vmlinuz-linux ./$arch/kernel
+cp $root/boot/initramfs-linux.img ./$arch/initrd
 
 run_root pacman --noconfirm -Rsc go

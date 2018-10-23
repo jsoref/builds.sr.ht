@@ -29,13 +29,16 @@ func (ctx *JobContext) Boot(r *redis.Client) func() {
 		panic(errors.Wrap(err, "assign port"))
 	}
 
+	arch := "default"
+	if ctx.Manifest.Arch != nil {
+		arch = *ctx.Manifest.Arch
+	}
 	ctx.Port = int(port)
 	ctx.Log.Printf("Booting image %s (%s) on port %d",
-		ctx.Manifest.Image, ctx.Manifest.Arch, port)
+		ctx.Manifest.Image, arch, port)
 
 	boot := ctx.Control(ctx.Context,
-		ctx.Manifest.Image, "boot",
-		ctx.Manifest.Arch, strconv.Itoa(ctx.Port))
+		ctx.Manifest.Image, "boot", arch, strconv.Itoa(ctx.Port))
 	boot.Stdout = ctx.LogFile
 	boot.Stderr = ctx.LogFile
 	if err := boot.Run(); err != nil {

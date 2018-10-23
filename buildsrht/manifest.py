@@ -82,7 +82,7 @@ class Manifest:
             # Will throw exception on invalid UUIDs as well
             secrets = list(map(uuid.UUID, secrets))
         self.image = image
-        self.arch = arch or "x86_64"
+        self.arch = arch
         self.packages = packages
         self.repos = repos
         self.sources = sources

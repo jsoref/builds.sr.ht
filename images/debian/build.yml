@@ -2,12 +2,13 @@ image: debian/stretch
 packages:
   - debootstrap
   - e2fsprogs
-  - qemu-system-x86
+  - qemu-system-arm64
   - rsync
   - extlinux # temporary
 sources:
   - https://git.sr.ht/~sircmpwn/builds.sr.ht
 environment:
+  arch: x86_64
   release: stretch
   slaves:
     - deploy@ritsu.runners.sr.ht
@@ -20,9 +21,14 @@ tasks:
       sudo ./genimg
   - sanity-check: |
       cd builds.sr.ht
-      # Debian does not have a kvm group so we just gotta do it this way
-      sudo chown build:build /dev/kvm
-      MEMORY=1024 ./images/control debian/$release sanity-check
+      if [ -e /dev/kvm ]
+      then
+          # Debian does not have a kvm group so we just gotta do it this way
+          sudo chown build:build /dev/kvm
+          MEMORY=1024 ./images/control debian/$release sanity-check
+      else
+          echo "KVM unavailable, skipping sanity check"
+      fi
   - deploy: |
       cd builds.sr.ht/images/debian/$release
       sshopts="-o StrictHostKeyChecking=no"
@@ -30,8 +36,8 @@ tasks:
       do
         rsync \
           --rsh="ssh $sshopts" -rzP root.img.qcow2 \
-          ${server}:/var/lib/images/debian/$release/new_root.img.qcow2
+          ${server}:/var/lib/images/debian/$release/$arch/new_root.img.qcow2
         ssh $sshopts $server \
-          mv /var/lib/images/debian/$release/new_root.img.qcow2 \
-             /var/lib/images/debian/$release/root.img.qcow2
+          mv /var/lib/images/debian/$release/$arch/new_root.img.qcow2 \
+             /var/lib/images/debian/$release/$arch/root.img.qcow2
       done

@@ -1,4 +1,2 @@
 *.tar.gz
-root.img.qcow2
-kernel
-initrd
+x86_64/

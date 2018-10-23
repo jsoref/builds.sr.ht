@@ -1,9 +1,15 @@
 #!/bin/sh
 poweroff_cmd="sudo systemctl poweroff"
+default_arch=x86_64
 
 boot() {
-	_boot \
-		-kernel $wd/kernel -initrd $wd/initrd \
+	if [ "$arch" != "x86_64" ]
+	then
+		echo "Unsupported architecture $arch" >&2
+		exit 1
+	fi
+	_boot $(cpu_opts x86_64) \
+		-kernel $wd/$arch/kernel -initrd $wd/$arch/initrd \
 		-append "root=/dev/vda rw console=ttyS0"
 }
 
@@ -28,7 +34,7 @@ add_repository() {
 
 sanity_check() {
 	echo "Booting..."
-	cmd_boot 8022 qemu &
+	cmd_boot x86_64 8022 qemu &
 	trap 'cmd_cleanup 8022' EXIT
 	_wait_boot 8022
 	echo "Testing sudo..."
