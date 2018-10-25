@@ -1,0 +1,7 @@
+<div class="sidebar">
+  <p>Embeddable badge for this view:</p>
+  {% set badge = request.base_url + '.svg' + ('?search=' + search if search else '') %}
+  <a href="{{badge}}"><img src="{{badge}}" /></a>
+  <p style="margin-top: 1rem"><strong>Markdown</strong></p>
+  <pre>[![]({{badge}})]({{request.url}})</pre>
+</div>

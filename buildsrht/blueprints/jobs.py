@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, abort, redirect, session
+from flask import Response
 from flask_login import current_user
 from srht.database import db
 from srht.flask import paginate_query, loginrequired
@@ -52,19 +53,48 @@ icon_map = {
     TaskStatus.skipped: "minus",
 }
 
-def jobs_page(jobs, sidebar, **kwargs):
+def get_jobs(jobs):
     jobs = jobs.order_by(Job.created.desc())
     search = request.args.get("search")
     if search:
         # TODO: More advanced search
         for term in search.split(" "):
             jobs = jobs.filter(Job.note.ilike("%" + term + "%"))
-    jobs, pagination = paginate_query(jobs)
+    return jobs
+
+def jobs_page(jobs, sidebar="sidebar.html", **kwargs):
+    jobs, pagination = paginate_query(get_jobs(jobs))
+    search = request.args.get("search")
     return render_template("jobs.html",
         jobs=jobs, status_map=status_map, icon_map=icon_map, tags=tags,
         sort_tasks=lambda tasks: sorted(tasks, key=lambda t: t.id),
         sidebar=sidebar, search=search, **pagination, **kwargs
     )
+
+badge_success = """
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="124" height="20"><linearGradient id="b" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient><clipPath id="a"><rect width="124" height="20" rx="3" fill="#fff"/></clipPath><g clip-path="url(#a)"><path fill="#555" d="M0 0h71v20H0z"/><path fill="#4c1" d="M71 0h53v20H71z"/><path fill="url(#b)" d="M0 0h124v20H0z"/></g><g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="110"> <text x="365" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="610">{}</text><text x="365" y="140" transform="scale(.1)" textLength="610">builds.sr.ht</text><text x="965" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="430">success</text><text x="965" y="140" transform="scale(.1)" textLength="430">success</text></g></svg>
+"""
+
+badge_failure = """
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="124" height="20"><linearGradient id="b" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient><clipPath id="a"><rect width="124" height="20" rx="3" fill="#fff"/></clipPath><g clip-path="url(#a)"><path fill="#555" d="M0 0h71v20H0z"/><path fill="#e05d44" d="M71 0h53v20H71z"/><path fill="url(#b)" d="M0 0h124v20H0z"/></g><g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="110"> <text x="365" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="610">builds.sr.ht</text><text x="365" y="140" transform="scale(.1)" textLength="610">builds.sr.ht</text><text x="965" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="430">failure</text><text x="965" y="140" transform="scale(.1)" textLength="430">failure</text></g></svg>
+"""
+
+badge_unknown = """
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="132" height="20"><linearGradient id="b" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient><clipPath id="a"><rect width="132" height="20" rx="3" fill="#fff"/></clipPath><g clip-path="url(#a)"><path fill="#555" d="M0 0h71v20H0z"/><path fill="#9f9f9f" d="M71 0h61v20H71z"/><path fill="url(#b)" d="M0 0h132v20H0z"/></g><g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="110"> <text x="365" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="610">builds.sr.ht</text><text x="365" y="140" transform="scale(.1)" textLength="610">builds.sr.ht</text><text x="1005" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="510">unknown</text><text x="1005" y="140" transform="scale(.1)" textLength="510">unknown</text></g> </svg>
+"""
+
+def svg_page(jobs):
+    job = (get_jobs(jobs)
+        .filter(Job.status.in_([
+            JobStatus.success,
+            JobStatus.failed,
+            JobStatus.timeout]))
+        .first())
+    if not job:
+        return Response(badge_unknown, mimetype="image/svg+xml")
+    if job.status == JobStatus.success:
+        return Response(badge_success, mimetype="image/svg+xml")
+    return Response(badge_failure, mimetype="image/svg+xml")
 
 @jobs.route("/")
 def index():
@@ -138,9 +168,17 @@ def user(username):
     jobs = Job.query.filter(Job.owner_id == user.id)
     if not current_user or current_user.id != user.id:
         pass # TODO: access controls
-    return jobs_page(jobs, "user.html", user=user, breadcrumbs=[
+    return jobs_page(jobs, user=user, breadcrumbs=[
         { "name": "~" + user.username, "link": "" }
     ])
+
+@jobs.route("/~<username>.svg")
+def user_svg(username):
+    user = User.query.filter(User.username == username).first()
+    if not user:
+        abort(404)
+    jobs = Job.query.filter(Job.owner_id == user.id)
+    return svg_page(jobs)
 
 @jobs.route("/~<username>/<path:path>")
 def tag(username, path):
@@ -151,9 +189,18 @@ def tag(username, path):
         .filter(Job.tags.ilike(path + "%"))
     if not current_user or current_user.id != user.id:
         pass # TODO: access controls
-    return jobs_page(jobs, "user.html", user=user, breadcrumbs=[
+    return jobs_page(jobs, user=user, breadcrumbs=[
         { "name": "~" + user.username, "url": "" }
     ] + tags(path))
+
+@jobs.route("/~<username>/<path:path>.svg")
+def tag_svg(username, path):
+    user = User.query.filter(User.username == username).first()
+    if not user:
+        abort(404)
+    jobs = Job.query.filter(Job.owner_id == user.id)\
+        .filter(Job.tags.ilike(path + "%"))
+    return svg_page(jobs)
 
 @jobs.route("/~<username>/job/<int:job_id>")
 def job_by_id(username, job_id):
