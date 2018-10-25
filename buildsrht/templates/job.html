@@ -97,23 +97,25 @@
     </div>
     <div class="col-md-9">
       {% for log in logs %}
-      {% if log["name"] %}
-      <h3 id="task-{{log["name"]}}">{{ log["name"] }}</h3>
-      {% else %}
-      <a id="setup"></a>
-      {% endif %}
-      <table class="table-code">
-        <tr>
-          <td>
-            <pre>{% for line in log["log"] %}<a href="#{{"task-" + log["name"] if log["name"] else "setup"}}-{{loop.index}}" id="{{"task-" + log["name"] if log["name"] else "setup"}}-{{loop.index}}">{{loop.index}}</a>{% if not loop.last %}
+      <details open>
+        {% if log["name"] %}
+        <summary id="task-{{log["name"]}}">{{ log["name"] }}</summary>
+        {% else %}
+        <summary id="setup">setup</summary>
+        {% endif %}
+        <table class="table-code">
+          <tr>
+            <td>
+              <pre>{% for line in log["log"] %}<a href="#{{"task-" + log["name"] if log["name"] else "setup"}}-{{loop.index}}" id="{{"task-" + log["name"] if log["name"] else "setup"}}-{{loop.index}}">{{loop.index}}</a>{% if not loop.last %}
 {% endif %}{% endfor %}</pre>
-          </td>
-          <td>
-            <pre>{% for line in log["log"] %}{{ line }}{% if not loop.last %}
+            </td>
+            <td>
+              <pre>{% for line in log["log"] %}{{ line }}{% if not loop.last %}
 {% endif %}{% endfor %}</pre>
-          </td>
-        </tr>
-      </table>
+            </td>
+          </tr>
+        </table>
+      </details>
       {% endfor %}
       {% if job.status.value == "success" or job.status.value == "failed" %}
       <div class="alert {{ "alert-success" if job.status.value == "success" else "alert-danger" }}">
