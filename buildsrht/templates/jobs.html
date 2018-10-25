@@ -15,6 +15,14 @@
     {% endif %}
     {% if len(jobs) != 0 %}
     <div class="event-list">
+      <form>
+        <input
+          name="search"
+          type="text"
+          placeholder="Search"
+          class="form-control"
+          value="{{ search if search else "" }}" />
+      </form>
       {% for job in jobs %}
       <div class="event">
         <h3>

@@ -54,18 +54,25 @@ icon_map = {
 
 def jobs_page(jobs, sidebar, **kwargs):
     jobs = jobs.order_by(Job.created.desc())
+    search = request.args.get("search")
+    if search:
+        # TODO: More advanced search
+        for term in search.split(" "):
+            jobs = jobs.filter(Job.note.ilike("%" + term + "%"))
     jobs, pagination = paginate_query(jobs)
     return render_template("jobs.html",
         jobs=jobs, status_map=status_map, icon_map=icon_map, tags=tags,
         sort_tasks=lambda tasks: sorted(tasks, key=lambda t: t.id),
-        sidebar=sidebar, **pagination, **kwargs
+        sidebar=sidebar, search=search, **pagination, **kwargs
     )
 
 @jobs.route("/")
 def index():
     if not current_user:
         return render_template("index-logged-out.html")
-    return jobs_page(Job.query.filter(Job.owner_id == current_user.id), "index.html")
+    return jobs_page(
+            Job.query.filter(Job.owner_id == current_user.id),
+            "index.html")
 
 @loginrequired
 @jobs.route("/submit")
