@@ -90,6 +90,7 @@ def submit_POST():
     valid = Validation(request)
     _manifest = valid.require("manifest", friendly_name="Manifest")
     max_len = Job.manifest.prop.columns[0].type.length
+    note = valid.optional("note", default="Submitted on the web")
     valid.expect(not _manifest or len(_manifest) < max_len,
             "Manifest must be less than {} bytes".format(max_len),
             field="manifest")
@@ -101,7 +102,7 @@ def submit_POST():
         valid.error(str(ex), field="manifest")
         return render_template("submit.html", **valid.kwargs)
     job = Job(current_user, _manifest)
-    job.note = "Submitted on the web"
+    job.note = note
     db.session.add(job)
     db.session.flush()
     for task in manifest.tasks:

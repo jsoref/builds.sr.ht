@@ -47,6 +47,11 @@
         "success", "failed", "timeout", "cancelled"
       ] %}
       <form style="margin-bottom: 0.5rem" method="POST" action="/submit">
+        <input
+          type="hidden"
+          name="note"
+          value="Resubmission of build #{{job.id}}"
+        />
         <button class="btn btn-primary btn-block">
           Resubmit build
           {{ icon("caret-right") }}
