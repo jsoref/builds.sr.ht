@@ -129,7 +129,7 @@ function complete-build() {
 	for key, value := range ctx.Manifest.Environment {
 		switch v := value.(type) {
 		case string:
-			env += fmt.Sprintf("%s=%s\n", key, v)
+			env += fmt.Sprintf("export %s=%s\n", key, v)
 		case []interface{}:
 			env += key + "=("
 			for i, _item := range v {
