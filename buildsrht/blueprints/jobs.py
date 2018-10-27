@@ -32,7 +32,7 @@ status_map = {
     JobStatus.failed: "text-danger",
     JobStatus.running: "text-info icon-spin",
     JobStatus.timeout: "text-danger",
-    JobStatus.cancelled: "text-danger",
+    JobStatus.cancelled: "text-warning",
     TaskStatus.success: "text-success",
     TaskStatus.failed: "text-danger",
     TaskStatus.running: "text-primary icon-spin",
