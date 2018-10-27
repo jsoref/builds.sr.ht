@@ -33,7 +33,7 @@ modprobe nbd max_part=16
 qemu-nbd --connect=/dev/nbd0 $arch/root.img.qcow2
 trap cleanup EXIT
 
-if [ "$arch" -eq "amd64" ]
+if [ "$arch" = "amd64" ]
 then
 	dd if=/usr/lib/syslinux/mbr/mbr.bin of=/dev/nbd0 bs=1 count=440
 fi
