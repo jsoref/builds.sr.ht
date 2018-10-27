@@ -26,6 +26,7 @@ def tags(tags):
     return results
 
 status_map = {
+    JobStatus.pending: "text-info",
     JobStatus.queued: "text-info",
     JobStatus.success: "text-success",
     JobStatus.failed: "text-danger",
@@ -40,6 +41,7 @@ status_map = {
 }
 
 icon_map = {
+    JobStatus.pending: "clock",
     JobStatus.queued: "clock",
     JobStatus.success: "check",
     JobStatus.failed: "times",
