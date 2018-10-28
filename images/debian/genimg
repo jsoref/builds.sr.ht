@@ -126,4 +126,10 @@ cat >>/mnt/etc/fstab <<EOF
 /dev/vda3 / ext4 rw,relatime,data=ordered 0 0
 EOF
 
+if [ "$arch" != "amd64" ]
+then
+	cp /mnt/boot/vmlinuz $arch/vmlinuz
+	cp /mnt/boot/initrd.img $arch/initrd.img
+fi
+
 sync
