@@ -57,7 +57,7 @@ func (ctx *JobContext) Boot(r *redis.Client) func() {
 
 func (ctx *JobContext) Settle() error {
 	ctx.Log.Println("Waiting for guest to settle")
-	timeout, _ := context.WithTimeout(ctx.Context, 60*time.Second)
+	timeout, _ := context.WithTimeout(ctx.Context, 120*time.Second)
 	done := make(chan error, 1)
 	attempt := 0
 	go func() {
