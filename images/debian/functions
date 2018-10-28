@@ -8,7 +8,7 @@ boot() {
 			qemu=qemu-system-x86_64
 			_boot $(cpu_opts x86_64)
 			;;
-		aarch64)
+		arm64)
 			driveopts="id=root,if=none"
 			_boot \
 				$(cpu_opts aarch64) \

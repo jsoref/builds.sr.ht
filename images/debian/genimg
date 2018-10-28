@@ -5,7 +5,7 @@ case $arch in
 	amd64)
 		iface=ens3
 		;;
-	aarch64)
+	arm64)
 		iface=enp0s1
 		;;
 	*)
