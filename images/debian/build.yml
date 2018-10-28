@@ -3,6 +3,7 @@ packages:
   - debootstrap
   - e2fsprogs
   - qemu-system-x86
+  - qemu-user-static
   - binfmt-support
   - rsync
   - extlinux # temporary
