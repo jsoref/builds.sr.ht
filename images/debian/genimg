@@ -18,6 +18,7 @@ esac
 
 cleanup() {
 	# The order here is important if you don't want to hose your mounts
+	cat /mnt/debootstrap/debootstrap.log || true
 	umount /mnt/dev/pts 2>/dev/null || true
 	umount /mnt/dev/shm 2>/dev/null || true
 	umount /mnt/dev 2>/dev/null || true
