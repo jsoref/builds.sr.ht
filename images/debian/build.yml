@@ -21,7 +21,7 @@ tasks:
       sudo ./genimg $arch
   - sanity-check: |
       cd builds.sr.ht
-      if [ -e /dev/kvm ]
+      if [ -e /dev/kvm ] && [ "$(uname -m)" = "x86_64" ]
       then
           # Debian does not have a kvm group so we just gotta do it this way
           sudo chown build:build /dev/kvm
