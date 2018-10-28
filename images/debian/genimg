@@ -4,9 +4,11 @@ arch=${1:-amd64}
 case $arch in
 	amd64)
 		iface=ens3
+		qarch=x86_64
 		;;
 	arm64)
 		iface=enp0s1
+		qarch=aarch64
 		;;
 	*)
 		echo "unsupported architecture $arch"
@@ -63,7 +65,7 @@ mount --bind /sys /mnt/sys
 
 if [ "$arch" != "amd64" ]
 then
-	cp /usr/bin/qemu-arm64-static /mnt/usr/bin
+	cp /usr/bin/qemu-$qarch-static /mnt/usr/bin
 fi
 
 run_root() {
