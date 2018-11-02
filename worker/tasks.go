@@ -126,11 +126,12 @@ func (ctx *JobContext) SendEnv() error {
 	const home = "/home/build"
 	ctx.Log.Println("Sending build environment")
 	envpath := path.Join(home, ".buildenv")
-	env := `#!/bin/sh
+	env := fmt.Sprintf(`#!/bin/sh
 function complete-build() {
 	exit 255
 }
-`
+export JOB_ID=%d
+`, ctx.Job.Id)
 	for key, value := range ctx.Manifest.Environment {
 		switch v := value.(type) {
 		case string:
