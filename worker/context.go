@@ -13,8 +13,39 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	ms "github.com/mitchellh/mapstructure"
+)
+
+var (
+	buildsStarted = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "buildsrht_builds_started",
+		Help: "The total number of builds which have been started",
+	})
+	successfulBuilds = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "buildsrht_build_successes",
+		Help: "The total number of builds which completed successfully",
+	})
+	failedBuilds = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "buildsrht_build_failed",
+		Help: "The total number of builds which failed",
+	})
+	timeoutBuilds = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "buildsrht_build_timed_out",
+		Help: "The total number of builds which timed out",
+	})
+	cancelledBuilds = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "buildsrht_build_cancelled",
+		Help: "The total number of builds which were cancelled",
+	})
+	buildDuration = promauto.NewHistogram(prometheus.HistogramOpts{
+		Name: "buildsrht_build_duration",
+		Help: "Duration of each build",
+
+		Buckets: []float64{10, 30, 60, 90, 120, 300, 600, 900, 1800},
+	})
 )
 
 type WorkerContext struct {
@@ -42,13 +73,20 @@ func (wctx *WorkerContext) RunBuild(
 		ctx *JobContext
 	)
 
+	timer := prometheus.NewTimer(buildDuration)
+	defer timer.ObserveDuration()
+	buildsStarted.Inc()
+
 	defer func() {
 		if err := recover(); err != nil {
 			log.Printf("run_build panic: %v", err)
 			if job != nil && ctx != nil {
+				failedBuilds.Inc()
 				if ctx.Context.Err() == context.DeadlineExceeded {
+					timeoutBuilds.Inc()
 					job.SetStatus("timeout")
 				} else if ctx.Context.Err() == context.Canceled {
+					cancelledBuilds.Inc()
 					job.SetStatus("cancelled")
 				} else {
 					job.SetStatus("failed")
@@ -60,6 +98,7 @@ func (wctx *WorkerContext) RunBuild(
 			} else if job != nil {
 				job.SetStatus("failed")
 			}
+			failedBuilds.Inc()
 			ctx.ProcessTriggers()
 		}
 	}()
@@ -134,6 +173,8 @@ func (wctx *WorkerContext) RunBuild(
 	job.SetStatus("success")
 	ctx.LogFile.Close()
 	ctx.ProcessTriggers()
+
+	successfulBuilds.Inc()
 }
 
 func (ctx *JobContext) Control(

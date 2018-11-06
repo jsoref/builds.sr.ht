@@ -3,6 +3,8 @@ package main
 import (
 	"net/http"
 	"fmt"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func HttpServer() {
@@ -41,5 +43,6 @@ func HttpServer() {
 			w.Write([]byte("404 not found"))
 		}
 	})
+	http.Handle("/metrics", promhttp.Handler())
 	http.ListenAndServe(":8080", nil)
 }

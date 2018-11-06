@@ -10,7 +10,21 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+
 	ms "github.com/mitchellh/mapstructure"
+)
+
+var (
+	triggersExecuted = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "buildsrht_triggers_executed",
+		Help: "The total number of triggers which have been executed",
+	})
+	webhooksExecuted = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "buildsrht_triggers_webhooks",
+		Help: "The total number of webhooks which have been delivered",
+	})
 )
 
 type Trigger struct {
@@ -44,6 +58,7 @@ func (ctx *JobContext) ProcessTriggers() {
 		if process {
 			if fn, ok := triggers[trigger.Action]; ok {
 				fn(def)
+				triggersExecuted.Inc()
 			} else {
 				ctx.Log.Printf("Unknown trigger action '%s'\n", trigger.Action)
 			}
@@ -123,6 +138,7 @@ func (ctx *JobContext) processWebhook(def map[string]interface{}) {
 		if utf8.Valid(respData) {
 			ctx.Log.Printf("%s\n", string(respData))
 		}
+		webhooksExecuted.Inc()
 	} else {
 		fmt.Printf("Error submitting webhook: %v\n", err)
 	}

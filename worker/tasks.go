@@ -14,6 +14,15 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+)
+
+var (
+	counterStore map[string]prometheus.Counter =
+		make(map[string]prometheus.Counter)
+	histogramStore map[string]prometheus.Histogram =
+		make(map[string]prometheus.Histogram)
 )
 
 func (ctx *JobContext) Boot(r *redis.Client) func() {
@@ -45,6 +54,12 @@ func (ctx *JobContext) Boot(r *redis.Client) func() {
 		panic(errors.Wrap(err, "boot"))
 	}
 
+	registerOrInc(
+		"buildsrht_images_" + strings.Replace(ctx.Manifest.Image, "/", "_", 0),
+		"The total number of builds run with " + ctx.Manifest.Image)
+	registerOrInc("buildsrht_arches_" + arch,
+		"The total number of builds run with " + arch)
+
 	return func() {
 		ctx.Log.Printf("Tearing down build VM")
 		cleanup := ctx.Control(context.TODO(), ctx.Manifest.Image, "cleanup",
@@ -57,6 +72,20 @@ func (ctx *JobContext) Boot(r *redis.Client) func() {
 
 func (ctx *JobContext) Settle() error {
 	ctx.Log.Println("Waiting for guest to settle")
+
+	imageSettleTime := registerHistogram(
+		"buildsrht_settle_image_" + ctx.Manifest.Image,
+		"Time to settle VMs running the " + ctx.Manifest.Image + " image",
+		[]float64{1, 2, 3, 5, 10, 30, 60, 90, 120, 300})
+	archSettleTime := registerHistogram(
+		"buildsrht_settle_arch_" + ctx.Manifest.Image,
+		"Time to settle VMs running the " + ctx.Manifest.Image + " arch",
+		[]float64{1, 2, 3, 5, 10, 30, 60, 90, 120, 300})
+	imageTimer := prometheus.NewTimer(imageSettleTime)
+	defer imageTimer.ObserveDuration()
+	archTimer := prometheus.NewTimer(archSettleTime)
+	defer archTimer.ObserveDuration()
+
 	timeout, _ := context.WithTimeout(ctx.Context, 120*time.Second)
 	done := make(chan error, 1)
 	attempt := 0
@@ -362,4 +391,33 @@ func (ctx *JobContext) RunTasks() error {
 		return err
 	}
 	return nil
+}
+
+func registerOrInc(key, help string) {
+	if counter, ok := counterStore[key]; !ok {
+		counter := promauto.NewCounter(prometheus.CounterOpts{
+			Name: key,
+			Help: help,
+		})
+		counterStore[key] = counter
+		counter.Inc()
+	} else {
+		counter.Inc()
+	}
+}
+
+func registerHistogram(key, help string,
+	buckets []float64) prometheus.Histogram {
+
+	if hist, ok := histogramStore[key]; !ok {
+		hist := promauto.NewHistogram(prometheus.HistogramOpts{
+			Buckets: buckets,
+			Name:    key,
+			Help:    help,
+		})
+		histogramStore[key] = hist
+		return hist
+	} else {
+		return hist
+	}
 }
