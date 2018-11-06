@@ -55,7 +55,7 @@ func (ctx *JobContext) Boot(r *redis.Client) func() {
 	}
 
 	registerOrInc(
-		"buildsrht_images_" + strings.Replace(ctx.Manifest.Image, "/", "_", 0),
+		"buildsrht_images_" + strings.Replace(ctx.Manifest.Image, "/", "_", -1),
 		"The total number of builds run with " + ctx.Manifest.Image)
 	registerOrInc("buildsrht_arches_" + arch,
 		"The total number of builds run with " + arch)
@@ -73,13 +73,17 @@ func (ctx *JobContext) Boot(r *redis.Client) func() {
 func (ctx *JobContext) Settle() error {
 	ctx.Log.Println("Waiting for guest to settle")
 
+	arch := "default"
+	if ctx.Manifest.Arch != nil {
+		arch = *ctx.Manifest.Arch
+	}
 	imageSettleTime := registerHistogram(
-		"buildsrht_settle_image_" + ctx.Manifest.Image,
+		"buildsrht_settle_image_" + strings.Replace(
+			ctx.Manifest.Image, "/", "_", -1),
 		"Time to settle VMs running the " + ctx.Manifest.Image + " image",
 		[]float64{1, 2, 3, 5, 10, 30, 60, 90, 120, 300})
-	archSettleTime := registerHistogram(
-		"buildsrht_settle_arch_" + ctx.Manifest.Image,
-		"Time to settle VMs running the " + ctx.Manifest.Image + " arch",
+	archSettleTime := registerHistogram("buildsrht_settle_arch_" + arch,
+		"Time to settle VMs running the " + arch + " arch",
 		[]float64{1, 2, 3, 5, 10, 30, 60, 90, 120, 300})
 	imageTimer := prometheus.NewTimer(imageSettleTime)
 	defer imageTimer.ObserveDuration()
