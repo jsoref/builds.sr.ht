@@ -19,6 +19,8 @@ type Job struct {
 	Runner     *string
 	Tags       *string
 	Secrets    bool
+
+	Username string
 }
 
 type Secret struct {
@@ -37,17 +39,20 @@ type Secret struct {
 func GetJob(db *sql.DB, id int) (*Job, error) {
 	row := db.QueryRow(`
 		SELECT
-			"id", "created", "updated", "manifest", "owner_id",
-			"job_group_id", "note", "status", "runner", "tags",
-			"secrets"
-		FROM "job" WHERE "id" = $1;
+			"job"."id", "job"."created", "job"."updated", "job"."manifest",
+			"job"."owner_id", "job"."job_group_id", "job"."note",
+			"job"."status", "job"."runner", "job"."tags", "job"."secrets",
+			"user".username
+		FROM "job"
+		JOIN "user" ON "job"."owner_id" = "user"."id"
+		WHERE "job"."id" = $1;
 	`, id)
 	var job Job
 	job.db = db
 	if err := row.Scan(
 		&job.Id, &job.Created, &job.Updated, &job.Manifest, &job.OwnerId,
 		&job.JobGroupId, &job.Note, &job.Status, &job.Runner, &job.Tags,
-		&job.Secrets); err != nil {
+		&job.Secrets, &job.Username); err != nil {
 
 		return nil, err
 	}
@@ -87,6 +92,8 @@ func (job *Job) SetStatus(status string) error {
 		job.Id, status)
 	if err == nil {
 		job.Status = status
+		_, err = job.db.Exec(`UPDATE "job" SET "updated" = $2 WHERE "id" = $1`,
+			job.Id, time.Now().UTC())
 	}
 	return err
 }

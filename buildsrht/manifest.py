@@ -5,6 +5,7 @@ import yaml
 import re
 
 class TriggerAction(Enum):
+    email = 'email'
     webhook = 'webhook'
 
 class TriggerCondition(Enum):

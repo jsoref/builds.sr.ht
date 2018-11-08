@@ -51,10 +51,12 @@ var (
 type WorkerContext struct {
 	Db    *sql.DB
 	Redis *redis.Client
+	Conf  func(section, key string) string
 }
 
 type JobContext struct {
 	Cancel   context.CancelFunc
+	Conf     func(section, key string) string
 	Context  context.Context
 	Db       *sql.DB
 	Job      *Job
@@ -63,6 +65,8 @@ type JobContext struct {
 	Log      *log.Logger
 	Manifest *Manifest
 	Port     int
+
+	ProcessedTriggers bool
 }
 
 func (wctx *WorkerContext) RunBuild(
@@ -98,8 +102,11 @@ func (wctx *WorkerContext) RunBuild(
 			} else if job != nil {
 				job.SetStatus("failed")
 			}
-			failedBuilds.Inc()
+			if ctx.LogFile != nil {
+				ctx.LogFile.Close()
+			}
 			ctx.ProcessTriggers()
+			failedBuilds.Inc()
 		}
 	}()
 
@@ -122,6 +129,7 @@ func (wctx *WorkerContext) RunBuild(
 
 	ctx = &JobContext{
 		Cancel:   cancel,
+		Conf:     wctx.Conf,
 		Context:  goctx,
 		Db:       wctx.Db,
 		Job:      job,
@@ -171,8 +179,8 @@ func (wctx *WorkerContext) RunBuild(
 
 	cancel()
 	job.SetStatus("success")
-	ctx.LogFile.Close()
 	ctx.ProcessTriggers()
+	ctx.LogFile.Close()
 
 	successfulBuilds.Inc()
 }

@@ -62,7 +62,7 @@ func main() {
 		panic(err)
 	}
 
-	ctx := &WorkerContext{db, localRedis}
+	ctx := &WorkerContext{db, localRedis, conf}
 	client.Register("buildsrht.runner.run_build", ctx.RunBuild)
 
 	log.Println("Starting worker...")
