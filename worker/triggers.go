@@ -130,7 +130,7 @@ func (ctx *JobContext) processEmail(def map[string]interface{}) {
 
 {{if .Job.Note}}{{.Job.Note}}
 
-{{end}}{{.Origin}}/~{{.Job.Username}}/{{.Job.Id}}
+{{end}}{{.Origin}}/~{{.Job.Username}}/job/{{.Job.Id}}
 
 {{.Tasks}}`)
 	if err != nil {
