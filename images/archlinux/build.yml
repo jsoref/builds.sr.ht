@@ -12,6 +12,10 @@ environment:
     - deploy@ritsu.runners.sr.ht
 secrets:
   - fa00a8d3-7b63-42d5-8060-3bb31c3e3018
+triggers:
+  - action: email
+    condition: failure
+    to: Drew DeVault <sir@cmpwn.com>
 tasks:
   - genimg: |
       cd builds.sr.ht/images/archlinux
