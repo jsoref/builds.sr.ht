@@ -1,11 +1,15 @@
 {% extends "layout.html" %}
 {% block content %} 
 <section class="row">
-  <div class="col-md-4">
-    <h2>builds</h2>
+  <div class="col-md-6">
     <p>
-      This is the sr.ht build service.
-      <a href="{{ oauth_url }}">Log in</a> to get started.
+      Welcome to {{domain}}. This is a part of the
+      <a href="{{cfg("meta.sr.ht", "origin")}}">
+        {{cfg("sr.ht", "site-name")}} network
+      </a>
+      and provides continuous integration services to members. If you already
+      have an account, you can <a href="{{oauth_url}}">log in here</a>. New
+      users can <a href="{{cfg("meta.sr.ht", "origin")}}">register here</a>.
     </p>
   </div>
 </section>
