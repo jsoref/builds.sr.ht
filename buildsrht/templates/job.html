@@ -47,6 +47,7 @@
         "success", "failed", "timeout", "cancelled"
       ] %}
       <form style="margin-bottom: 0.5rem" method="POST" action="/submit">
+        {{csrf_token()}}
         <input
           type="hidden"
           name="note"
@@ -71,6 +72,7 @@
         current_user.id == job.owner_id and
         job.status.value == "running") %}
       <form method="POST" action="{{ url_for("jobs.cancel", job_id=job.id) }}">
+        {{csrf_token()}}
         <button class="btn btn-danger btn-block">
           Cancel build
         </button>
