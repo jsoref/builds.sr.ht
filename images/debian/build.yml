@@ -42,7 +42,7 @@ tasks:
       do
         # TODO: update kernel
         rsync \
-          --rsh="ssh $sshopts" -rzP root.img.qcow2 \
+          --rsh="ssh $sshopts" -rzP $arch/root.img.qcow2 \
           ${server}:/var/lib/images/debian/$release/$arch/new_root.img.qcow2
         ssh $sshopts $server \
           mv /var/lib/images/debian/$release/$arch/new_root.img.qcow2 \
