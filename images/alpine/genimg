@@ -51,7 +51,7 @@ apk add -U -X http://dl-cdn.alpinelinux.org/alpine/$release/main/ \
 	--root=/mnt \
 	--initdb \
 	acct alpine-base alpine-conf alpine-sdk linux-vanilla git openssh \
-	sudo syslinux tzdata haveged bash
+	sudo syslinux tzdata gnupg haveged bash
 
 mount --bind /dev /mnt/dev
 mount --bind /dev/pts /mnt/dev/pts
