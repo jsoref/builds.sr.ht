@@ -95,6 +95,7 @@ func (wctx *WorkerContext) RunBuild(
 				} else {
 					job.SetStatus("failed")
 				}
+				ctx.ProcessTriggers()
 				if ctx.Log != nil {
 					ctx.Log.Printf("Error: %v\n", err)
 					ctx.LogFile.Close()
@@ -102,10 +103,6 @@ func (wctx *WorkerContext) RunBuild(
 			} else if job != nil {
 				job.SetStatus("failed")
 			}
-			if ctx.LogFile != nil {
-				ctx.LogFile.Close()
-			}
-			ctx.ProcessTriggers()
 			failedBuilds.Inc()
 		}
 	}()

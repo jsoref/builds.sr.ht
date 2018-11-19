@@ -46,7 +46,7 @@ func (ctx *JobContext) ProcessTriggers() {
 		return
 	}
 	ctx.ProcessedTriggers = true
-	ctx.Log.Println("Processing post-build triggers...")
+	ctx.Log.Printf("Processing post-%s triggers...\n", ctx.Job.Status)
 	for _, def := range ctx.Manifest.Triggers {
 		var trigger Trigger
 		ms.Decode(def, &trigger)
