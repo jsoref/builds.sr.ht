@@ -83,13 +83,11 @@ run_root systemctl enable sshd
 
 echo "makeopts=(--skippgpcheck)" >> $root/etc/makepkg.conf
 
-run_normal curl -O https://aur.archlinux.org/cgit/aur.git/snapshot/yay.tar.gz
-run_normal tar xf yay.tar.gz
-run_normal 'cd yay && makepkg -si --noconfirm --skippgpcheck'
-run_normal rm -r yay yay.tar.gz
+run_normal curl -O https://aur.archlinux.org/cgit/aur.git/snapshot/yay-bin.tar.gz
+run_normal tar xf yay-bin.tar.gz
+run_normal 'cd yay-bin && makepkg -si --noconfirm --skippgpcheck'
+run_normal rm -r yay-bin yay-bin.tar.gz
 
 pkill gpg-agent || true
 cp $root/boot/vmlinuz-linux ./$arch/kernel
 cp $root/boot/initramfs-linux.img ./$arch/initrd
-
-run_root pacman --noconfirm -Rsc go
