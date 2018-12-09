@@ -22,8 +22,6 @@ environment:
   repo_server: deploy@mirror.sr.ht
   repo_path: /var/www/mirror.sr.ht/archlinux/sr.ht/
   master: deploy@builds.sr.ht
-  slaves:
-    - deploy@yui.runners.sr.ht
 secrets:
   - fa00a8d3-7b63-42d5-8060-3bb31c3e3018 # ssh deploy key
   - 3e65a1a8-a20f-4f6b-a452-df2ac398bc1e # package signing key
@@ -71,7 +69,3 @@ tasks:
         $repo_path/sr.ht.db.tar.gz \
         $repo_path/${project}-worker-$pkgver-$pkgrel-any.pkg.tar.xz
       ssh $sshopts $master sudo /usr/local/bin/update-srht ${project}
-      for server in "${slaves[@]}"
-      do
-        ssh $sshopts $server sudo /usr/local/bin/update-srht ${project} ${project}-images
-      done
