@@ -4,17 +4,23 @@ set -e
 
 release="${1:-unstable}"
 arch="${2:-x86_64}"
-# TODO: check that the host matches the specified arch
+
+if [ "$(uname -m)" != "${arch}" ]
+then
+	echo "Cross building is not supported" >&2
+	exit 1
+fi
 
 # In a non-nixos system we first need to install nix
-if ! [ -x "$(command -v nix)" ]; then
-  # Prepare /nix
-  sudo mkdir /nix
-  sudo chown build /nix
-  # Install nix
-  curl https://nixos.org/nix/install | sh
-  # Activate nix
-  . ~/.nix-profile/etc/profile.d/nix.sh
+if ! [ -x "$(command -v nix)" ]
+then
+	# Prepare /nix
+	sudo mkdir /nix
+	sudo chown build /nix
+	# Install nix
+	curl https://nixos.org/nix/install | sh
+	# Activate nix
+	. ~/.nix-profile/etc/profile.d/nix.sh
 fi
 
 # Test nix and show the channel

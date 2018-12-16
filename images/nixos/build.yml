@@ -9,15 +9,11 @@ packages:
 sources:
   - https://git.sr.ht/~sircmpwn/builds.sr.ht
 environment:
-  # Can be: "unstable" or "xx.yy" (stable releases such as 18.09)
   release: unstable
-  # Remember to change the builder arch too, since genimg builds an image with
-  # the same arch as the host
-  arch: x86_64 # can be: x86_64 or aarch64
 tasks:
   - genimg: |
       cd builds.sr.ht/images/nixos
-      ./genimg "${release}" "${arch}"
+      ./genimg "${release}" "$(uname -m)"
   - kvm: |
       sudo modprobe kvm-intel
       sleep 1
