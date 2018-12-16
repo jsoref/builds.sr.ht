@@ -143,7 +143,7 @@ cmd_cleanup() {
 			sleep 2
 			kill $cid || true
 			kill -9 $cid || true
-			rm /tmp/qemu-$port.id
+			rm -f /tmp/qemu-$port.id
 		fi
 	fi
 }
