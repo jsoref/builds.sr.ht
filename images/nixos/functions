@@ -20,9 +20,12 @@ install() {
 
 add_repository() {
 	port=$1
+	name=$2
+	src=$3
 	shift 1
-	guest_ssh -p $port build@127.0.0.1 nix-channel --add "$@"
-	guest_ssh -p $port build@127.0.0.1 nix-channel --update
+	guest_ssh -p $port build@127.0.0.1 nix-channel --add "${src}" "${name}"
+	# Only update the selected channel, so we don't perform n^2 updates:
+	guest_ssh -p $port build@127.0.0.1 nix-channel --update "${name}"
 }
 
 sanity_check() {
