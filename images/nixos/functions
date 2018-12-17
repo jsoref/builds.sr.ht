@@ -38,7 +38,7 @@ sanity_check() {
 	echo "Testing networking..."
 	guest_ssh -p 8022 build@127.0.0.1 curl https://example.org
 	echo "Testing nix..."
-	add_repository 8022 https://nixos.org/channels/nixpkgs-unstable
+	add_repository 8022 nixpkgs https://nixos.org/channels/nixpkgs-unstable
 	guest_ssh -p 8022 build@127.0.0.1 nix-shell -p hello --run "hello"
 	echo "Testing git..."
 	guest_ssh -p 8022 build@127.0.0.1 git --version
