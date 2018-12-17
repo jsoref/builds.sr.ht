@@ -38,5 +38,4 @@ nix-build image.nix
 mkdir -p "${release}/${arch}"
 cp "result/root.img.qcow2" "${release}/${arch}/root.img.qcow2"
 chmod u+w "${release}/${arch}/root.img.qcow2"
-ln -s "${PWD}/functions" "${release}/functions"
 
