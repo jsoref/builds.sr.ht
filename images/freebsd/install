@@ -1,17 +1,35 @@
-PARTITIONS=ggate0
-DISTRIBUTIONS="kernel.txz base.txz ports.txz"
-BSDINSTALL_DISTSITE=https://download.freebsd.org/ftp/releases/amd64/11.2-RELEASE/
+PARTITIONS="md0 GPT { 512K freebsd-boot, 2G freebsd-swap, auto freebsd-ufs / }"
+DISTRIBUTIONS="base.txz kernel.txz ports.txz"
 
-#!/bin/sh
-echo 'ifconfig_em0="inet 10.0.2.15 netmask 255.255.255.0"' >>/etc/rc.conf
-echo 'defaultrouter="10.0.2.2"' >>/etc/rc.conf
-pkg install git bash sudo curl
+#!/bin/sh -eux
 
-adduser -u 1000 -w none build
+sysrc ntpd_enable=YES
+sysrc sshd_enable=YES
+sysrc growfs_enable=YES
+sysrc 'ifconfig_em0="inet 10.0.2.15 netmask 255.255.255.0"'
+sysrc 'defaultrouter="10.0.2.2"'
+echo "nameserver 1.1.1.1" >/etc/resolv.conf
+echo 'autoboot_delay="-1"' >>/boot/loader.conf
+
+# Device names at runtime are different from the ones at install time
+sed -e s:/dev/md0:/dev/ada0: -i .orig /etc/fstab
+
+# Run firstboot scripts on next startup
+touch /firstboot
+
+cat <<EOF >>/etc/ssh/sshd_config
+PermitRootLogin yes
+PasswordAuthentication yes
+PermitEmptyPasswords yes
+EOF
+
+ln -sf /usr/share/zoneinfo/UTC /etc/localtime
+
+# TODO: remove bash
+pkg install -y git bash sudo curl
+
+echo "build:1000:::::::/usr/local/bin/bash:" | adduser -w none -f -
 pw groupadd sudo
 pw groupmod sudo -M build
 
-ln -sf /usr/share/zoneinf/UTC /etc/localtime
-echo "nameserver 1.1.1.1" > /etc/resolv.conf
-
-echo "%sudo ALL=(ALL) NOPASSWD: ALL" >> /usr/local/etc/sudoers
+echo "%sudo ALL=(ALL) NOPASSWD: ALL" >>/usr/local/etc/sudoers

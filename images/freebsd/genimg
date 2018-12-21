@@ -1,7 +1,15 @@
 #!/bin/sh -eux
 
+echo "$release" >/dev/null # fail on -u if release unset
+arch="${1:-amd64}"
+
+export DISTRIBUTIONS="kernel.txz base.txz ports.txz"
+export BSDINSTALL_DISTSITE="https://download.freebsd.org/ftp/releases/$arch/$release/"
+export BSDINSTALL_DISTDIR="/usr/freebsd-dist/$arch/$release"
+export BSDINSTALL_LOG="/tmp/bsdinstall.log"
+
 cleanup() {
-	cat /tmp/bsdinstall_log || true
+	cat "$BSDINSTALL_LOG" || true
 	# The order here is important if you don't want to hose your mounts
 	umount -f /mnt/dev/pts 2>/dev/null || true
 	umount -f /mnt/dev/shm 2>/dev/null || true
@@ -11,23 +19,26 @@ cleanup() {
 	umount -f /mnt/sys 2>/dev/null || true
 	umount -f /mnt/boot 2>/dev/null || true
 	umount -f /mnt 2>/dev/null || true 
-	pkill nbd
-	ggatec destroy -f -u 0
+	mdconfig -d -u 0
 }
 
-rm -f /tmp/bsdinstall_log
-qemu-img create -f qcow2 root.img.qcow2 16G
-qemu-nbd root.img.qcow2 &
-nbd-client 127.0.0.1
+# qemu-nbd is not supported, so we just create a raw image and convert it
+rm -f "$BSDINSTALL_LOG"
+qemu-img create -f raw root.img.raw 6G
+mdconfig -a -t vnode -f root.img.raw -u 0
 trap cleanup EXIT
 
-# Download distributions
-# This is _supposed_ to be done automatically, but seems it is not
-BSDINSTALL_DISTSITE=https://download.freebsd.org/ftp/releases/amd64/11.2-RELEASE/
-mkdir -p /usr/freebsd-dist
-for pkg in kernel.txz base.txz ports.txz
-do
-	curl -L "${BSDINSTALL_DISTSITE}${pkg}" > /usr/freebsd-dist/"$pkg"
-done
+export nonInteractive=YES
+mkdir -p "$BSDINSTALL_DISTDIR"
+bsdinstall distfetch
+bsdinstall checksum
+bsdinstall script ./install
 
-bsdinstall script install
+trap - EXIT
+cleanup
+
+qemu-img convert -f raw -O qcow2 root.img.raw root.img.qcow2
+rm root.img.raw
+
+# Filesystem will be enlarged by growfs(7) on next startup
+qemu-img resize root.img.qcow2 16G

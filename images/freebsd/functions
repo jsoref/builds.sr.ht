@@ -1,5 +1,4 @@
 #!/bin/sh
-poweroff_cmd="sudo poweroff"
 default_arch=x86_64
 
 boot() {
@@ -26,7 +25,7 @@ sanity_check() {
     guest_ssh -p 8022 build@localhost sudo ls -a
     echo "Testing networking..."
     guest_ssh -p 8022 build@localhost curl http://example.org
-    echo "Testing apk..."
+    echo "Testing pkg..."
     guest_ssh -p 8022 build@localhost sudo pkg update
     guest_ssh -p 8022 build@localhost sudo pkg upgrade -y
     guest_ssh -p 8022 build@localhost sudo pkg install -y htop
