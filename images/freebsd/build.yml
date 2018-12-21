@@ -1,0 +1,42 @@
+image: freebsd
+packages:
+  - qemu
+  - qemu-utils
+  - rsync
+sources:
+  - https://git.sr.ht/~sircmpwn/builds.sr.ht
+environment:
+  arch: amd64
+  release: latest
+  slaves:
+    - deploy@mio.runners.sr.ht
+    - deploy@yui.runners.sr.ht
+secrets:
+  - fa00a8d3-7b63-42d5-8060-3bb31c3e3018
+triggers:
+  - action: email
+    condition: failure
+    to: Drew DeVault <sir@cmpwn.com>
+tasks:
+  - genimg: |
+      cd builds.sr.ht/images/freebsd/$release
+      sudo ./genimg $arch
+  - kvm: |
+      sudo modprobe kvm-intel
+      sleep 1
+      sudo chown build:build /dev/kvm
+  - sanity-check: |
+      cd builds.sr.ht
+      MEMORY=1024 ./images/control freebsd/$release sanity-check
+#  - deploy: |
+#      cd builds.sr.ht/images/alpine/$release
+#      sshopts="-o StrictHostKeyChecking=no"
+#      for server in "${slaves[@]}"
+#      do
+#        rsync \
+#          --rsh="ssh $sshopts" -rzP $arch/root.img.qcow2 \
+#          ${server}:/var/lib/images/alpine/$release/$arch/new_root.img.qcow2
+#        ssh $sshopts $server \
+#          mv /var/lib/images/alpine/$release/$arch/new_root.img.qcow2 \
+#             /var/lib/images/alpine/$release/$arch/root.img.qcow2
+#      done

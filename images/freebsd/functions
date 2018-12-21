@@ -2,12 +2,12 @@
 default_arch=x86_64
 
 boot() {
-	if [ "$arch" != "x86_64" ]
+	if [ "$arch" != "amd64" ]
 	then
 		echo "Unsupported architecture $arch" >&2
 		exit 1
 	fi
-	_boot $(cpu_opts x86_64)
+	_boot $(cpu_opts amd64)
 }
 
 install() {
@@ -18,7 +18,7 @@ install() {
 }
 
 sanity_check() {
-    boot 8022 &
+    boot amd64 8022 &
     qemu=$!
     sleep 20
     echo "Testing sudo..."
