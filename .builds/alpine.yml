@@ -53,12 +53,14 @@ tasks:
       cd ~/${project}
       git describe --exact-match HEAD || complete-build
   - publish: |
-      cd ~/packages/sr.ht/x86_64
+      cd ~/packages/sr.ht
       sshopts="-o StrictHostKeyChecking=no"
       set -u
       ssh $sshopts $repo_server rm -f $repo_path/${project}'*.apk'
       rsync --blocking-io \
-        -rPe "ssh $sshopts" *.apk $repo_server:$repo_path/
+        -rPe "ssh $sshopts" x86_64/*.apk $repo_server:$repo_path/
+      rsync --blocking-io \
+        -rPe "ssh $sshopts" any/*.apk $repo_server:$repo_path/
       ssh $sshopts $repo_server find $repo_path -type f -name '*.apk' -print0 |
         ssh $sshopts $repo_server xargs -0 apk index \
           --rewrite-arch x86_64 \
