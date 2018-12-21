@@ -1,1 +1,3 @@
-../genimg
+#!/bin/sh
+export release=18.09
+exec ../genimg "$@"
