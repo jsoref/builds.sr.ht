@@ -398,9 +398,11 @@ func (ctx *JobContext) RunTasks() error {
 }
 
 func registerOrInc(key, help string) {
+	name := strings.Replace(key, "/", "_", -1)
+	name = strings.Replace(name, ".", "_", -1)
 	if counter, ok := counterStore[key]; !ok {
 		counter := promauto.NewCounter(prometheus.CounterOpts{
-			Name: key,
+			Name: name,
 			Help: help,
 		})
 		counterStore[key] = counter
