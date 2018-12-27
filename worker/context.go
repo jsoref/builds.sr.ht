@@ -73,6 +73,7 @@ func (wctx *WorkerContext) RunBuild(
 	job_id int, _manifest map[string]interface{}) {
 
 	var (
+		err error
 		job *Job
 		ctx *JobContext
 	)
@@ -80,6 +81,20 @@ func (wctx *WorkerContext) RunBuild(
 	timer := prometheus.NewTimer(buildDuration)
 	defer timer.ObserveDuration()
 	buildsStarted.Inc()
+
+	var manifest Manifest
+	ms.Decode(_manifest, &manifest)
+
+	job, err = GetJob(wctx.Db, job_id)
+	if err != nil {
+		panic(errors.Wrap(err, "GetJob"))
+	}
+	if err = job.SetRunner(conf("builds.sr.ht::worker", "name")); err != nil {
+		panic(errors.Wrap(err, "job.SetRunner"))
+	}
+	if err = job.SetStatus("running"); err != nil {
+		panic(errors.Wrap(err, "job.SetStatus"))
+	}
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -107,20 +122,6 @@ func (wctx *WorkerContext) RunBuild(
 		}
 	}()
 
-	var manifest Manifest
-	ms.Decode(_manifest, &manifest)
-
-	job, err := GetJob(wctx.Db, job_id)
-	if err != nil {
-		panic(errors.Wrap(err, "GetJob"))
-	}
-	if err := job.SetRunner(conf("builds.sr.ht::worker", "name")); err != nil {
-		panic(errors.Wrap(err, "job.SetRunner"))
-	}
-	if err := job.SetStatus("running"); err != nil {
-		panic(errors.Wrap(err, "job.SetStatus"))
-	}
-
 	timeout, _ := time.ParseDuration(conf("builds.sr.ht::worker", "timeout"))
 	goctx, cancel := context.WithTimeout(context.Background(), timeout)
 
@@ -139,7 +140,7 @@ func (wctx *WorkerContext) RunBuild(
 
 	ctx.LogDir = path.Join(
 		conf("builds.sr.ht::worker", "buildlogs"), strconv.Itoa(job_id))
-	if err := os.MkdirAll(ctx.LogDir, 0755); err != nil {
+	if err = os.MkdirAll(ctx.LogDir, 0755); err != nil {
 		panic(errors.Wrap(err, "Make log directory"))
 	}
 	if ctx.LogFile, err = os.Create(path.Join(ctx.LogDir, "log")); err != nil {
@@ -148,8 +149,6 @@ func (wctx *WorkerContext) RunBuild(
 
 	ctx.Log = log.New(io.MultiWriter(ctx.LogFile, os.Stdout),
 		"[#"+strconv.Itoa(job.Id)+"] ", log.LstdFlags)
-
-	defer ctx.ProcessTriggers()
 
 	cleanup := ctx.Boot(wctx.Redis)
 	defer cleanup()
@@ -165,7 +164,7 @@ func (wctx *WorkerContext) RunBuild(
 		ctx.RunTasks,
 	}
 	for _, task := range tasks {
-		if err := task(); err != nil {
+		if err = task(); err != nil {
 			panic(err)
 		}
 	}
