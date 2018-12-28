@@ -5,7 +5,7 @@ from srht.database import DbSession
 
 db = DbSession(cfg("builds.sr.ht", "connection-string"))
 
-from buildsrht.types import User, JobStatus
+from buildsrht.types import User, JobStatus, UserType
 
 db.init()
 
@@ -41,8 +41,9 @@ class BuildApp(SrhtFlask):
         if not user:
             user = User()
             db.session.add(user)
-        user.username = profile.get("name")
-        user.email = profile.get("email")
+        user.username = profile["name"]
+        user.email = profile["email"]
+        user.user_type = UserType(profile["user_type"])
         user.oauth_token = exchange["token"]
         user.oauth_token_expires = exchange["expires"]
         user.oauth_token_scopes = scopes

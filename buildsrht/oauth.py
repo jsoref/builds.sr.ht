@@ -3,7 +3,7 @@ from srht.oauth import OAuthScope, AbstractOAuthService, set_base_service
 from srht.oauth import delegated_exchange
 from srht.flask import DATE_FORMAT
 from srht.database import db
-from buildsrht.types import OAuthToken, User
+from buildsrht.types import OAuthToken, User, UserType
 from datetime import datetime
 
 client_id = cfg("builds.sr.ht", "oauth-client-id")
@@ -29,8 +29,9 @@ class BuildOAuthService(AbstractOAuthService):
         user = User.query.filter(User.username == profile["name"]).one_or_none()
         if not user:
             user = User()
-            user.username = profile.get("name")
-            user.email = profile.get("email")
+            user.username = profile["name"]
+            user.email = profile["email"]
+            user.user_type = UserType(profile["user_type"])
             user.oauth_token = token
             user.oauth_token_expires = expires
             db.session.add(user)

@@ -1,4 +1,4 @@
-from .user import User
+from .user import User, UserType
 from .job import Job, JobStatus
 from .task import Task, TaskStatus
 from .job_group import JobGroup
