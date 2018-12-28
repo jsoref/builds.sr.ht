@@ -1,6 +1,6 @@
 from srht.config import cfg
 from srht.oauth import OAuthScope, AbstractOAuthService, set_base_service
-from srht.oauth import meta_delegated_exchange
+from srht.oauth import delegated_exchange
 from srht.flask import DATE_FORMAT
 from srht.database import db
 from buildsrht.types import OAuthToken, User
@@ -22,16 +22,15 @@ class BuildOAuthService(AbstractOAuthService):
         ).first()
         if oauth_token:
             return oauth_token
-        _token, profile = meta_delegated_exchange(
-                token, client_id, client_secret, revocation_url)
+        _token, profile = delegated_exchange(token,
+                client_id, client_secret, revocation_url)
         expires = datetime.strptime(_token["expires"], DATE_FORMAT)
         scopes = set(OAuthScope(s) for s in _token["scopes"].split(","))
-        user = User.query.filter(User.username == profile["username"]).first()
+        user = User.query.filter(User.username == profile["name"]).one_or_none()
         if not user:
             user = User()
-            user.username = profile.get("username")
+            user.username = profile.get("name")
             user.email = profile.get("email")
-            user.paid = profile.get("paid")
             user.oauth_token = token
             user.oauth_token_expires = expires
             db.session.add(user)
