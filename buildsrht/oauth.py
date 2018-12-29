@@ -1,6 +1,5 @@
 from srht.config import cfg
-from srht.oauth import OAuthScope, AbstractOAuthService, set_base_service
-from srht.oauth import delegated_exchange
+from srht.oauth import OAuthScope, AbstractOAuthService, DelegatedScope
 from srht.flask import DATE_FORMAT
 from srht.database import db
 from buildsrht.types import OAuthToken, User, UserType
@@ -11,8 +10,10 @@ client_secret = cfg("builds.sr.ht", "oauth-client-secret")
 revocation_url = "{}/oauth/revoke".format(cfg("builds.sr.ht", "origin"))
 
 class BuildOAuthService(AbstractOAuthService):
-    def get_client_id(self):
-        return client_id
+    def __init__(self):
+        super().__init__(client_id, client_secret, delegated_scopes=[
+            DelegatedScope("jobs", "build jobs", True),
+        ])
 
     def get_token(self, token, token_hash, scopes):
         now = datetime.utcnow()
@@ -22,8 +23,7 @@ class BuildOAuthService(AbstractOAuthService):
         ).first()
         if oauth_token:
             return oauth_token
-        _token, profile = delegated_exchange(token,
-                client_id, client_secret, revocation_url)
+        _token, profile = self.exchange(token, revocation_url)
         expires = datetime.strptime(_token["expires"], DATE_FORMAT)
         scopes = set(OAuthScope(s) for s in _token["scopes"].split(","))
         user = User.query.filter(User.username == profile["name"]).one_or_none()
@@ -42,4 +42,16 @@ class BuildOAuthService(AbstractOAuthService):
         db.session.commit()
         return oauth_token
 
-set_base_service(BuildOAuthService())
+    def lookup_or_register(self, exchange, profile, scopes):
+        user = User.query.filter(User.username == profile["name"]).one_or_none()
+        if not user:
+            user = User()
+            db.session.add(user)
+        user.username = profile["name"]
+        user.email = profile["email"]
+        user.user_type = UserType(profile["user_type"])
+        user.oauth_token = exchange["token"]
+        user.oauth_token_expires = exchange["expires"]
+        user.oauth_token_scopes = scopes
+        db.session.commit()
+        return user

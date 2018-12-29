@@ -9,11 +9,12 @@ from buildsrht.types import User, JobStatus, UserType
 
 db.init()
 
-import buildsrht.oauth
+from buildsrht.oauth import BuildOAuthService
 
 class BuildApp(SrhtFlask):
     def __init__(self):
-        super().__init__("builds.sr.ht", __name__)
+        super().__init__("builds.sr.ht", __name__,
+                oauth_service=BuildOAuthService())
 
         from buildsrht.blueprints.api import api
         from buildsrht.blueprints.jobs import jobs
@@ -23,10 +24,6 @@ class BuildApp(SrhtFlask):
         self.register_blueprint(jobs)
         self.register_blueprint(secrets)
 
-        meta_client_id = cfg("builds.sr.ht", "oauth-client-id")
-        meta_client_secret = cfg("builds.sr.ht", "oauth-client-secret")
-        self.configure_meta_auth(meta_client_id, meta_client_secret)
-
         @self.context_processor
         def inject():
             return { "JobStatus": JobStatus }
@@ -35,19 +32,5 @@ class BuildApp(SrhtFlask):
         def load_user(username):
             # TODO: Switch to a session token
             return User.query.filter(User.username == username).one_or_none()
-
-    def lookup_or_register(self, exchange, profile, scopes):
-        user = User.query.filter(User.username == profile["name"]).one_or_none()
-        if not user:
-            user = User()
-            db.session.add(user)
-        user.username = profile["name"]
-        user.email = profile["email"]
-        user.user_type = UserType(profile["user_type"])
-        user.oauth_token = exchange["token"]
-        user.oauth_token_expires = exchange["expires"]
-        user.oauth_token_scopes = scopes
-        db.session.commit()
-        return user
 
 app = BuildApp()
