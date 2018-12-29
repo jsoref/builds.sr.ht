@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, Response, abort
 from flask_login import current_user
 from srht.database import db
 from srht.validation import Validation
-from srht.oauth import oauth
+from srht.oauth import oauth, current_token
 from buildsrht.runner import queue_build
 from buildsrht.types import Job, JobStatus, Task
 from buildsrht.types import Trigger, TriggerType, TriggerCondition
@@ -16,7 +16,7 @@ api = Blueprint('api', __name__)
 
 @api.route("/api/jobs", methods=["POST"])
 @oauth("jobs:write")
-def jobs_POST(token):
+def jobs_POST():
     valid = Validation(request)
     _manifest = valid.require("manifest", cls=str)
     max_len = Job.manifest.prop.columns[0].type.length
@@ -25,7 +25,7 @@ def jobs_POST(token):
             field="manifest")
     note = valid.optional("note", cls=str)
     read = valid.optional("access:read", ["*"], list)
-    write = valid.optional("access:write", [token.user.username], list)
+    write = valid.optional("access:write", [current_token.user.username], list)
     secrets = valid.optional("secrets", cls=bool, default=True)
     tags = valid.optional("tags", [], list)
     valid.expect(all(re.match(r"^[a-z0-9_.-]+$", tag) for tag in tags),
@@ -41,7 +41,7 @@ def jobs_POST(token):
         valid.error(str(ex))
         return valid.response
     # TODO: access controls
-    job = Job(token.user, _manifest)
+    job = Job(current_token.user, _manifest)
     job.note = note
     if tags:
         job.tags = "/".join(tags)
@@ -75,7 +75,7 @@ def jobs_POST(token):
 
 @api.route("/api/jobs/<job_id>")
 @oauth("jobs:read")
-def jobs_by_id_GET(token, job_id):
+def jobs_by_id_GET(job_id):
     job = Job.query.filter(Job.id == job_id).first()
     if not job:
         abort(404)
@@ -92,11 +92,11 @@ def jobs_by_id_manifest_GET(job_id):
 
 @api.route("/api/jobs/<job_id>/start", methods=["POST"])
 @oauth("jobs:write")
-def jobs_by_id_start_POST(token, job_id):
+def jobs_by_id_start_POST(job_id):
     job = Job.query.filter(Job.id == job_id).first()
     if not job:
         abort(404)
-    if job.owner_id != token.user_id:
+    if job.owner_id != current_token.user_id:
         abort(401) # TODO: ACLs
     if job.status != JobStatus.pending:
         reason_map = {
