@@ -1,13 +1,11 @@
+from buildsrht.types import JobStatus, OAuthToken, User
 from flask import session
-from srht.flask import SrhtFlask
 from srht.config import cfg
 from srht.database import DbSession
+from srht.flask import SrhtFlask
 from srht.oauth import AbstractOAuthService, DelegatedScope
 
 db = DbSession(cfg("builds.sr.ht", "connection-string"))
-
-from buildsrht.types import JobStatus, OAuthToken, User
-
 db.init()
 
 client_id = cfg("builds.sr.ht", "oauth-client-id")
