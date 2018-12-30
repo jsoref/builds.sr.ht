@@ -2,12 +2,10 @@ from srht.database import Base
 from srht.oauth import ExternalUserMixin, ExternalOAuthTokenMixin
 
 class User(Base, ExternalUserMixin):
-    def __init__(*args, **kwargs):
-        ExternalUserMixin.__init__(*args, **kwargs)
+    pass
 
 class OAuthToken(Base, ExternalOAuthTokenMixin):
-    def __init__(*args, **kwargs):
-        ExternalOAuthTokenMixin.__init__(*args, **kwargs)
+    pass
 
 from .job import Job, JobStatus
 from .task import Task, TaskStatus
