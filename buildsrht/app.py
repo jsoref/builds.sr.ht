@@ -2,14 +2,22 @@ from flask import session
 from srht.flask import SrhtFlask
 from srht.config import cfg
 from srht.database import DbSession
+from srht.oauth import AbstractOAuthService, DelegatedScope
 
 db = DbSession(cfg("builds.sr.ht", "connection-string"))
 
-from buildsrht.types import User, JobStatus, UserType
+from buildsrht.types import JobStatus, OAuthToken, User
 
 db.init()
 
-from buildsrht.oauth import BuildOAuthService
+client_id = cfg("builds.sr.ht", "oauth-client-id")
+client_secret = cfg("builds.sr.ht", "oauth-client-secret")
+
+class BuildOAuthService(AbstractOAuthService):
+    def __init__(self):
+        super().__init__(client_id, client_secret, delegated_scopes=[
+            DelegatedScope("jobs", "build jobs", True),
+        ], user_class=User, token_class=OAuthToken)
 
 class BuildApp(SrhtFlask):
     def __init__(self):
@@ -27,10 +35,5 @@ class BuildApp(SrhtFlask):
         @self.context_processor
         def inject():
             return { "JobStatus": JobStatus }
-
-        @self.login_manager.user_loader
-        def load_user(username):
-            # TODO: Switch to a session token
-            return User.query.filter(User.username == username).one_or_none()
 
 app = BuildApp()
