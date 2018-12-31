@@ -39,5 +39,8 @@ setup(
           'static/*',
           'static/icons/*',
       ]
-  }
+  },
+  scripts = [
+      'buildsrht-migrate'
+  ]
 )
