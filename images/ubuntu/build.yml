@@ -11,7 +11,7 @@ sources:
   - https://git.sr.ht/~sircmpwn/builds.sr.ht
 environment:
   arch: amd64
-  release: stretch
+  release: bionic
   slaves:
     - deploy@mio.runners.sr.ht
     - deploy@yui.runners.sr.ht
@@ -24,28 +24,28 @@ triggers:
 tasks:
   - genimg: |
       cd builds.sr.ht
-      cd images/debian/$release
+      cd images/ubuntu/$release
       sudo ./genimg $arch
   - sanity-check: |
       cd builds.sr.ht
       if [ -e /dev/kvm ] && [ "$(uname -m)" = "x86_64" ]
       then
-          # Debian does not have a kvm group so we just gotta do it this way
+          # Ubuntu does not have a kvm group so we just gotta do it this way
           sudo chown build:build /dev/kvm
-          MEMORY=1024 ./images/control debian/$release sanity-check
+          MEMORY=1024 ./images/control ubuntu/$release sanity-check
       else
           echo "KVM unavailable, skipping sanity check"
       fi
   - deploy: |
-      cd builds.sr.ht/images/debian/$release
+      cd builds.sr.ht/images/ubuntu/$release
       sshopts="-o StrictHostKeyChecking=no"
       for server in "${slaves[@]}"
       do
         # TODO: update kernel
         rsync \
           --rsh="ssh $sshopts" -rzP $arch/root.img.qcow2 \
-          ${server}:/var/lib/images/debian/$release/$arch/new_root.img.qcow2
+          ${server}:/var/lib/images/ubuntu/$release/$arch/new_root.img.qcow2
         ssh $sshopts $server \
-          mv /var/lib/images/debian/$release/$arch/new_root.img.qcow2 \
-             /var/lib/images/debian/$release/$arch/root.img.qcow2
+          mv /var/lib/images/ubuntu/$release/$arch/new_root.img.qcow2 \
+             /var/lib/images/ubuntu/$release/$arch/root.img.qcow2
       done
