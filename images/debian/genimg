@@ -25,6 +25,7 @@ cleanup() {
 	umount /mnt/proc 2>/dev/null || true
 	umount /mnt/run 2>/dev/null || true
 	umount /mnt/sys 2>/dev/null || true
+	umount /mnt/boot 2>/dev/null || true 
 	umount /mnt 2>/dev/null || true 
 	qemu-nbd --disconnect /dev/nbd0 || true
 }
