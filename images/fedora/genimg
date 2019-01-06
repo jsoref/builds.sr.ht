@@ -19,7 +19,8 @@ cleanup() {
 	umount /mnt/proc 2>/dev/null || true
 	umount /mnt/run 2>/dev/null || true
 	umount /mnt/sys 2>/dev/null || true
-	umount /mnt 2>/dev/null || true 
+	umount /mnt/boot 2>/dev/null || true
+	umount /mnt 2>/dev/null || true
 	qemu-nbd --disconnect /dev/nbd0 || true
 }
 
@@ -64,11 +65,6 @@ mount --bind /proc /mnt/proc
 mount --bind /run /mnt/run
 mount --bind /sys /mnt/sys
 
-if [ "$arch" != "amd64" ]
-then
-	cp /usr/bin/qemu-$qarch-static /mnt/usr/bin
-fi
-
 run_root() {
 	chroot /mnt /usr/bin/env \
 		PATH=/sbin:/usr/sbin:/bin:/usr/bin \
@@ -85,7 +81,7 @@ Address=10.0.2.15/24
 Gateway=10.0.2.2
 EOF
 echo build > /mnt/etc/hostname
-cat > /mnt/etc/hosts <<EOF 
+cat > /mnt/etc/hosts <<EOF
 127.0.0.1 localhost
 127.0.0.1 build
 EOF
