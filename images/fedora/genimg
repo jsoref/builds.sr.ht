@@ -72,9 +72,9 @@ run_root() {
 }
 
 echo 'nameserver 8.8.8.8' >> /mnt/etc/resolv.conf
-cat >/mnt/etc/systemd/network/25-$interface.network <<EOF
+cat >/mnt/etc/systemd/network/25-$iface.network <<EOF
 [Match]
-Name=$interface
+Name=$iface
 
 [Network]
 Address=10.0.2.15/24
