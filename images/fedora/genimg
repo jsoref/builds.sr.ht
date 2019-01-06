@@ -91,7 +91,7 @@ run_root systemctl enable systemd-timesyncd.service
 
 run_root dnf -y install kernel
 run_root dnf -y install @development-tools git openssh sudo \
-	syslinux syslinux-extlinux
+	syslinux syslinux-extlinux libselinux-utils
 
 if [ "$arch" = "x86_64" ]
 then
