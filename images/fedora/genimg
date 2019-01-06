@@ -91,7 +91,7 @@ run_root systemctl enable systemd-timesyncd.service
 
 run_root dnf -y install kernel
 run_root dnf -y install @development-tools git openssh sudo \
-	syslinux syslinux-extlinux libselinux-utils
+	syslinux syslinux-extlinux
 
 if [ "$arch" = "x86_64" ]
 then
@@ -103,7 +103,6 @@ run_root systemctl enable systemd-timesyncd.service
 
 run_root groupadd sudo
 run_root useradd -mG sudo build
-run_root setenforce 0
 run_root passwd -d build
 echo '%sudo ALL=(ALL) NOPASSWD: ALL' >>/mnt/etc/sudoers
 
