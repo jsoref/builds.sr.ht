@@ -101,6 +101,7 @@ fi
 run_root ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 run_root systemctl enable systemd-timesyncd.service
 
+run_root groupadd sudo
 run_root useradd -mG sudo build
 run_root passwd -d build
 echo '%sudo ALL=(ALL) NOPASSWD: ALL' >>/mnt/etc/sudoers
