@@ -108,7 +108,7 @@ echo '%sudo ALL=(ALL) NOPASSWD: ALL' >>/mnt/etc/sudoers
 
 echo "PermitEmptyPasswords yes" >>/mnt/etc/ssh/sshd_config
 echo ssh >>/mnt/etc/securetty
-run_root systemctl enable ssh
+run_root systemctl enable sshd
 
 linuxver=$(ls /mnt/boot | grep "vmlinuz.*.$arch" | cut -d- -f2-)
 
