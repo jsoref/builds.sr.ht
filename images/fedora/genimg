@@ -118,7 +118,7 @@ cat >/mnt/boot/extlinux.conf <<EOF
 default fedora
 label fedora
 	linux vmlinuz-$linuxver
-	initrd initrd.img-$linuxver
+	initrd initramfs-$linuxver.img
 	append root=/dev/vda3 rw quiet
 EOF
 
