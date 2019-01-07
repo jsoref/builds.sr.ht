@@ -37,9 +37,9 @@ sanity_check() {
 	guest_ssh -p 8022 build@localhost sudo ls -a
 	echo "Testing networking..."
 	guest_ssh -p 8022 build@localhost curl https://example.org
-	echo "Testing apk..."
+	echo "Testing dnf..."
 	guest_ssh -p 8022 build@localhost sudo dnf -y upgrade
-	guest_ssh -p 8022 build@localhost sudo dnf -y add htop
+	guest_ssh -p 8022 build@localhost sudo dnf -y install htop
 	echo "Testing git..."
 	guest_ssh -p 8022 build@localhost git --version
 	echo "Everything works!"
