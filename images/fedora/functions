@@ -14,8 +14,8 @@ boot() {
 install() {
 	port=$1
 	shift 1
-	guest_ssh -p $port build@localhost sudo dnf upgrade
-	guest_ssh -p $port build@localhost sudo dnf install "$@"
+	guest_ssh -p $port build@localhost sudo dnf -y upgrade
+	guest_ssh -p $port build@localhost sudo dnf -y install "$@"
 }
 
 add_repository() {
@@ -38,8 +38,8 @@ sanity_check() {
 	echo "Testing networking..."
 	guest_ssh -p 8022 build@localhost curl https://example.org
 	echo "Testing apk..."
-	guest_ssh -p 8022 build@localhost sudo dnf upgrade
-	guest_ssh -p 8022 build@localhost sudo dnf add htop
+	guest_ssh -p 8022 build@localhost sudo dnf -y upgrade
+	guest_ssh -p 8022 build@localhost sudo dnf -y add htop
 	echo "Testing git..."
 	guest_ssh -p 8022 build@localhost git --version
 	echo "Everything works!"
