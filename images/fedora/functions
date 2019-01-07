@@ -19,8 +19,13 @@ install() {
 }
 
 add_repository() {
-	echo "TODO: add repos"
-	exit 1
+	port=$1
+	name=$2
+	url=$3
+	guest_ssh -p $port build@localhost sudo dnf config-manager \
+		--add-repo "$url"
+	guest_ssh -p $port build@localhost sudo dnf config-manager \
+		--set-enabled "$name"
 }
 
 sanity_check() {
