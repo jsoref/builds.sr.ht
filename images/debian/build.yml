@@ -41,7 +41,6 @@ tasks:
       sshopts="-o StrictHostKeyChecking=no"
       for server in "${slaves[@]}"
       do
-        # TODO: update kernel
         rsync \
           --rsh="ssh $sshopts" -rzP $arch/root.img.qcow2 \
           ${server}:/var/lib/images/debian/$release/$arch/new_root.img.qcow2
