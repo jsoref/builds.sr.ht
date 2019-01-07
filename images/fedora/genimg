@@ -90,7 +90,8 @@ run_root dnf -y install @development-tools git openssh-server sudo \
 
 if [ "$arch" = "x86_64" ]
 then
-	run_root sudo extlinux -i /boot
+	run_root extlinux -i /boot
+	run_root dd if=/usr/share/syslinux/mbr.bin of=/dev/nbd0 bs=1 count=440
 fi
 
 run_root ln -sf /usr/share/zoneinfo/UTC /etc/localtime
