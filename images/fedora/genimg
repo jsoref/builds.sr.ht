@@ -45,11 +45,17 @@ mount /dev/nbd0p3 /mnt
 mkdir /mnt/boot
 mount /dev/nbd0p1 /mnt/boot
 
+repo=fedora
+if [ "$release" = "rawhide" ]
+then
+	repo=rawhide
+fi
+
 dnf -y \
 	--releasever=$release \
 	--installroot=/mnt \
 	--disablerepo='*' \
-	--enablerepo=fedora \
+	--enablerepo="$rawhide" \
 	--enablerepo=updates install \
 	systemd passwd dnf fedora-release
 
