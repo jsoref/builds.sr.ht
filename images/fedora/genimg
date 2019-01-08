@@ -55,7 +55,7 @@ dnf -y \
 	--releasever=$release \
 	--installroot=/mnt \
 	--disablerepo='*' \
-	--enablerepo="$rawhide" \
+	--enablerepo="$repo" \
 	--enablerepo=updates install \
 	systemd passwd dnf fedora-release
 
