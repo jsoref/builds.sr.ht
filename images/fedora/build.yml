@@ -2,6 +2,7 @@ image: fedora/29
 packages:
   - e2fsprogs
   - qemu-system-x86
+  - qemu-img
   - rsync
 sources:
   - https://git.sr.ht/~sircmpwn/builds.sr.ht
