@@ -60,17 +60,7 @@ def secrets_POST():
 
     secret = Secret(current_user, secret_type)
 
-    if secret_type == SecretType.ssh_key:
-        try:
-            serialization.load_pem_private_key(
-                    _secret,
-                    password=None,
-                    backend=default_backend())
-        except Exception as ex:
-            print(ex)
-            valid.error("Unable to load SSH key. Does it have a password?",
-                    field="secret")
-    elif secret_type == SecretType.pgp_key:
+    if secret_type == SecretType.pgp_key:
         try:
             key, _ = pgpy.PGPKey.from_blob(_secret)
             if key.is_protected:
