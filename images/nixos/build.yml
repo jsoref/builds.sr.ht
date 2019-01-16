@@ -21,13 +21,13 @@ triggers:
     condition: failure
     to: Drew DeVault <sir@cmpwn.com>
 tasks:
-  - genimg: |
-      cd builds.sr.ht/images/nixos
-      ./genimg "${release}" "$(uname -m)"
   - kvm: |
       sudo modprobe kvm-intel
       sleep 1
       sudo chown build:build /dev/kvm
+  - genimg: |
+      cd builds.sr.ht/images/nixos
+      ./genimg "${release}" "$(uname -m)"
   - sanity-check: |
       cd builds.sr.ht
       MEMORY=1024 ./images/control "nixos/${release}" sanity-check
