@@ -48,6 +48,7 @@ func (ctx *JobContext) Boot(r *redis.Client) func() {
 
 	boot := ctx.Control(ctx.Context,
 		ctx.Manifest.Image, "boot", arch, strconv.Itoa(ctx.Port))
+	boot.Env = append(os.Environ(), fmt.Sprintf("BUILD_JOB_ID=%d", ctx.Job.Id))
 	boot.Stdout = ctx.LogFile
 	boot.Stderr = ctx.LogFile
 	if err := boot.Run(); err != nil {

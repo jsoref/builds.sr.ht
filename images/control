@@ -44,12 +44,13 @@ _docker_boot() {
 		--mount type=tmpfs,destination=/var/tmp \
 		--device /dev/kvm \
 		-p 127.0.0.1:$port:$port \
+		--name "builds_job_${BUILD_JOB_ID:-unknown_$(date +"%s")}" \
 		qemu /bin/${qemu:-qemu-system-$arch} \
 		-m ${MEMORY:-2048} \
 		-net nic,model=virtio -net user,hostfwd=tcp::$port-:22 \
 		-nographic \
 		-device virtio-rng-pci \
-		-device virtio-ballooon,automatic=true \
+		-device virtio-balloon \
 		-drive file="$wd/$arch/root.img.qcow2",media=disk,snapshot=on,${driveopts:-if=virtio} \
 		"$@" > /tmp/docker-$port.id
 }
@@ -61,7 +62,7 @@ _qemu_boot() {
 		-net nic,model=virtio -net user,hostfwd=tcp::$port-:22 \
 		-nographic \
 		-device virtio-rng-pci \
-		-device virtio-ballooon,automatic=true \
+		-device virtio-balloon \
 		-drive file="$wd/$arch/root.img.qcow2",media=disk,snapshot=on,${driveopts:-if=virtio} \
 		"$@" >/dev/null 2>&1 </dev/null &
 }
