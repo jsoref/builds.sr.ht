@@ -49,6 +49,7 @@ _docker_boot() {
 		-net nic,model=virtio -net user,hostfwd=tcp::$port-:22 \
 		-nographic \
 		-device virtio-rng-pci \
+		-device virtio-ballooon,automatic=true \
 		-drive file="$wd/$arch/root.img.qcow2",media=disk,snapshot=on,${driveopts:-if=virtio} \
 		"$@" > /tmp/docker-$port.id
 }
@@ -60,6 +61,7 @@ _qemu_boot() {
 		-net nic,model=virtio -net user,hostfwd=tcp::$port-:22 \
 		-nographic \
 		-device virtio-rng-pci \
+		-device virtio-ballooon,automatic=true \
 		-drive file="$wd/$arch/root.img.qcow2",media=disk,snapshot=on,${driveopts:-if=virtio} \
 		"$@" >/dev/null 2>&1 </dev/null &
 }
