@@ -7,6 +7,7 @@ from srht.validation import Validation
 from buildsrht.types import Job, JobStatus, Task, TaskStatus, User
 from buildsrht.manifest import Manifest
 from buildsrht.runner import queue_build
+import hashlib
 import requests
 import yaml
 
@@ -93,10 +94,15 @@ def svg_page(jobs):
             JobStatus.timeout]))
         .first())
     if not job:
-        return Response(badge_unknown, mimetype="image/svg+xml")
-    if job.status == JobStatus.success:
-        return Response(badge_success, mimetype="image/svg+xml")
-    return Response(badge_failure, mimetype="image/svg+xml")
+        badge = badge_unknown
+    elif job.status == JobStatus.success:
+        badge = badge_success
+    else:
+        badge = badge_failure
+    return Response(badge, mimetype="image/svg+xml", headers={
+        "Cache-Control": "no-cache",
+        "ETag": hashlib.sha1(badge.encode()).hexdigest(),
+    })
 
 @jobs.route("/")
 def index():
