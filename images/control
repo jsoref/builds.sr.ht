@@ -85,6 +85,11 @@ cmd_boot() {
 	then
 		arch="$default_arch"
 	fi
+	if [ ! -e "$self/$base/$arch/root.img.qcow2" ]
+	then
+		printf "Unknown image $base\n"
+		exit 1
+	fi
 
 	port=$1
 	if [ "$#" -gt 1 ]
