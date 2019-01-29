@@ -31,6 +31,6 @@ tasks:
       cd sr.ht-pkgbuilds
       echo "StrictHostKeyChecking=no" >> ~/.ssh/config
       ./pkgkit upload "$remote" "$remote_path" sr.ht $project
+  # TODO: move this box to Alpine
   - deploy: |
-      echo "StrictHostKeyChecking=no" >> ~/.ssh/config
       ssh $master sudo /usr/local/bin/update-srht ${project}
