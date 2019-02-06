@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, Response, abort
 from flask_login import current_user
 from srht.database import db
+from srht.flask import csrf_bypass
 from srht.validation import Validation
 from srht.oauth import oauth, current_token
 from buildsrht.runner import queue_build
@@ -13,6 +14,7 @@ import requests
 import yaml
 
 api = Blueprint('api', __name__)
+csrf_bypass(api)
 
 @api.route("/api/jobs", methods=["POST"])
 @oauth("jobs:write")
