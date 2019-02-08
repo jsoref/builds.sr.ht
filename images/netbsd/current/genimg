@@ -1,0 +1,5 @@
+#!/bin/sh -eu
+arch="${1:-amd64}"
+export netbsd_dist="ftp://ftp.netbsd.org/pub/NetBSD/NetBSD-current/$arch/"
+export pkgsrc_dist="ftp://ftp.netbsd.org/pub/pkgsrc/current/pkgsrc.tar.gz"
+exec ../genimg "$@"

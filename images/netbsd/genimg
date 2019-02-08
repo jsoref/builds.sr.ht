@@ -1,0 +1,109 @@
+#!/bin/sh -eux
+echo "$netbsd_dist" >/dev/null # fail on -u if release unset
+echo "$pkgsrc_dist" >/dev/null # fail on -u if release unset
+arch="${1:-amd64}"
+
+cleanup() {
+	sync || true
+	umount -R /mnt/dev/pts || true
+	umount -R /mnt/dev || true
+	umount -R /mnt/kern || true
+	umount -R /mnt/proc || true
+	umount -R /mnt/tmp || true
+	umount /mnt || true
+	vndconfig -u vnd0 || true
+}
+
+mkdir -p workdir
+trap cleanup EXIT
+
+mkdir -p "$arch"
+# This is really noisy/breaks terminals, hence redirecting to /dev/null
+anita \
+	--workdir=workdir \
+	--sets=kern-GENERIC,base,etc,comp,xbase,xcomp \
+	--disk-size=8G \
+	--persist \
+	--structured-log \
+	install "$netbsd_dist" >/dev/null
+
+vndconfig -c vnd0 workdir/wd0.img
+
+mount /dev/vnd0a /mnt
+mount -t null /dev /mnt/dev
+mount -t null /dev/pts /mnt/dev/pts
+mount -t null /kern /mnt/kern
+mount -t null /proc /mnt/proc
+mount -t null /tmp /mnt/tmp
+
+run_root() {
+	chroot /mnt /usr/bin/env \
+		PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/pkg/bin:/usr/pkg/sbin \
+		/bin/sh -c "$*"
+}
+
+sed -e 's/timeout=5/timeout=0/g' -i /mnt/boot.cfg
+
+run_root useradd -mG wheel build
+sed -e 's;build.*;build::1000:100::0:0:,,,:/home/build:/bin/sh;g' \
+	-i /mnt/etc/master.passwd
+
+echo "nameserver 1.1.1.1" >/mnt/etc/resolv.conf
+cat <<EOF >/mnt/etc/ifconfig.vioif0
+up
+10.0.2.15 netmask 255.255.255.0
+EOF
+echo 
+cat <<EOF >>/mnt/etc/rc.conf
+hostname=build
+defaultroute="10.0.2.2"
+resize_root=YES
+EOF
+
+sed -e 's/#PermitEmptyPasswords no/PermitEmptyPasswords yes/' \
+	-i /mnt/etc/ssh/sshd_config
+sed -e 's/UsePam yes/UsePam no/' \
+	-i /mnt/etc/ssh/sshd_config
+
+sed -e 's/sshd=NO/sshd=YES/g' -i /mnt/etc/defaults/rc.conf
+
+if ! [ -e pkgsrc.tar.gz ]
+then
+	ftp "$pkgsrc_dist"
+fi
+
+tar -xzf pkgsrc.tar.gz -C /mnt/usr
+pkgsrc_build() {
+	pkg="$1"
+	run_root "cd /usr/pkgsrc/$pkg && make"
+	run_root "cd /usr/pkgsrc/$pkg && make install"
+	run_root "cd /usr/pkgsrc/$pkg && make clean clean-depends"
+}
+
+# pkgin is not supported for NetBSD-current
+if [ -n "${pkgin_dest:-}" ]
+then
+	pkgsrc_build "$pkg"
+	echo "$pkgin_dest" >>/mnt/usr/pkg/etc/pkgin/repositories.conf
+	run_root pkgin update
+	# TODO: Remove bash
+	run_root pkgin install -y sudo gnupg git-base bash
+else
+	# TODO: Remove bash
+	for pkg in security/sudo security/gnupg devel/git-base shells/bash
+	do
+		pkgsrc_build "$pkg"
+	done
+fi
+run_root chown -R build /usr/pkgsrc/
+
+printf '%s\n' "%wheel ALL=(ALL) NOPASSWD: ALL" >> /mnt/usr/pkg/etc/sudoers
+
+rm /mnt/etc/motd
+
+cleanup
+trap : EXIT
+
+qemu-img convert -f raw -O qcow2 workdir/wd0.img "$arch"/root.img.qcow2
+qemu-img resize "$arch"/root.img.qcow2 16G
+rm "$arch"/wd0.img
