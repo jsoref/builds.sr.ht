@@ -415,11 +415,13 @@ func registerOrInc(key, help string) {
 
 func registerHistogram(key, help string,
 	buckets []float64) prometheus.Histogram {
+	name := strings.Replace(key, "/", "_", -1)
+	name = strings.Replace(name, ".", "_", -1)
 
 	if hist, ok := histogramStore[key]; !ok {
 		hist := promauto.NewHistogram(prometheus.HistogramOpts{
 			Buckets: buckets,
-			Name:    key,
+			Name:    name,
 			Help:    help,
 		})
 		histogramStore[key] = hist
