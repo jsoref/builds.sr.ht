@@ -62,6 +62,16 @@ defaultroute="10.0.2.2"
 resize_root=YES
 EOF
 
+cat <<EOF >>/mnt/etc/fstab
+/dev/ld0a		/	ffs	rw		 1 1
+/dev/ld0b		none	swap	sw,dp		 0 0
+kernfs		/kern	kernfs	rw
+ptyfs		/dev/pts	ptyfs	rw
+procfs		/proc	procfs	rw
+/dev/cd0a		/cdrom	cd9660	ro,noauto
+tmpfs		/var/shm	tmpfs	rw,-m1777,-sram%25
+EOF
+
 sed -e 's/#PermitEmptyPasswords no/PermitEmptyPasswords yes/' \
 	-i /mnt/etc/ssh/sshd_config
 sed -e 's/UsePam yes/UsePam no/' \
@@ -108,4 +118,4 @@ trap : EXIT
 
 qemu-img convert -f raw -O qcow2 workdir/wd0.img "$arch"/root.img.qcow2
 qemu-img resize "$arch"/root.img.qcow2 16G
-#rm workdir/wd0.img
+rm workdir/wd0.img
