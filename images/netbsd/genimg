@@ -99,10 +99,11 @@ then
 	echo "$pkgin_dist" >/mnt/usr/pkg/etc/pkgin/repositories.conf
 	run_root pkgin update
 	# TODO: Remove bash
-	run_root pkgin -y install sudo gnupg git-base bash
+	run_root pkgin -y install sudo gnupg git-base moreutils bash
 else
 	# TODO: Remove bash
-	for pkg in security/sudo security/gnupg devel/git-base shells/bash
+	for pkg in security/sudo security/gnupg devel/git-base misc/moreutils \
+		shells/bash
 	do
 		pkgsrc_build "$pkg"
 	done

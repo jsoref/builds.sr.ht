@@ -1,0 +1,88 @@
+#!/bin/sh
+poweroff_cmd="sudo poweroff"
+default_arch=amd64
+
+boot() {
+	case "$arch" in
+		amd64)
+			qemu=qemu-system-x86_64
+			_boot $(cpu_opts x86_64)
+			;;
+		*)
+			echo "Unsupported architecture $arch" >&2
+			exit 1
+			;;
+	esac
+}
+
+pkgin_install() {
+	port=$1
+	shift 1
+	guest_ssh -p $port build@localhost -- sudo pkgin -y update
+	guest_ssh -p $port build@localhost -- sudo pkgin -y install "$@"
+}
+
+pkgsrc_install() {
+	port=$1
+	shift 1
+	echo "Updating pkgsrc (this could take a while)..."
+	guest_ssh -p $port build@localhost \
+		"cd /usr/pkgsrc/ && sudo cvs update -dPp" >/dev/null 2>&1
+	echo "Tip: want to speed up pkgsrc builds?" \
+		"Consider installing dependencies via pkgin"
+	for pkg in $@
+	do
+		# We use chronic to keep the noise to a minimum, because dear god, it
+		# is noisy
+		date
+		echo "Building $pkg (logs hidden unless it fails - this could take a while)..."
+		guest_ssh -p $port build@localhost -- \
+			"cd /usr/pkgsrc/$pkg && sudo chronic make && sudo chronic make install"
+		guest_ssh -p $port build@localhost -- \
+			"cd /usr/pkgsrc/$pkg && sudo chronic make clean clean-depends"
+		echo "Done."
+		date
+	done
+}
+
+install() {
+	port=$1
+	shift 1
+	pkgin_pkgs=""
+	pkgsrc_pkgs=""
+	for pkg in $@
+	do
+		if [ -n "${pkg##*/*}" ]
+		then
+			pkgin_pkgs="$pkg $pkgin_pkgs"
+		else
+			pkgsrc_pkgs="$pkg $pkgsrc_pkgs"
+		fi
+	done
+	if [ -n "${pkgin_pkgs%% }" ]
+	then
+		pkgin_install "$port" $pkgin_pkgs
+	fi
+	if [ -n "${pkgsrc_pkgs%% }" ]
+	then
+		pkgsrc_install "$port" $pkgsrc_pkgs
+	fi
+}
+
+sanity_check() {
+	echo "Booting..."
+	cmd_boot amd64 8022 qemu &
+	trap 'cmd_cleanup 8022' EXIT
+	_wait_boot 8022
+	echo "Testing sudo..."
+	guest_ssh -p 8022 build@localhost sudo ls -a
+	echo "Testing networking..."
+	guest_ssh -p 8022 build@localhost curl https://example.org
+	echo "Testing pkgin..."
+	guest_ssh -p 8022 build@localhost sudo pkgin update
+	guest_ssh -p 8022 build@localhost sudo pkgin -y install htop
+	echo "Testing git..."
+	guest_ssh -p 8022 build@localhost git --version
+	echo "Everything works!"
+	guest_ssh -p 8022 build@localhost sudo poweroff || true
+}
