@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, abort, redirect, session
 from flask import Response
 from flask_login import current_user
+from srht.config import cfg
 from srht.database import db
 from srht.flask import paginate_query, loginrequired
 from srht.validation import Validation
@@ -75,18 +76,20 @@ def jobs_page(jobs, sidebar="sidebar.html", **kwargs):
     )
 
 badge_success = """
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="124" height="20"><linearGradient id="b" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient><clipPath id="a"><rect width="124" height="20" rx="3" fill="#fff"/></clipPath><g clip-path="url(#a)"><path fill="#555" d="M0 0h71v20H0z"/><path fill="#4c1" d="M71 0h53v20H71z"/><path fill="url(#b)" d="M0 0h124v20H0z"/></g><g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="110"> <text x="365" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="610">{}</text><text x="365" y="140" transform="scale(.1)" textLength="610">builds.sr.ht</text><text x="965" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="430">success</text><text x="965" y="140" transform="scale(.1)" textLength="430">success</text></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="124" height="20"><linearGradient id="b" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient><clipPath id="a"><rect width="124" height="20" rx="3" fill="#fff"/></clipPath><g clip-path="url(#a)"><path fill="#555" d="M0 0h71v20H0z"/><path fill="#4c1" d="M71 0h53v20H71z"/><path fill="url(#b)" d="M0 0h124v20H0z"/></g><g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="110"> <text x="365" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="610">__NAME__</text><text x="365" y="140" transform="scale(.1)" textLength="610">__NAME__</text><text x="965" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="430">success</text><text x="965" y="140" transform="scale(.1)" textLength="430">success</text></g></svg>
 """
 
 badge_failure = """
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="124" height="20"><linearGradient id="b" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient><clipPath id="a"><rect width="124" height="20" rx="3" fill="#fff"/></clipPath><g clip-path="url(#a)"><path fill="#555" d="M0 0h71v20H0z"/><path fill="#e05d44" d="M71 0h53v20H71z"/><path fill="url(#b)" d="M0 0h124v20H0z"/></g><g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="110"> <text x="365" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="610">builds.sr.ht</text><text x="365" y="140" transform="scale(.1)" textLength="610">builds.sr.ht</text><text x="965" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="430">failure</text><text x="965" y="140" transform="scale(.1)" textLength="430">failure</text></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="124" height="20"><linearGradient id="b" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient><clipPath id="a"><rect width="124" height="20" rx="3" fill="#fff"/></clipPath><g clip-path="url(#a)"><path fill="#555" d="M0 0h71v20H0z"/><path fill="#e05d44" d="M71 0h53v20H71z"/><path fill="url(#b)" d="M0 0h124v20H0z"/></g><g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="110"> <text x="365" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="610">__NAME__</text><text x="365" y="140" transform="scale(.1)" textLength="610">__NAME__</text><text x="965" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="430">failure</text><text x="965" y="140" transform="scale(.1)" textLength="430">failure</text></g></svg>
 """
 
 badge_unknown = """
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="132" height="20"><linearGradient id="b" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient><clipPath id="a"><rect width="132" height="20" rx="3" fill="#fff"/></clipPath><g clip-path="url(#a)"><path fill="#555" d="M0 0h71v20H0z"/><path fill="#9f9f9f" d="M71 0h61v20H71z"/><path fill="url(#b)" d="M0 0h132v20H0z"/></g><g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="110"> <text x="365" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="610">builds.sr.ht</text><text x="365" y="140" transform="scale(.1)" textLength="610">builds.sr.ht</text><text x="1005" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="510">unknown</text><text x="1005" y="140" transform="scale(.1)" textLength="510">unknown</text></g> </svg>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="132" height="20"><linearGradient id="b" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient><clipPath id="a"><rect width="132" height="20" rx="3" fill="#fff"/></clipPath><g clip-path="url(#a)"><path fill="#555" d="M0 0h71v20H0z"/><path fill="#9f9f9f" d="M71 0h61v20H71z"/><path fill="url(#b)" d="M0 0h132v20H0z"/></g><g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="110"> <text x="365" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="610">__NAME__</text><text x="365" y="140" transform="scale(.1)" textLength="610">__NAME__</text><text x="1005" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="510">unknown</text><text x="1005" y="140" transform="scale(.1)" textLength="510">unknown</text></g> </svg>
 """
 
 def svg_page(jobs):
+    name = request.args.get("name",
+            default=cfg("sr.ht", "site-name"))
     job = (get_jobs(jobs)
         .filter(Job.status.in_([
             JobStatus.success,
@@ -94,11 +97,11 @@ def svg_page(jobs):
             JobStatus.timeout]))
         .first())
     if not job:
-        badge = badge_unknown
+        badge = badge_unknown.replace("__NAME__", name)
     elif job.status == JobStatus.success:
-        badge = badge_success
+        badge = badge_success.replace("__NAME__", name)
     else:
-        badge = badge_failure
+        badge = badge_failure.replace("__NAME__", name)
     return Response(badge, mimetype="image/svg+xml", headers={
         "Cache-Control": "no-cache",
         "ETag": hashlib.sha1(badge.encode()).hexdigest(),
