@@ -62,7 +62,7 @@ defaultroute="10.0.2.2"
 resize_root=YES
 EOF
 
-cat <<EOF >>/mnt/etc/fstab
+cat <<EOF >/mnt/etc/fstab
 /dev/ld0a		/	ffs	rw		 1 1
 /dev/ld0b		none	swap	sw,dp		 0 0
 kernfs		/kern	kernfs	rw
