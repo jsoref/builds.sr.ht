@@ -85,11 +85,11 @@ pkgsrc_build() {
 # pkgin is not supported for NetBSD-current
 if [ -n "${pkgin_dist:-}" ]
 then
-	pkgsrc_build "$pkg"
-	echo "$pkgin_dist" >>/mnt/usr/pkg/etc/pkgin/repositories.conf
+	pkgsrc_build pkgtools/pkgin
+	echo "$pkgin_dist" >/mnt/usr/pkg/etc/pkgin/repositories.conf
 	run_root pkgin update
 	# TODO: Remove bash
-	run_root pkgin install -y sudo gnupg git-base bash
+	run_root pkgin -y install sudo gnupg git-base bash
 else
 	# TODO: Remove bash
 	for pkg in security/sudo security/gnupg devel/git-base shells/bash
@@ -108,4 +108,4 @@ trap : EXIT
 
 qemu-img convert -f raw -O qcow2 workdir/wd0.img "$arch"/root.img.qcow2
 qemu-img resize "$arch"/root.img.qcow2 16G
-rm "$arch"/wd0.img
+#rm workdir/wd0.img
