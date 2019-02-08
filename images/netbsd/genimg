@@ -19,6 +19,8 @@ trap cleanup EXIT
 
 mkdir -p "$arch"
 # This is really noisy/breaks terminals, hence redirecting to /dev/null
+# TODO: consider just downloading the sets & configuring the bootloader
+# manually
 anita \
 	--workdir=workdir \
 	--sets=kern-GENERIC,base,etc,comp,xbase,xcomp \
@@ -81,10 +83,10 @@ pkgsrc_build() {
 }
 
 # pkgin is not supported for NetBSD-current
-if [ -n "${pkgin_dest:-}" ]
+if [ -n "${pkgin_dist:-}" ]
 then
 	pkgsrc_build "$pkg"
-	echo "$pkgin_dest" >>/mnt/usr/pkg/etc/pkgin/repositories.conf
+	echo "$pkgin_dist" >>/mnt/usr/pkg/etc/pkgin/repositories.conf
 	run_root pkgin update
 	# TODO: Remove bash
 	run_root pkgin install -y sudo gnupg git-base bash
