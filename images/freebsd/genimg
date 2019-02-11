@@ -86,8 +86,8 @@ echo "%sudo ALL=(ALL) NOPASSWD: ALL" >>/mnt/usr/local/etc/sudoers
 cleanup
 trap : EXIT
 
-qemu-img convert -f raw -O qcow2 disk.img root.img.qcow2
+qemu-img convert -f raw -O qcow2 disk.img "$arch"/root.img.qcow2
 rm disk.img
 
 # Filesystem will be enlarged by growfs(7) on next startup
-qemu-img resize root.img.qcow2 16G
+qemu-img resize "$arch"/root.img.qcow2 16G
