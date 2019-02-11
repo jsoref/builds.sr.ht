@@ -122,6 +122,7 @@ EOF
 printf '%s\n' "%wheel ALL=(ALL) NOPASSWD: ALL" >> /mnt/usr/pkg/etc/sudoers
 
 rm /mnt/etc/motd
+touch /mnt/firstboot
 
 cleanup
 trap : EXIT
