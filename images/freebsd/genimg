@@ -45,7 +45,8 @@ cat >>/mnt/etc/rc.conf <<EOF
 ntpd_enable=YES
 sshd_enable=YES
 growfs_enable=YES
-ifconfig_em0="inet 10.0.2.15 netmask 255.255.255.0"
+hostname="build"
+ifconfig_DEFAULT="inet 10.0.2.15 netmask 255.255.255.0"
 defaultrouter="10.0.2.2"
 EOF
 echo "nameserver 1.1.1.1" >/mnt/etc/resolv.conf
@@ -55,6 +56,7 @@ cat >>/mnt/etc/ssh/sshd_config <<EOF
 PermitRootLogin yes
 PasswordAuthentication yes
 PermitEmptyPasswords yes
+UsePAM no
 EOF
 
 mkdir -p /mnt/usr/local/etc/pkg/repos/
