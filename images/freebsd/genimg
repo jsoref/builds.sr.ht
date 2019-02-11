@@ -37,7 +37,7 @@ do
 	tar -C /mnt -xJf "$dist_dir/$f"
 done
 
-echo "/dev/ada0p2 / ufs rw,noatime 1 1" >/mnt/etc/fstab
+echo "/dev/gpt/rootfs / ufs rw,noatime 1 1" >/mnt/etc/fstab
 touch /mnt/firstboot
 echo 'autoboot_delay="-1"' >>/mnt/boot/loader.conf
 
