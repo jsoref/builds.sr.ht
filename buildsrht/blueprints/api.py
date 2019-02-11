@@ -44,6 +44,7 @@ def jobs_POST():
         return valid.response
     # TODO: access controls
     job = Job(current_token.user, _manifest)
+    job.image = manifest.image
     job.note = note
     if tags:
         job.tags = "/".join(tags)

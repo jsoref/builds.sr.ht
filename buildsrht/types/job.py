@@ -31,6 +31,7 @@ class Job(Base):
             sau.ChoiceType(JobStatus, impl=sa.String()),
             nullable=False,
             default=JobStatus.pending)
+    image = sa.Column(sa.String(256))
 
     def __init__(self, owner, manifest):
         self.owner_id = owner.id

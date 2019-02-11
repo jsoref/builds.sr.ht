@@ -150,6 +150,7 @@ def submit_POST():
         valid.error(str(ex), field="manifest")
         return render_template("submit.html", **valid.kwargs)
     job = Job(current_user, _manifest)
+    job.image = manifest.image
     job.note = note
     db.session.add(job)
     db.session.flush()
