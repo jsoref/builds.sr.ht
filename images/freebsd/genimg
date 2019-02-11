@@ -86,6 +86,7 @@ echo "%sudo ALL=(ALL) NOPASSWD: ALL" >>/mnt/usr/local/etc/sudoers
 cleanup
 trap : EXIT
 
+mkdir -p "$arch"
 qemu-img convert -f raw -O qcow2 disk.img "$arch"/root.img.qcow2
 rm disk.img
 
