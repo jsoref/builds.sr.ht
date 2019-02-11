@@ -19,7 +19,7 @@ guest_ssh() {
 }
 
 cpu_opts() {
-	if [ "$(uname -m)" == "$1" ]
+	if [ "$(uname -m)" == "$1" ] && [ -e /dev/kvm ]
 	then
 		printf "%s" "-cpu host -enable-kvm"
 		return
