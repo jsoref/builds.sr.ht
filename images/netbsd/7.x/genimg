@@ -1,6 +1,6 @@
 #!/bin/sh -eu
 arch="${1:-amd64}"
 export netbsd_dist="ftp://ftp.netbsd.org/pub/NetBSD/NetBSD-7.2/$arch/"
-export pkgsrc_dist="ftp://ftp.netbsd.org/pub/pkgsrc/pkgsrc-2018Q4/pkgsrc.tar.gz"
+export pkgsrc_dist="ftp://ftp.netbsd.org/pub/pkgsrc/current/pkgsrc.tar.gz"
 export pkgin_dist="ftp://ftp.netbsd.org/pub/pkgsrc/packages/netbsd/$arch/7.2/All"
 exec ../genimg "$@"
