@@ -110,7 +110,14 @@ else
 	done
 fi
 run_root chown -R build /usr/pkgsrc/
-run_root mozilla-rootcerts install
+run_root /usr/pkg/sbin/mozilla-rootcerts install
+
+cat <<"EOF" >/mnt/home/build/.profile
+PATH=$HOME/bin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/X11R7/bin:/usr/pkg/bin
+PATH=${PATH}:/usr/pkg/sbin:/usr/games:/usr/local/bin:/usr/local/sbin
+export PATH
+export ENV=$HOME/.env
+EOF
 
 printf '%s\n' "%wheel ALL=(ALL) NOPASSWD: ALL" >> /mnt/usr/pkg/etc/sudoers
 
