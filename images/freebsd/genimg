@@ -1,10 +1,10 @@
 #!/bin/sh -eux
 
-echo "$release" >/dev/null # fail on -u if release unset
+echo "$release" >/dev/null # fail on -u if unset
+echo "$ports_base" >/dev/null # fail on -u if unset
 arch="${1:-amd64}"
 
 dist_base="https://download.freebsd.org/ftp/releases/$arch/$release"
-snapshot_base="https://download.freebsd.org/ftp/snapshots/$arch/13.0-CURRENT"
 dist_files="kernel.txz base.txz"
 dist_dir="/usr/freebsd-dist/$arch/$release"
 
@@ -75,10 +75,9 @@ EOF
 
 env ASSUME_ALWAYS_YES=YES pkg -c /mnt bootstrap -f
 # TODO: remove bash
-# Subversion is required for ports
-env ASSUME_ALWAYS_YES=YES pkg -c /mnt install git bash sudo curl subversion
+env ASSUME_ALWAYS_YES=YES pkg -c /mnt install git bash sudo curl
 
-fetch -m -o "$dist_dir/ports.txz" "$snapshot_base/ports.txz"
+fetch -m -o "$dist_dir/ports.txz" "$ports_base/ports.txz"
 tar -C /mnt -xJf "$dist_dir/ports.txz"
 
 pw -R /mnt groupadd sudo
