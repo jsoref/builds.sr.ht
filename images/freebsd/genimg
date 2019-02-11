@@ -3,42 +3,91 @@
 echo "$release" >/dev/null # fail on -u if release unset
 arch="${1:-amd64}"
 
-export DISTRIBUTIONS="kernel.txz base.txz ports.txz"
-export BSDINSTALL_DISTSITE="https://download.freebsd.org/ftp/releases/$arch/$release/"
-export BSDINSTALL_DISTDIR="/usr/freebsd-dist/$arch/$release"
-export BSDINSTALL_LOG="/tmp/bsdinstall.log"
+dist_base="https://download.freebsd.org/ftp/releases/$arch/$release"
+snapshot_base="https://download.freebsd.org/ftp/snapshots/$arch/13.0-CURRENT"
+dist_files="kernel.txz base.txz"
+dist_dir="/usr/freebsd-dist/$arch/$release"
+
+mkdir -p "$dist_dir"
+for f in $dist_files
+do
+	fetch -m -o "$dist_dir/$f" "$dist_base/$f"
+done
 
 cleanup() {
-	cat "$BSDINSTALL_LOG" || true
-	# The order here is important if you don't want to hose your mounts
-	umount -f /mnt/dev/pts 2>/dev/null || true
-	umount -f /mnt/dev/shm 2>/dev/null || true
-	umount -f /mnt/dev 2>/dev/null || true
-	umount -f /mnt/proc 2>/dev/null || true
-	umount -f /mnt/run 2>/dev/null || true
-	umount -f /mnt/sys 2>/dev/null || true
-	umount -f /mnt/boot 2>/dev/null || true
-	umount -f /mnt 2>/dev/null || true 
-	mdconfig -d -u 0
+	sync || true
+	umount /mnt || true
+	mdconfig -du md0 || true
 }
-
-# qemu-nbd is not supported, so we just create a raw image and convert it
-rm -f "$BSDINSTALL_LOG"
-qemu-img create -f raw root.img.raw 6G
-mdconfig -a -t vnode -f root.img.raw -u 0
 trap cleanup EXIT
 
-export nonInteractive=YES
-mkdir -p "$BSDINSTALL_DISTDIR"
-bsdinstall distfetch
-bsdinstall checksum
-bsdinstall script ./install
+rm -f disk.img
+truncate -s 6G disk.img
+mdconfig -a -t vnode -f disk.img -u md0
+gpart create -s gpt /dev/md0
+gpart add -t freebsd-boot -l bootfs -b 40 -s 512K md0
+gpart bootcode -b /boot/pmbr -p /boot/gptboot -i 1 md0
+gpart add -t freebsd-ufs -l rootfs -b 1M -s 5G md0
+newfs -U /dev/md0p2
 
-trap - EXIT
+mount /dev/md0p2 /mnt
+
+for f in $dist_files
+do
+	tar -C /mnt -xJf "$dist_dir/$f"
+done
+
+echo "/dev/ada0p2 / ufs rw,noatime 1 1" >/mnt/etc/fstab
+touch /mnt/firstboot
+echo 'autoboot_delay="-1"' >>/mnt/boot/loader.conf
+
+cat >>/mnt/etc/rc.conf <<EOF
+ntpd_enable=YES
+sshd_enable=YES
+growfs_enable=YES
+ifconfig_em0="inet 10.0.2.15 netmask 255.255.255.0"
+defaultrouter="10.0.2.2"
+EOF
+echo "nameserver 1.1.1.1" >/mnt/etc/resolv.conf
+tzsetup -s -C /mnt UTC
+
+cat >>/mnt/etc/ssh/sshd_config <<EOF
+PermitRootLogin yes
+PasswordAuthentication yes
+PermitEmptyPasswords yes
+EOF
+
+mkdir -p /mnt/usr/local/etc/pkg/repos/
+cat >/mnt/usr/local/etc/pkg/repos/FreeBSD.conf <<EOF
+FreeBSD: {
+	url: pkg+http://pkg.FreeBSD.org/\$\{ABI\}/latest
+	enabled: yes
+}
+EOF
+
+/usr/sbin/freebsd-update -b /mnt \
+	--currently-running 12.0-RELEASE \
+	--not-running-from-cron \
+	fetch install \
+	>/dev/null
+
+env ASSUME_ALWAYS_YES=YES pkg -c /mnt bootstrap -f
+# TODO: remove bash
+# Subversion is required for ports
+env ASSUME_ALWAYS_YES=YES pkg -c /mnt install git bash sudo curl subversion
+
+fetch -m -o "$dist_dir/ports.txz" "$snapshot_base/ports.txz"
+tar -C /mnt -xJf "$dist_dir/ports.txz"
+
+pw -R /mnt groupadd sudo
+pw -R /mnt useradd -n build -u 1000 -s /usr/local/bin/bash -m -w none -G sudo
+echo "%sudo ALL=(ALL) NOPASSWD: ALL" >>/mnt/usr/local/etc/sudoers
+
 cleanup
+trap : EXIT
 
-qemu-img convert -f raw -O qcow2 root.img.raw root.img.qcow2
-rm root.img.raw
+qemu-img convert -f raw -O qcow2 disk.img root.img.qcow2
+rm disk.img
 
 # Filesystem will be enlarged by growfs(7) on next startup
 qemu-img resize root.img.qcow2 16G
