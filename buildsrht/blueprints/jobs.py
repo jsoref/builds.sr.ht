@@ -216,8 +216,7 @@ def tag_svg(username, path):
     return svg_page(jobs)
 
 def logify(text, task, log_url):
-    #log_max = 16384
-    log_max = 512
+    log_max = 16384
     if len(text) > log_max:
         text = text[-log_max:]
         try:
