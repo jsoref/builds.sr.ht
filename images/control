@@ -122,7 +122,7 @@ _wait_boot() {
 	do
 		sleep 5
 		attempts=$((attempts + 1))
-		if [ "$attempts" -eq 10 ]
+		if [ "$attempts" -eq 20 ]
 		then
 			echo "Giving up."
 			cmd_cleanup "$port"
