@@ -68,7 +68,7 @@ FreeBSD: {
 EOF
 
 /usr/sbin/freebsd-update -b /mnt \
-	--currently-running 12.0-RELEASE \
+	--currently-running "$release" \
 	--not-running-from-cron \
 	fetch install \
 	>/dev/null
