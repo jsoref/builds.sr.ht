@@ -112,14 +112,7 @@
         {% endif %}
         <table class="table-code">
           <tr>
-            <td>
-              <pre>{% for line in log["log"] %}<a href="#{{"task-" + log["name"] if log["name"] else "setup"}}-{{loop.index}}" id="{{"task-" + log["name"] if log["name"] else "setup"}}-{{loop.index}}">{{loop.index}}</a>{% if not loop.last %}
-{% endif %}{% endfor %}</pre>
-            </td>
-            <td>
-              <pre>{% for line in log["log"] %}{{ line }}{% if not loop.last %}
-{% endif %}{% endfor %}</pre>
-            </td>
+            {{log["log"]}}
           </tr>
         </table>
       </details>

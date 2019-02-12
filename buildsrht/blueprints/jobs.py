@@ -8,6 +8,7 @@ from srht.validation import Validation
 from buildsrht.types import Job, JobStatus, Task, TaskStatus, User
 from buildsrht.manifest import Manifest
 from buildsrht.runner import queue_build
+from jinja2 import Markup, escape
 import hashlib
 import requests
 import yaml
@@ -214,6 +215,17 @@ def tag_svg(username, path):
         .filter(Job.tags.ilike(path + "%"))
     return svg_page(jobs)
 
+def logify(text, task):
+    text = Markup('<pre>') + escape(text) + Markup('</pre>')
+    nlines = text.encode().count(b'\n')
+    linenos = Markup('<pre>')
+    for no in range(1, nlines + 1):
+        linenos += Markup(f"<a href='#{escape(task)}-{no-1}'>{no}</a>")
+        if no != nlines:
+            linenos += Markup("\n")
+    linenos += Markup("</pre>")
+    return Markup('<td>') + linenos + Markup('</td><td>') + text + Markup('</td>')
+
 @jobs.route("/~<username>/job/<int:job_id>")
 def job_by_id(username, job_id):
     # TODO: maybe we want per-user job IDs
@@ -226,7 +238,7 @@ def job_by_id(username, job_id):
         if r.status_code == 200:
             logs.append({
                 "name": None,
-                "log": r.text.splitlines()
+                "log": logify(r.text, "setup")
             })
     except:
         pass
@@ -245,7 +257,7 @@ def job_by_id(username, job_id):
         if r.status_code == 200:
             logs.append({
                 "name": task.name,
-                "log": r.text.splitlines()
+                "log": logify(r.text, "task-" + task.name)
             })
     return render_template("job.html",
             job=job,
