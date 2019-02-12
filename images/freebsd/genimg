@@ -1,10 +1,10 @@
 #!/bin/sh -eux
 
 echo "$release" >/dev/null # fail on -u if unset
+echo "$dist_base" >/dev/null # fail on -u if unset
 echo "$ports_base" >/dev/null # fail on -u if unset
 arch="${1:-amd64}"
 
-dist_base="https://download.freebsd.org/ftp/releases/$arch/$release"
 dist_files="kernel.txz base.txz"
 dist_dir="/usr/freebsd-dist/$arch/$release"
 
@@ -67,11 +67,15 @@ FreeBSD: {
 }
 EOF
 
-/usr/sbin/freebsd-update -b /mnt \
-	--currently-running "$release" \
-	--not-running-from-cron \
-	fetch install \
-	>/dev/null
+# freebsd-update is only supported for RELEASE
+if [ "${release%-RELEASE}" != "$release" ]
+then
+	env PAGER=true /usr/sbin/freebsd-update \
+		-b /mnt \
+		--currently-running "$release" \
+		--not-running-from-cron -F \
+		fetch install
+fi
 
 env ASSUME_ALWAYS_YES=YES pkg -c /mnt bootstrap -f
 # TODO: remove bash

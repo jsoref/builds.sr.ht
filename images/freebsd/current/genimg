@@ -1,5 +1,6 @@
 #!/bin/sh
 arch="${1:-amd64}"
 export release="13.0-CURRENT"
-export ports_base="https://download.freebsd.org/ftp/snapshots/$arch/$release"
+export dist_base="https://download.freebsd.org/ftp/snapshots/$arch/$release"
+export ports_base="$dist_base"
 exec ../genimg "$@"
