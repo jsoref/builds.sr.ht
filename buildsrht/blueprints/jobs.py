@@ -215,8 +215,25 @@ def tag_svg(username, path):
         .filter(Job.tags.ilike(path + "%"))
     return svg_page(jobs)
 
-def logify(text, task):
-    text = Markup('<pre>') + escape(text) + Markup('</pre>')
+def logify(text, task, log_url):
+    #log_max = 16384
+    log_max = 512
+    if len(text) > log_max:
+        text = text[-log_max:]
+        try:
+            text = text[text.index('\n')+1:]
+        except ValueError:
+            pass
+        text = (Markup('<pre>')
+                + Markup('<span class="text-muted">'
+                    'This is a big file! Only the last 16KiB is shown. '
+                    f'<a target="_blank" href="{escape(log_url)}">'
+                        'Click here to download the full log</a>.'
+                    '</span>\n\n')
+                + escape(text)
+                + Markup('</pre>'))
+    else:
+        text = Markup('<pre>') + escape(text) + Markup('</pre>')
     nlines = text.encode().count(b'\n')
     linenos = Markup('<pre>')
     for no in range(1, nlines + 1):
@@ -234,30 +251,34 @@ def job_by_id(username, job_id):
         abort(404)
     logs = list()
     try:
-        r = requests.get("http://{}/logs/{}/log".format(job.runner, job.id))
+        log_url = "http://{}/logs/{}/log".format(job.runner, job.id)
+        r = requests.get(log_url)
         if r.status_code == 200:
             logs.append({
                 "name": None,
-                "log": logify(r.text, "setup")
+                "log": logify(r.text, "setup", log_url)
             })
     except:
         pass
     for task in sorted(job.tasks, key=lambda t: t.id):
         if task.status == TaskStatus.pending:
             continue
+        log_url = "http://{}/logs/{}/{}/log".format(
+                job.runner, job.id, task.name)
         try:
-            r = requests.get("http://{}/logs/{}/{}/log".format(job.runner,
-                job.id, task.name))
+            r = requests.get(log_url)
         except:
             logs.append({
-                "name": "error",
-                "log": "Error fetching logs for this job"
+                "name": task.name,
+                "log": Markup('<td></td><td><pre><strong class="text-danger">'
+                    f'Error fetching logs for task "{escape(task.name)}"</strong>'
+                    '</pre></td>')
             })
             break
         if r.status_code == 200:
             logs.append({
                 "name": task.name,
-                "log": logify(r.text, "task-" + task.name)
+                "log": logify(r.text, "task-" + task.name, log_url)
             })
     return render_template("job.html",
             job=job,
