@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh -eu
 self=$(readlink -f $0)
 self=$(dirname "$self")
 
@@ -49,7 +49,7 @@ _docker_boot() {
 		qemu /bin/${qemu:-qemu-system-$arch} \
 		-m ${MEMORY:-2048} \
 		-net nic,model=virtio -net user,hostfwd=tcp::$port-:22 \
-		-nographic \
+		-display none \
 		-device virtio-rng-pci \
 		-device virtio-balloon \
 		-drive file="$wd/$arch/root.img.qcow2",media=disk,snapshot=on,${driveopts:-if=virtio} \
@@ -61,11 +61,11 @@ _qemu_boot() {
 		-pidfile /tmp/qemu-$port.id \
 		-m ${MEMORY:-2048} \
 		-net nic,model=virtio -net user,hostfwd=tcp::$port-:22 \
-		-nographic \
+		-display none \
 		-device virtio-rng-pci \
 		-device virtio-balloon \
 		-drive file="$wd/$arch/root.img.qcow2",media=disk,snapshot=on,${driveopts:-if=virtio} \
-		"$@" >/dev/null 2>&1 </dev/null &
+		"$@" &
 }
 
 _boot() {
