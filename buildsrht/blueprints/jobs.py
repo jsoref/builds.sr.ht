@@ -224,7 +224,7 @@ def logify(text, task, log_url):
             text = text[text.index('\n')+1:]
         except ValueError:
             pass
-        nlines = text.encode().count(b'\n')
+        nlines = len(text.splitlines())
         text = (Markup('<pre>')
                 + Markup('<span class="text-muted">'
                     'This is a big file! Only the last 128KiB is shown. '
