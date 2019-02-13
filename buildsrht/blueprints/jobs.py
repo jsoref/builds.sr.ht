@@ -235,7 +235,7 @@ def logify(text, task, log_url):
                 + Markup('</pre>'))
         linenos = Markup('<pre>\n\n\n')
     else:
-        nlines = text.encode().count(b'\n')
+        nlines = len(text.splitlines())
         text = Markup('<pre>') + escape(text) + Markup('</pre>')
         linenos = Markup('<pre>')
     for no in range(1, nlines + 1):
