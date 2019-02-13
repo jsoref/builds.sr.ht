@@ -264,7 +264,7 @@ def job_by_id(username, job_id):
                 r = requests.get(log_url)
             if r.status_code >= 200 and r.status_code <= 299:
                 logs.append({
-                    "name": None,
+                    "name": name,
                     "log": logify(r.text,
                         "task-" + name if name else "setup", log_url)
                 })
