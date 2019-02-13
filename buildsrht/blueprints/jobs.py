@@ -215,7 +215,7 @@ def tag_svg(username, path):
         .filter(Job.tags.ilike(path + "%"))
     return svg_page(jobs)
 
-log_max = 16384
+log_max = 131072
 
 def logify(text, task, log_url):
     if len(text) >= log_max:
@@ -224,18 +224,20 @@ def logify(text, task, log_url):
             text = text[text.index('\n')+1:]
         except ValueError:
             pass
+        nlines = text.encode().count(b'\n')
         text = (Markup('<pre>')
                 + Markup('<span class="text-muted">'
-                    'This is a big file! Only the last 16KiB is shown. '
+                    'This is a big file! Only the last 128KiB is shown. '
                     f'<a target="_blank" href="{escape(log_url)}">'
                         'Click here to download the full log</a>.'
                     '</span>\n\n')
                 + escape(text)
                 + Markup('</pre>'))
+        linenos = Markup('<pre>\n\n\n')
     else:
+        nlines = text.encode().count(b'\n')
         text = Markup('<pre>') + escape(text) + Markup('</pre>')
-    nlines = text.encode().count(b'\n')
-    linenos = Markup('<pre>')
+        linenos = Markup('<pre>')
     for no in range(1, nlines + 1):
         linenos += Markup(f"<a href='#{escape(task)}-{no-1}'>{no}</a>")
         if no != nlines:
