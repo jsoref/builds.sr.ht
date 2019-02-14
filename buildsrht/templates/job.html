@@ -120,6 +120,7 @@
       {% if job.status.value == "success" or job.status.value == "failed" %}
       <div class="alert {{ "alert-success" if job.status.value == "success" else "alert-danger" }}">
         Build complete: <strong>{{ job.status.value }}</strong> {{ job.updated | date }}
+        (took {{(job.updated - job.created) | date}})
       </div>
       {% endif %}
       <a id="bottom"></a>
