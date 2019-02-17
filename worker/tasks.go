@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"os/exec"
 	"path"
@@ -295,29 +296,62 @@ func (ctx *JobContext) CloneRepos() error {
 		return nil
 	}
 	ctx.Log.Println("Cloning repositories")
-	for _, url := range ctx.Manifest.Sources {
-		var ref string
-		slice := strings.Split(url, "#")
-		if len(slice) == 2 {
-			url = slice[0]
-			ref = slice[1]
+	for _, srcurl := range ctx.Manifest.Sources {
+		purl, err := url.Parse(srcurl)
+		if err != nil {
+			return errors.Wrap(err, "clone repository " + srcurl)
 		}
-		repo_name := path.Base(url)
-		repo_name = strings.TrimSuffix(repo_name, ".git")
-		git := ctx.SSH("git", "clone", "--recursive", url)
-		git.Stdout = ctx.LogFile
-		git.Stderr = ctx.LogFile
-		if err := git.Run(); err != nil {
-			return errors.Wrap(err, "git clone")
+
+		scm := "git"
+		clone_scheme := purl.Scheme
+		scheme_bits := strings.Split(purl.Scheme, "+")
+		if len(scheme_bits) == 2 {
+			// git+https://... form
+			scm = scheme_bits[0]
+			clone_scheme = scheme_bits[1]
 		}
-		if ref != "" {
-			git := ctx.SSH("sh", "-euxc",
-				fmt.Sprintf("'cd %s && git checkout -q %s'", repo_name, ref))
+		purl.Scheme = clone_scheme
+
+		ref := purl.Fragment
+		purl.Fragment = ""
+
+		if scm == "git" {
+			repo_name := path.Base(purl.Path)
+			repo_name = strings.TrimSuffix(repo_name, ".git")
+			git := ctx.SSH("git", "clone", "--recursive", purl.String())
 			git.Stdout = ctx.LogFile
 			git.Stderr = ctx.LogFile
 			if err := git.Run(); err != nil {
-				return errors.Wrap(err, "git checkout")
+				return errors.Wrap(err, "git clone")
 			}
+			if ref != "" {
+				git := ctx.SSH("sh", "-euxc",
+					fmt.Sprintf("'cd %s && git checkout -q %s'", repo_name, ref))
+				git.Stdout = ctx.LogFile
+				git.Stderr = ctx.LogFile
+				if err := git.Run(); err != nil {
+					return errors.Wrap(err, "git checkout")
+				}
+			}
+		} else if scm == "hg" {
+			repo_name := path.Base(purl.Path)
+			hg := ctx.SSH("hg", "clone", purl.String())
+			hg.Stdout = ctx.LogFile
+			hg.Stderr = ctx.LogFile
+			if err := hg.Run(); err != nil {
+				return errors.Wrap(err, "hg clone")
+			}
+			if ref != "" {
+				hg := ctx.SSH("sh", "-euxc",
+					fmt.Sprintf("'cd %s && hg update -y %s'", repo_name, ref))
+				hg.Stdout = ctx.LogFile
+				hg.Stderr = ctx.LogFile
+				if err := hg.Run(); err != nil {
+					return errors.Wrap(err, "hg update")
+				}
+			}
+		} else {
+			return errors.New("Unknown scm: " + scm)
 		}
 	}
 	return nil
