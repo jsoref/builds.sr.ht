@@ -42,14 +42,16 @@ def secrets_POST():
         for f in ["secret", "file-file"]:
             valid.expect(bool(_secret) ^ bool(secret_file),
                     "Either secret text or file have to be provided", field=f)
+    else:
+        _secret = valid.require("secret", friendly_name="Secret")
+
+    if secret_type in (SecretType.plaintext_file, SecretType.ssh_key):
         if _secret:
             _secret = _secret.replace('\r\n', '\n')
             if not _secret.endswith('\n'):
                 _secret += '\n'
-        else:
+        elif secret_type == SecretType.plaintext_file:
             _secret = secret_file
-    else:
-        _secret = valid.require("secret", friendly_name="Secret")
 
     if isinstance(_secret, str):
         _secret = _secret.encode()
