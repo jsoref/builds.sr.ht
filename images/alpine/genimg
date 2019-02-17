@@ -50,7 +50,7 @@ apk add -U -X http://dl-cdn.alpinelinux.org/alpine/$release/main/ \
 	--arch="$arch" \
 	--root=/mnt \
 	--initdb \
-	acct alpine-base alpine-conf alpine-sdk linux-vanilla git openssh \
+	acct alpine-base alpine-conf alpine-sdk linux-vanilla git mercurial openssh \
 	sudo syslinux tzdata gnupg haveged bash
 
 mount --bind /dev /mnt/dev

@@ -42,6 +42,8 @@ sanity_check() {
 	guest_ssh -p 8022 build@localhost sudo dnf -y install htop
 	echo "Testing git..."
 	guest_ssh -p 8022 build@localhost git --version
+	echo "Testing mercurial..."
+	guest_ssh -p 8022 build@localhost hg --version
 	echo "Everything works!"
 	guest_ssh -p 8022 build@localhost sudo systemctl poweroff || true
 }

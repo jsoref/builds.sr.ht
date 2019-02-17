@@ -46,6 +46,8 @@ sanity_check() {
 	guest_ssh -p 8022 build@localhost sudo pacman -Syu --noconfirm
 	echo "Testing git..."
 	guest_ssh -p 8022 build@localhost git --version
+	echo "Testing mercurial..."
+	guest_ssh -p 8022 build@localhost hg --version
 	echo "Testing AUR packages..."
 	install 8022 brightnessctl
 	echo "Everything works!"

@@ -99,7 +99,7 @@ run_root apt-get update
 run_root apt-get -y install locales
 run_root apt-get -y install linux-image-$arch
 run_root apt-get -y install \
-	build-essential git ssh sudo dirmngr apt-transport-https extlinux
+	build-essential git mercurial ssh sudo dirmngr apt-transport-https extlinux
 
 if [ "$arch" = "amd64" ]
 then
