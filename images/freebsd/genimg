@@ -79,7 +79,7 @@ fi
 
 env ASSUME_ALWAYS_YES=YES pkg -c /mnt bootstrap -f
 # TODO: remove bash
-env ASSUME_ALWAYS_YES=YES pkg -c /mnt install git bash sudo curl
+env ASSUME_ALWAYS_YES=YES pkg -c /mnt install git mercurial bash sudo curl
 
 fetch -m -o "$dist_dir/ports.txz" "$ports_base/ports.txz"
 tar -C /mnt -xJf "$dist_dir/ports.txz"

@@ -99,12 +99,12 @@ then
 	echo "$pkgin_dist" >/mnt/usr/pkg/etc/pkgin/repositories.conf
 	run_root pkgin update
 	# TODO: Remove bash
-	run_root pkgin -y install sudo gnupg git-base moreutils \
-		mozilla-rootcerts bash
+	run_root pkgin -y install sudo gnupg git-base mercurial \
+		moreutils mozilla-rootcerts bash
 else
 	# TODO: Remove bash
 	for pkg in security/sudo security/gnupg devel/git-base misc/moreutils \
-		security/mozilla-rootcerts shells/bash
+		security/mozilla-rootcerts shells/bash devel/mercurial
 	do
 		pkgsrc_build "$pkg"
 	done
