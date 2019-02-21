@@ -159,8 +159,8 @@ func (wctx *WorkerContext) RunBuild(
 		ctx.SendEnv,
 		ctx.SendSecrets,
 		ctx.ConfigureRepos,
-		ctx.CloneRepos,
 		ctx.InstallPackages,
+		ctx.CloneRepos,
 		ctx.RunTasks,
 	}
 	for _, task := range tasks {
