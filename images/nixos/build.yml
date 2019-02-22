@@ -16,13 +16,19 @@ environment:
   slaves:
     - deploy@mio.runners.sr.ht
     - deploy@yui.runners.sr.ht
+    - deploy@azusa.runners.sr.ht
 triggers:
   - action: email
     condition: failure
     to: Drew DeVault <sir@cmpwn.com>
 tasks:
   - kvm: |
-      sudo modprobe kvm-intel
+      if grep -i amd /proc/cpuinfo
+      then
+          sudo modprobe kvm_amd
+      else
+          sudo modprobe kvm_intel
+      fi
       sleep 1
       sudo chown build:build /dev/kvm
   - genimg: |
