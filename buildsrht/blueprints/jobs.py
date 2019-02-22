@@ -268,6 +268,7 @@ def job_by_id(username, job_id):
                     "log": logify(r.text,
                         "task-" + name if name else "setup", log_url)
                 })
+                return True
             else:
                 raise Exception()
         except:
@@ -277,14 +278,16 @@ def job_by_id(username, job_id):
                     f'Error fetching logs for task "{escape(name)}"</strong>'
                     '</pre></td>')
             })
+            return False
     log_url = "http://{}/logs/{}/log".format(job.runner, job.id)
-    get_log(log_url, None)
-    for task in sorted(job.tasks, key=lambda t: t.id):
-        if task.status == TaskStatus.pending:
-            continue
-        log_url = "http://{}/logs/{}/{}/log".format(
-                job.runner, job.id, task.name)
-        get_log(log_url, task.name)
+    if get_log(log_url, None):
+        for task in sorted(job.tasks, key=lambda t: t.id):
+            if task.status == TaskStatus.pending:
+                continue
+            log_url = "http://{}/logs/{}/{}/log".format(
+                    job.runner, job.id, task.name)
+            if not get_log(log_url, task.name):
+                break
     return render_template("job.html",
             job=job,
             status_map=status_map,
