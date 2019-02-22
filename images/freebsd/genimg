@@ -43,11 +43,20 @@ echo 'autoboot_delay="-1"' >>/mnt/boot/loader.conf
 
 cat >>/mnt/etc/rc.conf <<EOF
 ntpd_enable=YES
+ntpd_sync_on_start=YES
 sshd_enable=YES
 growfs_enable=YES
 hostname="build"
 ifconfig_DEFAULT="inet 10.0.2.15 netmask 255.255.255.0"
 defaultrouter="10.0.2.2"
+powerd_enable=NO
+sendmail_enable=NONE
+sendmail_submit_enable=NO
+sendmail_outbound_enable=NO
+sendmail_msp_queue_enable=NO
+cron_enable=NO
+# syslogd_enable=NO
+syslogd_flags="-ss"
 EOF
 echo "nameserver 1.1.1.1" >/mnt/etc/resolv.conf
 tzsetup -s -C /mnt UTC
@@ -57,6 +66,7 @@ PermitRootLogin yes
 PasswordAuthentication yes
 PermitEmptyPasswords yes
 UsePAM no
+UseDNS no
 EOF
 
 mkdir -p /mnt/usr/local/etc/pkg/repos/
