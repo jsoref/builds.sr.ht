@@ -259,9 +259,9 @@ def job_by_id(username, job_id):
             if cl > log_max:
                 r = requests.get(log_url, headers={
                     "Range": f"bytes={cl-log_max}-{cl-1}",
-                })
+                }, timeout=3)
             else:
-                r = requests.get(log_url)
+                r = requests.get(log_url, timeout=3)
             if r.status_code >= 200 and r.status_code <= 299:
                 logs.append({
                     "name": name,
