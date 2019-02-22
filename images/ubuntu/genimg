@@ -105,12 +105,12 @@ cat >/mnt/etc/apt/sources.list <<EOF
 deb http://archive.ubuntu.com/ubuntu/ $release main restricted universe multiverse 
 deb http://archive.ubuntu.com/ubuntu/ $release-security main restricted universe multiverse 
 deb http://archive.ubuntu.com/ubuntu/ $release-updates main restricted universe multiverse 
-deb http://archive.ubuntu.com/ubuntu/ $release-proposed main restricted universe multiverse 
 deb http://archive.ubuntu.com/ubuntu/ $release-backports main restricted universe multiverse 
 EOF
 run_root apt-key update
 run_root apt-get update
 run_root apt-get -y install locales
+run_root apt-get -y install linux-base
 run_root apt-get -y install linux-image-generic
 run_root apt-get -y install \
 	build-essential git mercurial ssh sudo dirmngr
