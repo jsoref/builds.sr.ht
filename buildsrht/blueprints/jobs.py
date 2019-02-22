@@ -116,16 +116,16 @@ def index():
             Job.query.filter(Job.owner_id == current_user.id),
             "index.html")
 
-@loginrequired
 @jobs.route("/submit")
+@loginrequired
 def submit_GET():
     manifest = session.get("manifest")
     if manifest:
         del session["manifest"]
     return render_template("submit.html", manifest=manifest)
 
-@loginrequired
 @jobs.route("/resubmit/<int:job_id>")
+@loginrequired
 def resubmit_GET(job_id):
     job = Job.query.filter(Job.id == job_id).one_or_none()
     if not job:
@@ -133,8 +133,8 @@ def resubmit_GET(job_id):
     session["manifest"] = job.manifest
     return redirect("/submit")
 
-@loginrequired
 @jobs.route("/submit", methods=["POST"])
+@loginrequired
 def submit_POST():
     valid = Validation(request)
     _manifest = valid.require("manifest", friendly_name="Manifest")
@@ -162,8 +162,8 @@ def submit_POST():
     queue_build(job, manifest) # commits the session
     return redirect("/~" + current_user.username + "/job/" + str(job.id))
 
-@loginrequired
 @jobs.route("/cancel/<int:job_id>", methods=["POST"])
+@loginrequired
 def cancel(job_id):
     job = Job.query.filter(Job.id == job_id).one_or_none()
     if not job:
