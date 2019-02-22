@@ -95,6 +95,12 @@ EOF
 run_root systemctl enable systemd-networkd.service
 run_root systemctl enable systemd-timesyncd.service
 
+cat <<EOF >/mnt/etc/hosts
+127.0.0.1 localhost.localdomain localhost
+::1 localhost.localdomain localhost
+127.0.0.1 build.localdomain build
+EOF
+
 cat >/mnt/etc/apt/sources.list <<EOF
 deb http://archive.ubuntu.com/ubuntu/ $release main restricted universe multiverse 
 deb http://archive.ubuntu.com/ubuntu/ $release-security main restricted universe multiverse 
