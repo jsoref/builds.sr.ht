@@ -42,6 +42,8 @@ sanity_check() {
 	guest_ssh -p 8022 build@127.0.0.1 nix-shell -p hello --run "hello"
 	echo "Testing git..."
 	guest_ssh -p 8022 build@127.0.0.1 git --version
+	echo "Testing mercurial..."
+	guest_ssh -p 8022 build@127.0.0.1 hg --version
 	echo "Everything works!"
 	guest_ssh -p 8022 build@127.0.0.1 sudo poweroff || true
 }

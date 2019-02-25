@@ -45,6 +45,7 @@
 
   environment.systemPackages = with pkgs; [
     git
+    mercurial
     curl
   ];
 }
