@@ -44,7 +44,7 @@
   };
 
   environment.systemPackages = with pkgs; [
-    git
+    gitMinimal
     mercurial
     curl
   ];
