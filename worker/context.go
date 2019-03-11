@@ -191,7 +191,7 @@ func (ctx *JobContext) Control(
 func (ctx *JobContext) SSH(args ...string) *exec.Cmd {
 	sport := strconv.Itoa(ctx.Port)
 	return exec.CommandContext(ctx.Context, "ssh",
-		append([]string{"-q",
+		append([]string{"-q", "-t",
 			"-p", sport,
 			"-o", "UserKnownHostsFile=/dev/null",
 			"-o", "StrictHostKeyChecking=no",

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -14,6 +15,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
+	"github.com/kr/pty"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -98,7 +100,7 @@ func (ctx *JobContext) Settle() error {
 	go func() {
 		for {
 			attempt++
-			check := ctx.SSH("echo", "hello world")
+			check := ctx.SSH("printf", "'hello world'")
 			pipe, _ := check.StdoutPipe()
 			if err := check.Start(); err != nil {
 				done <- err
@@ -106,7 +108,7 @@ func (ctx *JobContext) Settle() error {
 			}
 			stdout, _ := ioutil.ReadAll(pipe)
 			if err := check.Wait(); err == nil {
-				if string(stdout) == "hello world\n" {
+				if string(stdout) == "hello world" {
 					done <- nil
 					return
 				} else {
@@ -379,6 +381,7 @@ func (ctx *JobContext) RunTasks() error {
 			logfd *os.File
 			name  string
 			ssh   *exec.Cmd
+			tty   *os.File
 		)
 		for name, _ = range task {
 			break
@@ -393,14 +396,17 @@ func (ctx *JobContext) RunTasks() error {
 
 		ssh = ctx.SSH(path.Join(".", ".tasks", name))
 		if logfd, err = os.Create(path.Join(ctx.LogDir, name, "log")); err != nil {
-
 			err = errors.Wrap(err, "Creating log file")
 			goto fail
 		}
-		ssh.Stdout = logfd
-		ssh.Stderr = logfd
+		tty, err = pty.Start(ssh)
+		if err != nil {
+			err = errors.Wrap(err, "Allocating pty")
+			goto fail
+		}
+		go io.Copy(logfd, tty)
 
-		if err = ssh.Run(); err != nil {
+		if err = ssh.Wait(); err != nil {
 			exiterr, ok := err.(*exec.ExitError)
 			if !ok {
 				goto fail

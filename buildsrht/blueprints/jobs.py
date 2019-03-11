@@ -1,3 +1,4 @@
+from ansi2html import Ansi2HTMLConverter
 from flask import Blueprint, render_template, request, abort, redirect, session
 from flask import Response
 from flask_login import current_user
@@ -217,7 +218,10 @@ def tag_svg(username, path):
 
 log_max = 131072
 
+ansi = Ansi2HTMLConverter(scheme="mint-terminal")
+
 def logify(text, task, log_url):
+    text = ansi.convert(text, full=False)
     if len(text) >= log_max:
         text = text[-log_max:]
         try:
@@ -231,19 +235,26 @@ def logify(text, task, log_url):
                     f'<a target="_blank" href="{escape(log_url)}">'
                         'Click here to download the full log</a>.'
                     '</span>\n\n')
-                + escape(text)
+                + Markup(text)
                 + Markup('</pre>'))
         linenos = Markup('<pre>\n\n\n')
     else:
         nlines = len(text.splitlines())
-        text = Markup('<pre>') + escape(text) + Markup('</pre>')
+        text = (Markup('<pre>')
+                + Markup(text)
+                + Markup('</pre>'))
         linenos = Markup('<pre>')
     for no in range(1, nlines + 1):
         linenos += Markup(f"<a href='#{escape(task)}-{no-1}'>{no}</a>")
         if no != nlines:
             linenos += Markup("\n")
     linenos += Markup("</pre>")
-    return Markup('<td>') + linenos + Markup('</td><td>') + text + Markup('</td>')
+    return (Markup('<td>')
+            + linenos
+            + Markup('</td><td>')
+            + Markup(ansi.produce_headers())
+            + text
+            + Markup('</td>'))
 
 @jobs.route("/~<username>/job/<int:job_id>")
 def job_by_id(username, job_id):
