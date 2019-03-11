@@ -218,7 +218,7 @@ def tag_svg(username, path):
 
 log_max = 131072
 
-ansi = Ansi2HTMLConverter(scheme="mint-terminal")
+ansi = Ansi2HTMLConverter(scheme="mint-terminal", linkify=True)
 
 def logify(text, task, log_url):
     text = ansi.convert(text, full=False)
