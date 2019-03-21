@@ -173,6 +173,8 @@ export JOB_ID=%d
 		switch v := value.(type) {
 		case string:
 			env += fmt.Sprintf("export %s=%s\n", key, v)
+		case float64:
+			env += fmt.Sprintf("export %s=%g\n", key, v)
 		case []interface{}:
 			env += key + "=("
 			for i, _item := range v {
