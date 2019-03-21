@@ -96,6 +96,10 @@ func (wctx *WorkerContext) RunBuild(
 		panic(errors.Wrap(err, "job.SetStatus"))
 	}
 
+	if !job.Secrets {
+		manifest.Secrets = []string{}
+	}
+
 	defer func() {
 		if err := recover(); err != nil {
 			log.Printf("run_build panic: %v", err)
