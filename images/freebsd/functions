@@ -10,8 +10,13 @@ boot() {
 	fi
 	qemu=qemu-system-x86_64
 	#_boot $(cpu_opts x86_64)
-	# -cpu host doesn't work on AMD, kvm is not supported on freebsd
-	_boot -cpu qemu64
+	# -cpu host doesn't work on AMD
+	if [ "$(uname -m)" = "$1" ] && [ -e /dev/kvm ]
+	then
+		_boot -cpu qemu64 -enable-kvm
+	else
+		_boot -cpu qemu64
+	fi
 }
 
 install() {
