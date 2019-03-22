@@ -45,6 +45,7 @@ _docker_boot() {
 		--device /dev/kvm \
 		--cpus=1 \
 		-p 127.0.0.1:$port:$port \
+		--rm \
 		--name "builds_job_${BUILD_JOB_ID:-unknown_$(date +"%s")}" \
 		qemu /bin/${qemu:-qemu-system-$arch} \
 		-m ${MEMORY:-2048} \
