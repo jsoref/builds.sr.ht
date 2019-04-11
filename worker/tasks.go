@@ -326,6 +326,10 @@ func (ctx *JobContext) CloneRepos() error {
 			git.Stdout = ctx.LogFile
 			git.Stderr = ctx.LogFile
 			if err := git.Run(); err != nil {
+				ctx.Log.Println("Failed to clone repository. " +
+					"If this a private repository, make sure you've " +
+					"added a suitable SSH key.")
+				ctx.Log.Println("https://man.sr.ht/builds.sr.ht/private-repos.md")
 				return errors.Wrap(err, "git clone")
 			}
 			if ref != "" {
@@ -343,6 +347,10 @@ func (ctx *JobContext) CloneRepos() error {
 			hg.Stdout = ctx.LogFile
 			hg.Stderr = ctx.LogFile
 			if err := hg.Run(); err != nil {
+				ctx.Log.Println("Failed to clone repository. " +
+					"If this a private repository, make sure you've " +
+					"added a suitable SSH key.")
+				ctx.Log.Println("https://man.sr.ht/builds.sr.ht/private-repos.md")
 				return errors.Wrap(err, "hg clone")
 			}
 			if ref != "" {
