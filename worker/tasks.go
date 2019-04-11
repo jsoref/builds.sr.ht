@@ -322,7 +322,9 @@ func (ctx *JobContext) CloneRepos() error {
 		if scm == "git" {
 			repo_name := path.Base(purl.Path)
 			repo_name = strings.TrimSuffix(repo_name, ".git")
-			git := ctx.SSH("git", "clone", "--recursive", purl.String())
+			git := ctx.SSH("GIT_SSH_COMMAND='ssh -o " +
+				"UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'",
+				"git", "clone", "--recursive", purl.String())
 			git.Stdout = ctx.LogFile
 			git.Stderr = ctx.LogFile
 			if err := git.Run(); err != nil {
@@ -343,7 +345,9 @@ func (ctx *JobContext) CloneRepos() error {
 			}
 		} else if scm == "hg" {
 			repo_name := path.Base(purl.Path)
-			hg := ctx.SSH("hg", "clone", purl.String())
+			hg := ctx.SSH("hg", "clone",
+				"-e", "'ssh -o UserKnownHostsFile=/dev/null " +
+				"-o StrictHostKeyChecking=no'", purl.String())
 			hg.Stdout = ctx.LogFile
 			hg.Stderr = ctx.LogFile
 			if err := hg.Run(); err != nil {
