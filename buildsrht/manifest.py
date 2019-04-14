@@ -42,8 +42,8 @@ class Task:
             self.name = key
             self.script = yml[key].strip()
         if not re.match(r"^[a-z0-9_-]+$", self.name) or len(self.name) > 128:
-            raise Exception("Task name '{}' is invalid (must be all lowercase letters, " +
-                "numbers, underscores, and dashes, and <=128 characters)".format(self.name))
+            raise Exception(f"Task name '{self.name}' is invalid (must be all lowercase letters, " +
+                "numbers, underscores, and dashes, and <=128 characters)")
 
     def __repr__(self):
         return "<Task {}>".format(self.name)
