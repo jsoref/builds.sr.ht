@@ -10,8 +10,6 @@ environment:
   arch: x86_64
   release: "29"
   slaves:
-    - deploy@mio.runners.sr.ht
-    - deploy@yui.runners.sr.ht
     - deploy@azusa.runners.sr.ht
 secrets:
   - fa00a8d3-7b63-42d5-8060-3bb31c3e3018
@@ -30,13 +28,13 @@ tasks:
       MEMORY=1024 ./images/control fedora/$release sanity-check
   - deploy: |
       cd builds.sr.ht/images/fedora/$release
-      sshopts="-o StrictHostKeyChecking=no"
+      echo "StrictHostKeyChecking=no" >> ~/.ssh/config
       for server in "${slaves[@]}"
       do
-        rsync \
-          --rsh="ssh $sshopts" -rzP $arch/root.img.qcow2 \
+        ssh $server mkdir -p /var/lib/images/fedora/$release/$arch
+        rsync -rzP $arch/root.img.qcow2 \
           ${server}:/var/lib/images/fedora/$release/$arch/new_root.img.qcow2
-        ssh $sshopts $server \
+        ssh $server \
           mv /var/lib/images/fedora/$release/$arch/new_root.img.qcow2 \
              /var/lib/images/fedora/$release/$arch/root.img.qcow2
       done

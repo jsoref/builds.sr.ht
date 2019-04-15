@@ -14,8 +14,6 @@ environment:
   release: unstable
   arch: x86_64
   slaves:
-    - deploy@mio.runners.sr.ht
-    - deploy@yui.runners.sr.ht
     - deploy@azusa.runners.sr.ht
 triggers:
   - action: email
@@ -39,13 +37,13 @@ tasks:
       MEMORY=1024 ./images/control "nixos/${release}" sanity-check
   - deploy: |
       cd builds.sr.ht/images/nixos/$release
-      sshopts="-o StrictHostKeyChecking=no"
+      echo "StrictHostKeyChecking=no" >> ~/.ssh/config
       for server in "${slaves[@]}"
       do
-        rsync \
-          --rsh="ssh $sshopts" -rzP $arch/root.img.qcow2 \
+        ssh $server mkdir -p /var/lib/images/nixos/$release/$arch
+        rsync -rzP $arch/root.img.qcow2 \
           ${server}:/var/lib/images/nixos/$release/$arch/new_root.img.qcow2
-        ssh $sshopts $server \
+        ssh $server \
           mv /var/lib/images/nixos/$release/$arch/new_root.img.qcow2 \
              /var/lib/images/nixos/$release/$arch/root.img.qcow2
       done

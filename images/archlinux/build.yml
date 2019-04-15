@@ -9,8 +9,6 @@ sources:
 environment:
   arch: x86_64
   slaves:
-    - deploy@mio.runners.sr.ht
-    - deploy@yui.runners.sr.ht
     - deploy@azusa.runners.sr.ht
 secrets:
   - fa00a8d3-7b63-42d5-8060-3bb31c3e3018
@@ -33,15 +31,13 @@ tasks:
       fi
   - deploy: |
       cd builds.sr.ht/images/archlinux
-      sshopts="-o StrictHostKeyChecking=no"
+      echo "StrictHostKeyChecking=no" >> ~/.ssh/config
       for server in "${slaves[@]}"
       do
-        rsync \
-          --rsh="ssh $sshopts" \
-          -rzP $arch/initrd $arch/kernel $arch/root.img.qcow2 \
+        rsync -rzP $arch/initrd $arch/kernel $arch/root.img.qcow2 \
           ${server}:/var/lib/images/archlinux/$arch-new
-        ssh $sshopts $server \
+        ssh $server \
           mv /var/lib/images/archlinux/$arch-new/{initrd,kernel,root.img.qcow2} \
              /var/lib/images/archlinux/$arch
-        ssh $sshopts $server rm -rf /var/lib/images/archlinux/$arch-new
+        ssh $server rm -rf /var/lib/images/archlinux/$arch-new
       done
