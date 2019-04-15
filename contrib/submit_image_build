@@ -8,7 +8,7 @@ import sys
 import yaml
 
 opts, args = getopt(sys.argv[1:], "n:p:t:u:a:")
-usage = f"Usage: {sys.argv[0]} -t token [-n note] [-u builds url] [-p images path] [-a arch] image"
+usage = f"Usage: {sys.argv[0]} [-n note] [-u builds url] [-p images path] [-a arch] image"
 
 if len(args) != 1:
     print(usage)
@@ -16,14 +16,12 @@ if len(args) != 1:
 
 opts = { key: value for (key, value) in opts }
 
-if not "-t" in opts:
-    print(usage)
-    sys.exit(1)
+with open("/etc/sr.ht/image-refresh-token") as f:
+    token = f.read().strip()
 
 arch = opts.get("-a", "x86_64")
 note = opts.get("-n")
 path = opts.get("-p", "/var/lib/images")
-token = opts.get("-t")
 url = opts.get("-u", "https://builds.sr.ht")
 image = args[0]
 

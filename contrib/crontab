@@ -1,0 +1,22 @@
+# Daily refreshes
+0 20 * * * chronic /usr/local/bin/submit_image_build -n "Daily scheduled build image refresh" archlinux
+30 20 * * * chronic /usr/local/bin/submit_image_build -n "Daily scheduled build image refresh" alpine/edge
+0 21 * * * chronic /usr/local/bin/submit_image_build -n "Daily scheduled build image refresh" -a amd64 debian/sid
+30 21 * * * chronic /usr/local/bin/submit_image_build -n "Daily scheduled build image refresh" nixos/unstable
+0 22 * * * chronic /usr/local/bin/submit_image_build -n "Daily scheduled build image refresh" -a amd64 ubuntu/disco
+
+# Weekly refreshes
+30 19 * * 0 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" nixos/19.03
+30 19 * * 1 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" -a amd64 debian/buster
+30 19 * * 2 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" -a amd64 debian/stretch
+30 19 * * 3 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" -a amd64 ubuntu/bionic
+30 19 * * 4 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" -a amd64 ubuntu/cosmic
+30 19 * * 5 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" alpine/3.9
+30 19 * * 6 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" -a amd64 freebsd/current
+0 19 * * 0 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" fedora/29
+
+# Monthly
+0 18 1 * 0 chronic /usr/local/bin/submit_image_build -n "Monthly scheduled build image refresh" -a amd64 freebsd/11.x
+0 18 2 * 0 chronic /usr/local/bin/submit_image_build -n "Monthly scheduled build image refresh" -a amd64 freebsd/12.x
+0 18 3 * 0 chronic /usr/local/bin/submit_image_build -n "Monthly scheduled build image refresh" ubuntu/xenial
+0 18 4 * 0 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" alpine/3.8
