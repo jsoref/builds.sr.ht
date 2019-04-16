@@ -45,7 +45,7 @@ mount /dev/nbd0p1 /mnt/boot
 swapon /dev/nbd0p2
 
 # TODO: Remove bash
-apk add -U -X http://dl-cdn.alpinelinux.org/alpine/$release/main/ \
+apk add -U -X http://repo-cache.local/alpine/$release/main/ \
 	--allow-untrusted \
 	--arch="$arch" \
 	--root=/mnt \
@@ -83,13 +83,18 @@ run_root setup-timezone -z UTC
 if [ "$release" = "edge" ]
 then
 	cat >/mnt/etc/apk/repositories <<EOF
-http://dl-cdn.alpinelinux.org/alpine/$release/main
-http://dl-cdn.alpinelinux.org/alpine/$release/community
-http://dl-cdn.alpinelinux.org/alpine/$release/testing
+http://repo-cache.local/alpine/$release/main
+http://repo-cache.local/alpine/$release/community
+http://repo-cache.local/alpine/$release/testing
 EOF
 else
-	run_root setup-apkrepos -f
+	cat >/mnt/etc/apk/repositories <<EOF
+http://repo-cache.local/alpine/$release/main
+http://repo-cache.local/alpine/$release/community
+EOF
 fi
+
+echo '172.17.0.1 repo-cache.local' >> /mnt/etc/hosts
 
 extlinux -i /mnt/boot
 
