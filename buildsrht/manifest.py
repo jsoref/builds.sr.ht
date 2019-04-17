@@ -95,7 +95,7 @@ class Manifest:
         self.tasks = [Task(t) for t in tasks]
         for task in self.tasks:
             if len([t for t in self.tasks if t.name == task.name]) != 1:
-                raise Exception("Duplicate task '{}'", task.name)
+                raise Exception(f"Duplicate task '{task.name}'")
         triggers = self.yaml.get("triggers")
         self.triggers = [Trigger(t) for t in triggers] if triggers else []
 
