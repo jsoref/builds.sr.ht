@@ -94,7 +94,8 @@ func (ctx *JobContext) Settle() error {
 	archTimer := prometheus.NewTimer(archSettleTime)
 	defer archTimer.ObserveDuration()
 
-	timeout, _ := context.WithTimeout(ctx.Context, 120*time.Second)
+	timeout, cancel := context.WithTimeout(ctx.Context, 120*time.Second)
+	defer cancel()
 	done := make(chan error, 1)
 	attempt := 0
 	go func() {
