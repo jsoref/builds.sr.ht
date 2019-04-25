@@ -324,7 +324,7 @@ func (ctx *JobContext) CloneRepos() error {
 			repo_name = strings.TrimSuffix(repo_name, ".git")
 			git := ctx.SSH("GIT_SSH_COMMAND='ssh -o " +
 				"UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'",
-				"git", "clone", "--recursive", purl.String())
+				"git", "clone", purl.String())
 			git.Stdout = ctx.LogFile
 			git.Stderr = ctx.LogFile
 			if err := git.Run(); err != nil {
@@ -341,6 +341,15 @@ func (ctx *JobContext) CloneRepos() error {
 				git.Stderr = ctx.LogFile
 				if err := git.Run(); err != nil {
 					return errors.Wrap(err, "git checkout")
+				}
+				git = ctx.SSH("GIT_SSH_COMMAND='ssh -o " +
+					"UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'",
+					"sh", "-euxc",
+					fmt.Sprintf("'cd %s && git submodule update --init'", repo_name))
+				git.Stdout = ctx.LogFile
+				git.Stderr = ctx.LogFile
+				if err := git.Run(); err != nil {
+					return errors.Wrap(err, "git submodule update")
 				}
 			}
 		} else if scm == "hg" {
