@@ -25,6 +25,7 @@ add_repository() {
 		--add-repo "$url"
 	guest_ssh -p $port build@localhost sudo dnf config-manager \
 		--set-enabled "$name"
+	guest_ssh -p $port build@localhost sudo dnf makecache
 }
 
 sanity_check() {
