@@ -14,7 +14,7 @@ boot() {
 install() {
 	port=$1
 	shift 1
-	guest_ssh -p $port build@localhost sudo dnf -y install "$@"
+	guest_ssh -p $port build@localhost sudo dnf --refresh -y install "$@"
 }
 
 add_repository() {
