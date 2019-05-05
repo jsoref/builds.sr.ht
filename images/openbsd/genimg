@@ -1,0 +1,117 @@
+#!/bin/sh -eux
+: "$openbsd_version"
+: "$openbsd_sets"
+: "$openbsd_kernel"
+: "$openbsd_installurl"
+: "$openbsd_public_key"
+
+image_size="16g"
+run_syspatch=NO
+image_packages="bash git"
+
+BUILD_DIR="$PWD"
+mkdir -p "workdir"
+mkdir -p "$arch"
+
+cd_workdir() {
+	cd "$BUILD_DIR"/workdir
+}
+
+cleanup() {
+	sync || true
+	umount -f /mnt || true
+	vnconfig -u vnd0 || true
+}
+trap cleanup EXIT
+
+cd_workdir
+for f in $openbsd_sets $openbsd_kernel SHA256.sig SHA256
+do
+	test -f $f || ftp "${openbsd_installurl}/${openbsd_version}/${arch}/${f}"
+done
+
+signify -Cp /etc/signify/"$openbsd_public_key" \
+	-x SHA256.sig $openbsd_sets $openbsd_kernel
+
+rm -f root.img
+vmctl create root.img -s $image_size
+vnconfig -c vnd0 root.img
+fdisk -iy vnd0
+cat >/tmp/partitions <<EOF
+/ 1G-* 100%
+EOF
+disklabel -w -A -T /tmp/partitions vnd0
+newfs vnd0a
+mount /dev/vnd0a /mnt
+
+for f in $openbsd_sets
+do
+	tar -zxphf "$f" -C /mnt
+done
+
+cp $openbsd_kernel /mnt/bsd
+# lifted from openbsd install.sub to make syspatch work
+cp SHA256.sig /mnt/var/db/installed.SHA256.sig
+sha256 /mnt/bsd | (umask 077; sed 's,/mnt,,' >/mnt/var/db/kernel.SHA256)
+
+tar -zxphf /mnt/var/sysmerge/etc.tgz -C /mnt
+tar -zxphf /mnt/var/sysmerge/xetc.tgz -C /mnt
+
+cat > /mnt/etc/fstab <<EOF
+/dev/sd0a /     ffs rw,wxallowed 1 1
+EOF
+
+cd /mnt/dev
+sh MAKEDEV all
+cd_workdir
+
+cat >>/mnt/etc/ssh/sshd_config <<EOF
+PermitRootLogin yes
+PasswordAuthentication yes
+PermitEmptyPasswords yes
+EOF
+
+echo "build" > /mnt/etc/myname
+echo "10.0.2.2" > /mnt/etc/mygate
+echo "inet 10.0.2.15 255.255.255.128" > /mnt/etc/hostname.vio0
+echo "nameserver 1.1.1.1" > /mnt/etc/resolv.conf
+echo "$openbsd_installurl" > /mnt/etc/installurl
+ln -sf /usr/share/zoneinfo/UTC /mnt/etc/localtime
+
+cat >>/mnt/etc/rc.conf.local <<EOF
+library_aslr=NO
+pf=NO
+sndiod_flags=NO
+EOF
+
+# the username "build" is already used in OpenBSD base, but it probably isn't
+# anything too important; it seems to be used to build xenocara etc.
+chroot /mnt /usr/sbin/pkg_add -u
+chroot /mnt /usr/sbin/pkg_add $image_packages
+chroot /mnt /usr/sbin/userdel build
+# TODO: Remove bash
+chroot /mnt /usr/sbin/adduser \
+	-batch build wheel "Build user" "" -shell bash -s -noconfig
+echo "permit nopass keepenv :wheel" > /mnt/etc/doas.conf
+chroot /mnt /usr/sbin/usermod -p '' build
+
+if [ "$run_syspatch" = "YES" ]
+then
+	chroot /mnt ksh -x /usr/libexec/reorder_kernel
+	chroot /mnt ksh -x /usr/sbin/syspatch
+fi
+
+cat >/mnt/usr/libexec/reorder_kernel <<EOF
+#!/bin/sh
+echo "KARL disabled"
+exit 0
+EOF
+
+echo "boot" >/etc/boot.conf
+
+installboot -r /mnt vnd0
+trap : EXIT
+cleanup
+cd_workdir
+
+qemu-img convert -p -f raw -O qcow2 root.img ../$arch/root.img.qcow2
