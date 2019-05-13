@@ -29,7 +29,7 @@ sanity_check() {
 	echo "Testing doas..."
 	guest_ssh -p 8022 build@localhost doas ls -a
 	echo "Testing networking..."
-	guest_ssh -p 8022 build@localhost ftp -o https://example.org
+	guest_ssh -p 8022 build@localhost ftp -o- https://example.org
 	echo "Testing pkg_add..."
 	guest_ssh -p 8022 build@localhost doas pkg_add htop
 	echo "Testing git..."
