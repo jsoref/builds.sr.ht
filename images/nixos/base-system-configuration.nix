@@ -47,6 +47,7 @@
     gitMinimal
     mercurial
     curl
+    gnupg
   ];
 }
 
