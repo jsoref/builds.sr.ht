@@ -16,6 +16,7 @@ done
 
 cleanup() {
 	sync || true
+	umount /mnt/dev || true
 	umount /mnt || true
 	mdconfig -du md0 || true
 }
@@ -31,6 +32,9 @@ gpart add -t freebsd-ufs -l rootfs -b 1M -s 5G md0
 newfs -U /dev/md0p2
 
 mount /dev/md0p2 /mnt
+
+mkdir -p /mnt/dev
+mount -t devfs devfs /mnt/dev
 
 for f in $dist_files
 do
