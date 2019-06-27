@@ -343,15 +343,15 @@ func (ctx *JobContext) CloneRepos() error {
 				if err := git.Run(); err != nil {
 					return errors.Wrap(err, "git checkout")
 				}
-				git = ctx.SSH("GIT_SSH_COMMAND='ssh -o " +
-					"UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'",
-					"sh", "-euxc",
-					fmt.Sprintf("'cd %s && git submodule update --init'", repo_name))
-				git.Stdout = ctx.LogFile
-				git.Stderr = ctx.LogFile
-				if err := git.Run(); err != nil {
-					return errors.Wrap(err, "git submodule update")
-				}
+			}
+			git = ctx.SSH("GIT_SSH_COMMAND='ssh -o " +
+				"UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'",
+				"sh", "-euxc",
+				fmt.Sprintf("'cd %s && git submodule update --init'", repo_name))
+			git.Stdout = ctx.LogFile
+			git.Stderr = ctx.LogFile
+			if err := git.Run(); err != nil {
+				return errors.Wrap(err, "git submodule update")
 			}
 		} else if scm == "hg" {
 			repo_name := path.Base(purl.Path)
