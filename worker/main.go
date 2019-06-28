@@ -47,6 +47,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	if err := db.Ping(); err != nil {
+		log.Fatalf("Failed to open a database connection: %v", err)
+	}
 
 	clusterRedis := conf("builds.sr.ht", "redis")
 	broker := celery.NewRedisCeleryBroker(clusterRedis)
