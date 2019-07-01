@@ -302,6 +302,14 @@ func (ctx *JobContext) CloneRepos() error {
 	}
 	ctx.Log.Println("Cloning repositories")
 	for _, srcurl := range ctx.Manifest.Sources {
+		directory := ""
+		directory_bits := strings.Split(srcurl, "::")
+		if len(directory_bits) == 2 {
+			// directory::... form
+			directory = directory_bits[0]
+			srcurl = directory_bits[1]
+		}
+
 		purl, err := url.Parse(srcurl)
 		if err != nil {
 			return errors.Wrap(err, "clone repository " + srcurl)
@@ -323,9 +331,12 @@ func (ctx *JobContext) CloneRepos() error {
 		if scm == "git" {
 			repo_name := path.Base(purl.Path)
 			repo_name = strings.TrimSuffix(repo_name, ".git")
+			if directory != "" {
+				repo_name = directory
+			}
 			git := ctx.SSH("GIT_SSH_COMMAND='ssh -o " +
 				"UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'",
-				"git", "clone", purl.String())
+				"git", "clone", purl.String(), directory)
 			git.Stdout = ctx.LogFile
 			git.Stderr = ctx.LogFile
 			if err := git.Run(); err != nil {
@@ -355,9 +366,12 @@ func (ctx *JobContext) CloneRepos() error {
 			}
 		} else if scm == "hg" {
 			repo_name := path.Base(purl.Path)
+			if directory != "" {
+				repo_name = directory
+			}
 			hg := ctx.SSH("hg", "clone",
 				"-e", "'ssh -o UserKnownHostsFile=/dev/null " +
-				"-o StrictHostKeyChecking=no'", purl.String())
+				"-o StrictHostKeyChecking=no'", purl.String(), directory)
 			hg.Stdout = ctx.LogFile
 			hg.Stderr = ctx.LogFile
 			if err := hg.Run(); err != nil {
