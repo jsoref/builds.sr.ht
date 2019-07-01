@@ -412,7 +412,10 @@ func (ctx *JobContext) RunTasks() error {
 		}
 
 		ctx.Log.Printf("Running task %s\n", name)
-		ctx.Job.SetTaskStatus(name, "running")
+		err = ctx.Job.SetTaskStatus(name, "running")
+		if err != nil {
+			goto fail
+		}
 
 		if err = os.Mkdir(path.Join(ctx.LogDir, name), 0755); err != nil {
 			goto fail
