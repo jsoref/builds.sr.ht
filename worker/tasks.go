@@ -302,41 +302,40 @@ func (ctx *JobContext) CloneRepos() error {
 	}
 	ctx.Log.Println("Cloning repositories")
 	for _, srcurl := range ctx.Manifest.Sources {
-		directory := ""
+		scm := "git"
+		hash_bits := strings.Split(srcurl, "#")
+		ref := ""
+		if len(hash_bits) == 2 {
+			srcurl = hash_bits[0]
+			ref = hash_bits[1]
+		}
+		repo_name := path.Base(srcurl)
 		directory_bits := strings.Split(srcurl, "::")
 		if len(directory_bits) == 2 {
 			// directory::... form
-			directory = directory_bits[0]
 			srcurl = directory_bits[1]
+			if directory_bits[0] != "" {
+				repo_name = directory_bits[0]
+			}
 		}
-
 		purl, err := url.Parse(srcurl)
-		if err != nil {
-			return errors.Wrap(err, "clone repository " + srcurl)
+		if err == nil {
+			scheme_bits := strings.Split(purl.Scheme, "+")
+			if len(scheme_bits) == 2 {
+				// git+https://... form
+				scm = scheme_bits[0]
+				purl.Scheme = scheme_bits[1]
+				srcurl = purl.String()
+			}
 		}
-
-		scm := "git"
-		clone_scheme := purl.Scheme
-		scheme_bits := strings.Split(purl.Scheme, "+")
-		if len(scheme_bits) == 2 {
-			// git+https://... form
-			scm = scheme_bits[0]
-			clone_scheme = scheme_bits[1]
-		}
-		purl.Scheme = clone_scheme
-
-		ref := purl.Fragment
-		purl.Fragment = ""
-
 		if scm == "git" {
-			repo_name := path.Base(purl.Path)
-			repo_name = strings.TrimSuffix(repo_name, ".git")
-			if directory != "" {
-				repo_name = directory
+			if directory_bits[0] == "" {
+				// we're using the repo name from the url, which may have .git
+				repo_name = strings.TrimSuffix(repo_name, ".git")
 			}
 			git := ctx.SSH("GIT_SSH_COMMAND='ssh -o " +
 				"UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'",
-				"git", "clone", purl.String(), directory)
+				"git", "clone", srcurl, repo_name)
 			git.Stdout = ctx.LogFile
 			git.Stderr = ctx.LogFile
 			if err := git.Run(); err != nil {
@@ -365,13 +364,9 @@ func (ctx *JobContext) CloneRepos() error {
 				return errors.Wrap(err, "git submodule update")
 			}
 		} else if scm == "hg" {
-			repo_name := path.Base(purl.Path)
-			if directory != "" {
-				repo_name = directory
-			}
 			hg := ctx.SSH("hg", "clone",
 				"-e", "'ssh -o UserKnownHostsFile=/dev/null " +
-				"-o StrictHostKeyChecking=no'", purl.String(), directory)
+				"-o StrictHostKeyChecking=no'", srcurl, repo_name)
 			hg.Stdout = ctx.LogFile
 			hg.Stderr = ctx.LogFile
 			if err := hg.Run(); err != nil {
