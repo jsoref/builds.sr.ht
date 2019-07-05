@@ -329,7 +329,7 @@ func (ctx *JobContext) CloneRepos() error {
 			}
 		}
 		if scm == "git" {
-			if directory_bits[0] == "" {
+			if len(directory_bits) == 1 {
 				// we're using the repo name from the url, which may have .git
 				repo_name = strings.TrimSuffix(repo_name, ".git")
 			}
