@@ -1,12 +1,11 @@
-from flask import Blueprint, render_template, request, redirect, session, abort
-from flask_login import current_user
+from buildsrht.types import Secret, SecretType
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
-
+from flask import Blueprint, render_template, request, redirect, abort
+from flask_login import current_user
 from srht.database import db
-from srht.flask import loginrequired
+from srht.flask import loginrequired, session
 from srht.validation import Validation
-from buildsrht.types import Secret, SecretType
 
 secrets = Blueprint('secrets', __name__)
 

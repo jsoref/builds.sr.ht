@@ -1,10 +1,10 @@
 from ansi2html import Ansi2HTMLConverter
-from flask import Blueprint, render_template, request, abort, redirect, session
+from flask import Blueprint, render_template, request, abort, redirect
 from flask import Response
 from flask_login import current_user
 from srht.config import cfg
 from srht.database import db
-from srht.flask import paginate_query, loginrequired
+from srht.flask import paginate_query, loginrequired, session
 from srht.validation import Validation
 from buildsrht.types import Job, JobStatus, Task, TaskStatus, User
 from buildsrht.manifest import Manifest
