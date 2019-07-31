@@ -10,6 +10,10 @@ case $arch in
 		iface=enp0s1
 		qarch=aarch64
 		;;
+	ppc64el)
+		iface=ens3
+		qarch=ppc64
+		;;
 	*)
 		echo "unsupported architecture $arch"
 		exit 1
@@ -60,7 +64,7 @@ if [ "$arch" = "x86_64" ]
 then
 	debootstrap --include=gnupg2 --arch=$arch $release /mnt
 else
-	qemu-debootstrap --include=gnupg2 --arch=$arch $release /mnt
+	../qemu-debootstrap --include=gnupg2 --arch=$arch $release /mnt
 fi
 
 mount --bind /dev /mnt/dev
@@ -142,6 +146,10 @@ case "$arch" in
 		EOF
 		;;
 	arm64)
+		cp /mnt/boot/vmlinuz-* $arch/vmlinuz
+		cp /mnt/boot/initrd.img-* $arch/initrd.img
+		;;
+	ppc64el)
 		cp /mnt/boot/vmlinuz-* $arch/vmlinuz
 		cp /mnt/boot/initrd.img-* $arch/initrd.img
 		;;

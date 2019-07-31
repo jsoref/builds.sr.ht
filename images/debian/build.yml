@@ -30,6 +30,9 @@ tasks:
           amd64)
               qpkg=x86
               ;;
+          ppc64el)
+              qpkg=ppc
+              ;;
       esac
       sudo apt install -y qemu-system-"$qpkg"
       sudo ./genimg $arch

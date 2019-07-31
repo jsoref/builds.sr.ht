@@ -18,6 +18,16 @@ boot() {
 				-initrd "$wd/$arch/initrd.img" \
 				-append "root=/dev/vda3"
 			;;
+		ppc64el)
+			driveopts="id=root,if=none"
+			qemu=qemu-system-ppc64le
+			_boot \
+				$(cpu_opts ppc64le) \
+				-device virtio-blk-pci,drive=root \
+				-kernel "$wd/$arch/vmlinuz" \
+				-initrd "$wd/$arch/initrd.img" \
+				-append "root=/dev/vda3"
+			;;
 		*)
 			echo "Unsupported architecture $arch" >&2
 			exit 1
