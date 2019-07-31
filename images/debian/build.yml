@@ -2,7 +2,6 @@ image: debian/unstable
 packages:
   - debootstrap
   - e2fsprogs
-  - qemu-system-x86
   - qemu-user-static
   - binfmt-support
   - rsync
@@ -24,10 +23,19 @@ tasks:
   - genimg: |
       cd builds.sr.ht
       cd images/debian/$release
+      case "$arch" in
+          arm64)
+              qpkg=arm
+              ;;
+          amd64)
+              qpkg=x86
+              ;;
+      esac
+      sudo apt install -y qemu-system-"$qpkg"
       sudo ./genimg $arch
   - sanity-check: |
       cd builds.sr.ht
-      if [ -e /dev/kvm ] && [ "$(uname -m)" = "x86_64" ]
+      if [ -e /dev/kvm ] && [ "$(uname -m)" = "x86_64" ] && [ "$arch" = "amd64" ]
       then
           # Debian does not have a kvm group so we just gotta do it this way
           sudo chown build:build /dev/kvm
