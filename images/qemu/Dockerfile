@@ -51,7 +51,6 @@ COPY --from=0 /bin/qemu-system-i386 /bin/
 COPY --from=0 /bin/qemu-system-aarch64 /bin/
 COPY --from=0 /bin/qemu-system-arm /bin/
 COPY --from=0 /bin/qemu-system-ppc64 /bin/
-COPY --from=0 /bin/qemu-system-ppc64le /bin/
 COPY --from=0 /bin/qemu-system-s390x /bin/
 COPY --from=0 /bin/qemu-system-mips /bin/
 COPY --from=0 /bin/qemu-system-mipsel /bin/
