@@ -24,7 +24,7 @@ boot() {
 			_boot \
 				$(cpu_opts ppc64le) \
 				-device virtio-blk-pci,drive=root \
-				-kernel "$wd/$arch/vmlinuz" \
+				-kernel "$wd/$arch/vmlinux" \
 				-initrd "$wd/$arch/initrd.img" \
 				-append "root=/dev/vda3"
 			;;
