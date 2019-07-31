@@ -10,6 +10,7 @@ boot() {
 			;;
 		arm64)
 			driveopts="id=root,if=none"
+			qemu=qemu-system-aarch64
 			_boot \
 				$(cpu_opts aarch64) \
 				-device virtio-blk-pci,drive=root \

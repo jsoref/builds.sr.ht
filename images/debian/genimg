@@ -56,7 +56,12 @@ mount /dev/nbd0p3 /mnt
 mkdir /mnt/boot
 mount /dev/nbd0p1 /mnt/boot
 
-debootstrap --include=gnupg2 --arch=$arch $release /mnt
+if [ "$arch" = "x86_64" ]
+then
+	debootstrap --include=gnupg2 --arch=$arch $release /mnt
+else
+	qemu-debootstrap --include=gnupg2 --arch=$arch $release /mnt
+fi
 
 mount --bind /dev /mnt/dev
 mount --bind /dev/pts /mnt/dev/pts
@@ -99,12 +104,7 @@ run_root apt-get update --allow-releaseinfo-change
 run_root apt-get -y install locales
 run_root apt-get -y install linux-image-$arch
 run_root apt-get -y install \
-	build-essential git mercurial ssh sudo dirmngr apt-transport-https extlinux
-
-if [ "$arch" = "amd64" ]
-then
-	extlinux -i /mnt/boot
-fi
+	build-essential git mercurial ssh sudo dirmngr apt-transport-https
 
 run_root ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 run_root systemctl enable systemd-timesyncd.service
@@ -121,24 +121,30 @@ run_root update-initramfs -u
 
 linuxver=$(ls /mnt/boot | grep vmlinuz | cut -d- -f2-)
 
-cat >/mnt/boot/extlinux.conf <<EOF
-default debian
-label debian
-	linux vmlinuz-$linuxver
-	initrd initrd.img-$linuxver
-	append root=/dev/vda3 rw quiet
-EOF
-
 cat >>/mnt/etc/fstab <<EOF
 /dev/vda1 /boot ext4 rw,relatime,data=ordered 0 0
 /dev/vda2 swap swap defaults 0 0
 /dev/vda3 / ext4 rw,relatime,data=ordered 0 0
 EOF
 
-if [ "$arch" != "amd64" ]
-then
-	cp /mnt/boot/vmlinuz $arch/vmlinuz
-	cp /mnt/boot/initrd.img $arch/initrd.img
-fi
+# Boot setup
+case "$arch" in 
+	amd64)
+		run_root apt-get -y install extlinux
+		extlinux -i /mnt/boot
+
+		cat >/mnt/boot/extlinux.conf <<-EOF
+		default debian
+		label debian
+			linux vmlinuz-$linuxver
+			initrd initrd.img-$linuxver
+			append root=/dev/vda3 rw quiet
+		EOF
+		;;
+	arm64)
+		cp /mnt/boot/vmlinuz-* $arch/vmlinuz
+		cp /mnt/boot/initrd.img-* $arch/initrd.img
+		;;
+esac
 
 sync
