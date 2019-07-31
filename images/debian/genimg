@@ -13,7 +13,7 @@ case $arch in
 		kpkg=linux-image-arm64
 		;;
 	ppc64el)
-		iface=ens3
+		iface=enp0s0
 		qarch=ppc64le
 		kpkg=linux-image-powerpc64le
 		;;

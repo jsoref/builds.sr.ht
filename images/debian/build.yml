@@ -9,7 +9,7 @@ packages:
 sources:
   - https://git.sr.ht/~sircmpwn/builds.sr.ht
 environment:
-  arch: ppc64el
+  arch: amd64
   release: stable
   slaves:
     - deploy@azusa.runners.sr.ht
@@ -61,6 +61,12 @@ tasks:
                 rsync -rzP $arch/initrd.img \
                   ${server}:/var/lib/images/debian/$release/$arch/initrd.img.new
                 ;;
+            ppc*)
+                rsync -rzP $arch/vmlinux \
+                  ${server}:/var/lib/images/debian/$release/$arch/vmlinux.new
+                rsync -rzP $arch/initrd.img \
+                  ${server}:/var/lib/images/debian/$release/$arch/initrd.img.new
+                ;;
         esac
         ssh $server \
           mv /var/lib/images/debian/$release/$arch/new_root.img.qcow2 \
@@ -70,6 +76,14 @@ tasks:
                 ssh $server \
                   mv /var/lib/images/debian/$release/$arch/vmlinuz.new \
                      /var/lib/images/debian/$release/$arch/vmlinuz
+                ssh $server \
+                  mv /var/lib/images/debian/$release/$arch/initrd.img.new \
+                     /var/lib/images/debian/$release/$arch/initrd.img
+                ;;
+            ppc*)
+                ssh $server \
+                  mv /var/lib/images/debian/$release/$arch/vmlinux.new \
+                     /var/lib/images/debian/$release/$arch/vmlinux
                 ssh $server \
                   mv /var/lib/images/debian/$release/$arch/initrd.img.new \
                      /var/lib/images/debian/$release/$arch/initrd.img
