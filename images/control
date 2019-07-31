@@ -65,7 +65,6 @@ _qemu_boot() {
 		-pidfile /tmp/qemu-$port.id \
 		-m ${MEMORY:-2048} \
 		-net nic,model=virtio -net user,hostfwd=tcp::$port-:22 \
-		-cpus=1 \
 		-display none \
 		-device virtio-rng-pci \
 		-device virtio-balloon \
