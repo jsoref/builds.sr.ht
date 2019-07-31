@@ -51,7 +51,25 @@ tasks:
         ssh $server mkdir -p /var/lib/images/debian/$release/$arch
         rsync -rzP $arch/root.img.qcow2 \
           ${server}:/var/lib/images/debian/$release/$arch/new_root.img.qcow2
+        case "$arch" in
+            arm64)
+                rsync -rzP $arch/vmlinuz \
+                  ${server}:/var/lib/images/debian/$release/$arch/vmlinuz.new
+                rsync -rzP $arch/initrd.img \
+                  ${server}:/var/lib/images/debian/$release/$arch/initrd.img.new
+                ;;
+        esac
         ssh $server \
           mv /var/lib/images/debian/$release/$arch/new_root.img.qcow2 \
              /var/lib/images/debian/$release/$arch/root.img.qcow2
+        case "$arch" in
+            arm64)
+                ssh $server \
+                  mv /var/lib/images/debian/$release/$arch/vmlinuz.new \
+                     /var/lib/images/debian/$release/$arch/vmlinuz
+                ssh $server \
+                  mv /var/lib/images/debian/$release/$arch/initrd.img.new \
+                     /var/lib/images/debian/$release/$arch/initrd.img
+                ;;
+        esac
       done
