@@ -5,14 +5,17 @@ case $arch in
 	amd64)
 		iface=ens3
 		qarch=x86_64
+		kernel=linux-image-amd64
 		;;
 	arm64)
 		iface=enp0s1
 		qarch=aarch64
+		kernel=linux-image-arm64
 		;;
 	ppc64el)
 		iface=ens3
-		qarch=ppc64
+		qarch=ppc64le
+		kernel=linux-image-powerpc
 		;;
 	*)
 		echo "unsupported architecture $arch"
@@ -106,7 +109,7 @@ EOF
 run_root apt-key update
 run_root apt-get update --allow-releaseinfo-change
 run_root apt-get -y install locales
-run_root apt-get -y install linux-image-$arch
+run_root apt-get -y install $kernel
 run_root apt-get -y install \
 	build-essential git mercurial ssh sudo dirmngr apt-transport-https
 
