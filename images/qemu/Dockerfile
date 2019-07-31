@@ -51,6 +51,7 @@ COPY --from=0 /bin/qemu-system-i386 /bin/
 COPY --from=0 /bin/qemu-system-aarch64 /bin/
 COPY --from=0 /bin/qemu-system-arm /bin/
 COPY --from=0 /bin/qemu-system-ppc64 /bin/
+COPY --from=0 /bin/qemu-system-ppc64le /bin/
 COPY --from=0 /bin/qemu-system-s390x /bin/
 COPY --from=0 /share/qemu/ /share/qemu/
 COPY --from=0 /lib/x86_64-linux-gnu/libnss_dns-2.28.so /lib/x86_64-linux-gnu/
