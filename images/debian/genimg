@@ -15,7 +15,7 @@ case $arch in
 	ppc64el)
 		iface=ens3
 		qarch=ppc64le
-		kernel=linux-image-powerpc
+		kernel=linux-image-powerpc64le
 		;;
 	*)
 		echo "unsupported architecture $arch"
