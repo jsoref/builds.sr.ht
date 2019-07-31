@@ -20,7 +20,7 @@ boot() {
 			;;
 		ppc64el)
 			driveopts="id=root,if=none"
-			qemu=qemu-system-ppc64le
+			qemu=qemu-system-ppc64
 			_boot \
 				$(cpu_opts ppc64le) \
 				-device virtio-blk-pci,drive=root \

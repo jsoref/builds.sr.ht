@@ -32,6 +32,7 @@ cpu_opts() {
 			printf "%s" "-cpu qemu64"
 			;;
 		ppc64le)
+			printf "%s" "-cpu power9 -machine pseries"
 			;;
 		*)
 			echo "Unsupported architecture $arch" >&2
