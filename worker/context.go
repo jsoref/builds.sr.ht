@@ -172,8 +172,20 @@ func (wctx *WorkerContext) RunBuild(
 
 	cleanup = ctx.Boot(wctx.Redis)
 
+	if err = ctx.Settle(); err != nil {
+		panic(err)
+	}
+
+	if manifest.Shell {
+		ctx.Log.Println()
+		ctx.Log.Println("\x1B[1m\x1B[96mShell access for this build was requested.\x1B[0m")
+		ctx.Log.Println("To log in with SSH, use the following command:")
+		ctx.Log.Println()
+		ctx.Log.Printf("\tssh -t builds@%s connect %d", runner, job_id)
+		ctx.Log.Println()
+	}
+
 	tasks := []func() error{
-		ctx.Settle,
 		ctx.SendTasks,
 		ctx.SendEnv,
 		ctx.SendSecrets,
@@ -192,12 +204,6 @@ func (wctx *WorkerContext) RunBuild(
 	ctx.Task = ctx.NTasks
 
 	if manifest.Shell {
-		ctx.Log.Println()
-		ctx.Log.Println("\x1B[1m\x1B[96mShell access for this build was requested.\x1B[0m")
-		ctx.Log.Println("To log in with SSH, use the following command:")
-		ctx.Log.Println()
-		ctx.Log.Printf("\tssh -t builds@%s connect %d", runner, job_id)
-		ctx.Log.Println()
 		<-goctx.Done()
 	}
 
