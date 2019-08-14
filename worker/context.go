@@ -179,7 +179,7 @@ func (wctx *WorkerContext) RunBuild(
 		ctx.Log.Println("\x1B[1m\x1B[96mShell access for this build was requested.\x1B[0m")
 		ctx.Log.Println("To log in with SSH, use the following command:")
 		ctx.Log.Println()
-		ctx.Log.Printf("\tssh builds@%s connect %d", runner, job_id)
+		ctx.Log.Printf("\tssh -t builds@%s connect %d", runner, job_id)
 		ctx.Log.Println()
 		<-goctx.Done()
 	}
