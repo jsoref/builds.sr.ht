@@ -1,4 +1,4 @@
-{% extends "layout.html" %}
+{% extends "layout-full.html" %}
 {% block title %}
 <title>
   builds #{{ job.id }} - {{ job.status.value }}
@@ -103,6 +103,19 @@
       <a href="#bottom">go to bottom »</a>
     </div>
     <div class="col-md-9">
+      {% if current_user and current_user.id == job.owner_id %}
+      {% if (job.status.value == "failed" and
+          datetime.utcnow() < job.updated + timedelta(minutes=10)) %}
+      <div class="alert alert-danger">
+        <strong>This build job failed.</strong> You may log into the failed
+        build environment within 10 minutes to examine the results with the
+        following command:
+        <pre
+          style="margin-bottom: 0; margin-top: 1rem;"
+        >ssh builds@{{job.runner}} connect {{job.id}}</pre>
+      </div>
+      {% endif %}
+      {% endif %}
       {% for log in logs %}
       <details open>
         {% if log["name"] %}

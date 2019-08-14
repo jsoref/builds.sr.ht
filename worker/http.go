@@ -56,6 +56,8 @@ func HttpServer() {
 				w.Write([]byte("404 not found"))
 			}
 		case "cancel":
+			fallthrough
+		case "terminate":
 			if r.Method != "POST" {
 				w.WriteHeader(405)
 				w.Write([]byte("405 method not allowed"))
@@ -65,7 +67,9 @@ func HttpServer() {
 			defer jobsMutex.Unlock()
 			if job, ok := jobs[jobId]; ok {
 				job.Cancel()
-				job.Job.SetStatus("cancelled")
+				if op == "cancel" {
+					job.Job.SetStatus("cancelled")
+				}
 			} else {
 				w.WriteHeader(404)
 				w.Write([]byte("404 not found"))
@@ -73,6 +77,22 @@ func HttpServer() {
 			}
 			w.WriteHeader(200)
 			w.Write([]byte("cancelled"))
+		case "claim":
+			if r.Method != "POST" {
+				w.WriteHeader(405)
+				w.Write([]byte("405 method not allowed"))
+				return
+			}
+			jobsMutex.Lock()
+			defer jobsMutex.Unlock()
+			if job, ok := jobs[jobId]; ok {
+				job.Claimed = true
+				w.WriteHeader(200)
+				w.Write([]byte("claimed"))
+			} else {
+				w.WriteHeader(404)
+				w.Write([]byte("404 not found"))
+			}
 		default:
 			w.WriteHeader(404)
 			w.Write([]byte("404 not found"))

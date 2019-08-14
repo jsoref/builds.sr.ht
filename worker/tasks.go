@@ -110,6 +110,7 @@ func (ctx *JobContext) Settle() error {
 			stdout, _ := ioutil.ReadAll(pipe)
 			if err := check.Wait(); err == nil {
 				if string(stdout) == "hello world" {
+					ctx.Settled = true
 					done <- nil
 					return
 				} else {

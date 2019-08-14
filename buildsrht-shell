@@ -59,14 +59,16 @@ deadline = datetime.utcfromtimestamp(info["deadline"])
 manifest = Manifest(yaml.safe_load(info["manifest"]))
 
 def connect(job_id, info):
-    print("Your VM will be terminated "
-            + naturaltime(datetime.utcnow() - deadline))
+    """Opens a shell on the build VM"""
+    limit = naturaltime(datetime.utcnow() - deadline)
+    print(f"Your VM will be terminated {limit}, or when you log out.")
     print()
+    requests.post(f"http://localhost:8080/job/{job_id}/claim")
     sys.stdout.flush()
     sys.stderr.flush()
     tty = os.open("/dev/tty", os.O_RDWR)
     os.dup2(0, tty)
-    os.execvp("ssh", [
+    subprocess.call([
         "ssh", "-qt",
         "-p", str(info["port"]),
         "-o", "UserKnownHostsFile=/dev/null",
@@ -74,8 +76,10 @@ def connect(job_id, info):
         "-o", "LogLevel=quiet",
         "build@localhost", "bash"
     ])
+    requests.post(f"http://localhost:8080/job/{job_id}/terminate")
 
 def tail(job_id, info):
+    """Tails the build logs to stdout"""
     logs = os.path.join(cfg("builds.sr.ht::worker", "buildlogs"), str(job_id))
     p = subprocess.Popen(["tail", "-f", os.path.join(logs, "log")])
     tasks = set()
@@ -88,7 +92,7 @@ def tail(job_id, info):
             path = os.path.join(logs, task.name, "log")
             if os.path.exists(path):
                 procs.append(subprocess.Popen(
-                    f"tail -c +1 -f {shlex.quote(path)} | " +
+                    f"tail -f {shlex.quote(path)} | " +
                     "awk '{ print \"[" + shlex.quote(task.name) + "] \" $0 }'",
                     shell=True))
                 tasks.update({ task.name })
@@ -102,7 +106,7 @@ def tail(job_id, info):
         time.sleep(3)
 
 if op == "connect":
-    if info["task"] != info["tasks"]:
+    if info["task"] != info["tasks"] and info["status"] == "running":
         tail(job_id, info)
     connect(job_id, info)
 elif op == "tail":

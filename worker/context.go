@@ -56,16 +56,18 @@ type WorkerContext struct {
 
 type JobContext struct {
 	Cancel   context.CancelFunc
+	Claimed  bool
 	Conf     func(section, key string) string
 	Context  context.Context
 	Db       *sql.DB
 	Deadline time.Time
 	Job      *Job
+	Log      *log.Logger
 	LogDir   string
 	LogFile  *os.File
-	Log      *log.Logger
 	Manifest *Manifest
 	Port     int
+	Settled  bool
 
 	NTasks int
 	Task   int
@@ -80,6 +82,8 @@ func (wctx *WorkerContext) RunBuild(
 		err error
 		job *Job
 		ctx *JobContext
+
+		cleanup func()
 	)
 
 	timer := prometheus.NewTimer(buildDuration)
@@ -120,6 +124,9 @@ func (wctx *WorkerContext) RunBuild(
 					job.SetStatus("failed")
 				}
 				ctx.ProcessTriggers()
+				if ctx.Settled {
+					ctx.Standby()
+				}
 				if ctx.Log != nil {
 					ctx.Log.Printf("Error: %v\n", err)
 					ctx.LogFile.Close()
@@ -128,6 +135,9 @@ func (wctx *WorkerContext) RunBuild(
 				job.SetStatus("failed")
 			}
 			failedBuilds.Inc()
+		}
+		if cleanup != nil {
+			cleanup()
 		}
 	}()
 
@@ -160,8 +170,7 @@ func (wctx *WorkerContext) RunBuild(
 	ctx.Log = log.New(io.MultiWriter(ctx.LogFile, os.Stdout),
 		"[#"+strconv.Itoa(job.Id)+"] ", log.LstdFlags)
 
-	cleanup := ctx.Boot(wctx.Redis)
-	defer cleanup()
+	cleanup = ctx.Boot(wctx.Redis)
 
 	tasks := []func() error{
 		ctx.Settle,
@@ -202,6 +211,33 @@ func (wctx *WorkerContext) RunBuild(
 	ctx.LogFile.Close()
 
 	successfulBuilds.Inc()
+}
+
+func (ctx *JobContext) Standby() {
+	ctx.Log.Println("\x1B[1m\x1B[91mBuild failed.\x1B[0m")
+	ctx.Log.Println("The build environment will be kept alive for 10 minutes.")
+	ctx.Log.Println("To log in with SSH and examine it, use the following command:")
+	ctx.Log.Println()
+	ctx.Log.Printf("\tssh -t builds@%s connect %d", *ctx.Job.Runner, ctx.Job.Id)
+	ctx.Log.Println()
+	ctx.Log.Println("After logging in, the deadline is increased to your remaining build time.")
+	select {
+	case <-time.After(10*time.Minute):
+		break
+	case <-ctx.Context.Done():
+		ctx.Log.Println("Build cancelled. Terminating build environment.")
+		return
+	}
+	if ctx.Claimed {
+		select {
+		case <-time.After(time.Until(ctx.Deadline)):
+			break
+		case <-ctx.Context.Done():
+			break
+		}
+	} else {
+		ctx.Log.Println("Deadline elapsed. Terminating build environment.")
+	}
 }
 
 func (ctx *JobContext) Control(

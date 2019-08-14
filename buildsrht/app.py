@@ -1,4 +1,5 @@
 from buildsrht.types import JobStatus, OAuthToken, User
+from datetime import datetime, timedelta
 from flask import session
 from srht.config import cfg
 from srht.database import DbSession
@@ -32,6 +33,10 @@ class BuildApp(SrhtFlask):
 
         @self.context_processor
         def inject():
-            return { "JobStatus": JobStatus }
+            return {
+                "datetime": datetime,
+                "timedelta": timedelta,
+                "JobStatus": JobStatus,
+            }
 
 app = BuildApp()
