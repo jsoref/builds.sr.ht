@@ -59,12 +59,16 @@ type JobContext struct {
 	Conf     func(section, key string) string
 	Context  context.Context
 	Db       *sql.DB
+	Deadline time.Time
 	Job      *Job
 	LogDir   string
 	LogFile  *os.File
 	Log      *log.Logger
 	Manifest *Manifest
 	Port     int
+
+	NTasks int
+	Task   int
 
 	ProcessedTriggers bool
 }
@@ -135,6 +139,7 @@ func (wctx *WorkerContext) RunBuild(
 		Conf:     wctx.Conf,
 		Context:  goctx,
 		Db:       wctx.Db,
+		Deadline: time.Now().UTC().Add(timeout),
 		Job:      job,
 		Manifest: &manifest,
 	}
@@ -168,11 +173,14 @@ func (wctx *WorkerContext) RunBuild(
 		ctx.CloneRepos,
 		ctx.RunTasks,
 	}
-	for _, task := range tasks {
+	ctx.NTasks = len(tasks)
+	for i, task := range tasks {
+		ctx.Task = i
 		if err = task(); err != nil {
 			panic(err)
 		}
 	}
+	ctx.Task = ctx.NTasks
 
 	if manifest.Shell {
 		ctx.Log.Println()

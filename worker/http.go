@@ -30,14 +30,24 @@ func HttpServer() {
 			if job, ok := jobs[jobId]; ok {
 				w.WriteHeader(200)
 				bytes, _ := json.Marshal(struct {
+					Deadline int64   `json:"deadline"`
+					Manifest string  `json:"manifest"`
 					Note     *string `json:"note"`
 					OwnerId  int     `json:"owner_id"`
 					Port     int     `json:"port"`
+					Status   string  `json:"status"`
+					Task     int     `json:"task"`
+					Tasks    int     `json:"tasks"`
 					Username string  `json:"username"`
 				} {
+					Deadline: job.Deadline.Unix(),
+					Manifest: job.Job.Manifest,
 					Note:     job.Job.Note,
 					OwnerId:  job.Job.OwnerId,
 					Port:     job.Port,
+					Status:   job.Job.Status,
+					Task:     job.Task,
+					Tasks:    job.NTasks,
 					Username: job.Job.Username,
 				})
 				w.Write(bytes)

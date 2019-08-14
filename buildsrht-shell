@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
+from buildsrht.manifest import Manifest
+from datetime import datetime
+from humanize import naturaltime
 from srht.config import cfg, get_origin
 import os
 import requests
 import shlex
+import subprocess
 import sys
+import time
+import yaml
 
 def fail(reason):
     owner = cfg("sr.ht", "owner-name")
@@ -19,34 +25,85 @@ cmd = shlex.split(cmd)
 if len(cmd) != 2:
     fail("Usage: ssh ... connect <job ID>")
 op = cmd[0]
-if op not in ["connect"]:
+if op not in ["connect", "tail"]:
     fail("Usage: ssh ... connect <job ID>")
 job_id = int(cmd[1])
 
-r = requests.get(f"http://localhost:8080/job/{job_id}/info")
-if r.status_code != 200:
+def get_info(job_id):
+    r = requests.get(f"http://localhost:8080/job/{job_id}/info")
+    if r.status_code != 200:
+        return None
+    return r.json()
+
+info = get_info(job_id)
+if not info:
     fail("No such job found.")
-info = r.json()
 
 meta_origin = get_origin("meta.sr.ht")
 r = requests.get(f"{meta_origin}/api/ssh-key/{b64key}")
 if r.status_code == 200:
     username = r.json()["owner"]["name"]
+elif r.status_code == 404:
+    fail("We don't recognize your SSH key. Make sure you've added it to " +
+        f"your account.\n{get_origin('meta.sr.ht', external=True)}/keys")
 else:
     fail("Temporary authentication failure. Try again later.")
 
 if username != info["username"]:
     fail("You are not permitted to connect to this job.")
 
-sys.stdout.flush()
-sys.stderr.flush()
-tty = os.open("/dev/tty", os.O_RDWR)
-os.dup2(0, tty)
-os.execvp("ssh", [
-    "ssh", "-qt",
-    "-p", str(info["port"]),
-    "-o", "UserKnownHostsFile=/dev/null",
-    "-o", "StrictHostKeyChecking=no",
-    "-o", "LogLevel=quiet",
-    "build@localhost", "bash"
-])
+url = f"{get_origin('builds.sr.ht', external=True)}/jobs/~{username}/{job_id}"
+print(f"Connected to build job #{job_id} ({info['status']}): {url}")
+deadline = datetime.utcfromtimestamp(info["deadline"])
+
+manifest = Manifest(yaml.safe_load(info["manifest"]))
+
+def connect(job_id, info):
+    print("Your VM will be terminated "
+            + naturaltime(datetime.utcnow() - deadline))
+    print()
+    sys.stdout.flush()
+    sys.stderr.flush()
+    tty = os.open("/dev/tty", os.O_RDWR)
+    os.dup2(0, tty)
+    os.execvp("ssh", [
+        "ssh", "-qt",
+        "-p", str(info["port"]),
+        "-o", "UserKnownHostsFile=/dev/null",
+        "-o", "StrictHostKeyChecking=no",
+        "-o", "LogLevel=quiet",
+        "build@localhost", "bash"
+    ])
+
+def tail(job_id, info):
+    logs = os.path.join(cfg("builds.sr.ht::worker", "buildlogs"), str(job_id))
+    p = subprocess.Popen(["tail", "-f", os.path.join(logs, "log")])
+    tasks = set()
+    procs = [p]
+    # holy bejeezus this is hacky
+    while True:
+        for task in manifest.tasks:
+            if task.name in tasks:
+                continue
+            path = os.path.join(logs, task.name, "log")
+            if os.path.exists(path):
+                procs.append(subprocess.Popen(
+                    f"tail -c +1 -f {shlex.quote(path)} | " +
+                    "awk '{ print \"[" + shlex.quote(task.name) + "] \" $0 }'",
+                    shell=True))
+                tasks.update({ task.name })
+        info = get_info(job_id)
+        if not info:
+            break
+        if info["task"] == info["tasks"]:
+            for p in procs:
+                p.kill()
+            break
+        time.sleep(3)
+
+if op == "connect":
+    if info["task"] != info["tasks"]:
+        tail(job_id, info)
+    connect(job_id, info)
+elif op == "tail":
+    tail(job_id, info)
