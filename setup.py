@@ -68,6 +68,8 @@ setup(
       ]
   },
   scripts = [
-      'buildsrht-migrate'
+      'buildsrht-keys',
+      'buildsrht-migrate',
+      'buildsrht-shell',
   ]
 )

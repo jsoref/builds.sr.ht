@@ -58,10 +58,11 @@ class Manifest:
         sources = self.yaml.get("sources")
         env = self.yaml.get("environment")
         secrets = self.yaml.get("secrets")
+        shell = self.yaml.get("shell")
         if not image:
             raise Exception("Missing image in manifest")
         if not isinstance(image, str):
-            raise Exception("Expected imagease to be a string")
+            raise Exception("Expected image to be a string")
         if packages:
             if not isinstance(packages, list) or not all([isinstance(p, str) for p in packages]):
                 raise Exception("Expected packages to be a string array")
@@ -82,6 +83,8 @@ class Manifest:
                 raise Exception("Expected secrets to be a UUID array")
             # Will throw exception on invalid UUIDs as well
             secrets = list(map(uuid.UUID, secrets))
+        if not isinstance(shell, bool):
+            raise Exception("Expected shell to be a boolean")
         self.image = image
         self.arch = arch
         self.packages = packages
@@ -89,9 +92,13 @@ class Manifest:
         self.sources = sources
         self.environment = env
         self.secrets = secrets
+        self.shell = shell
         tasks = self.yaml.get("tasks")
         if not tasks or not isinstance(tasks, list):
-            raise Exception("Attempted to create manifest with no tasks")
+            if (tasks is None or tasks == []) and not self.shell:
+                raise Exception("Attempted to create manifest with no tasks")
+            else:
+                tasks = []
         self.tasks = [Task(t) for t in tasks]
         for task in self.tasks:
             if len([t for t in self.tasks if t.name == task.name]) != 1:
@@ -113,6 +120,7 @@ class Manifest:
             "secrets": [str(s) for s in self.secrets] if self.secrets else None,
             "tasks": [{ t.name: t.script } for t in self.tasks],
             "triggers": [t.to_dict() for t in self.triggers] if any(self.triggers) else None,
+            "shell": self.shell,
         }
 
     def to_yaml(self):

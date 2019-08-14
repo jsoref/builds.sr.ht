@@ -7,6 +7,7 @@ type Manifest struct {
 	Packages     []string
 	Repositories map[string]string
 	Secrets      []string
+	Shell        bool
 	Sources      []string
 	Tasks        []map[string]string
 	Triggers     []map[string]interface{}

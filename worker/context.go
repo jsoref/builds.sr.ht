@@ -173,6 +173,11 @@ func (wctx *WorkerContext) RunBuild(
 		}
 	}
 
+	if manifest.Shell {
+		ctx.Log.Println("TODO: Print shell access details here")
+		<-goctx.Done()
+	}
+
 	jobsMutex.Lock()
 	delete(jobs, job_id)
 	jobsMutex.Unlock()

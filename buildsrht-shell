@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+from srht.config import cfg, get_origin
+import os
+import requests
+import shlex
+import sys
+
+def fail(reason):
+    owner = cfg("sr.ht", "owner-name")
+    email = cfg("sr.ht", "owner-email")
+    print(reason)
+    print(f"Please reach out to {owner} <{email}> for support.")
+    sys.exit(1)
+
+b64key = sys.argv[1]
+
+cmd = os.environ.get("SSH_ORIGINAL_COMMAND") or ""
+cmd = shlex.split(cmd)
+if len(cmd) != 2:
+    fail("Usage: ssh ... connect <job ID>")
+op = cmd[0]
+if op not in ["connect"]:
+    fail("Usage: ssh ... connect <job ID>")
+job_id = int(cmd[1])
+
+r = requests.get(f"http://localhost:8080/job/{job_id}/info")
+if r.status_code != 200:
+    fail("No such job found.")
+info = r.json()
+
+meta_origin = get_origin("meta.sr.ht")
+r = requests.get(f"{meta_origin}/api/ssh-key/{b64key}")
+if r.status_code == 200:
+    username = r.json()["owner"]["name"]
+else:
+    fail("Temporary authentication failure. Try again later.")
+
+if username != info["username"]:
+    fail("You are not permitted to connect to this job.")
+
+sys.stdout.flush()
+sys.stderr.flush()
+tty = os.open("/dev/tty", os.O_RDWR)
+os.dup2(0, tty)
+os.execvp("ssh", [
+    "ssh", "-qt",
+    "-p", str(info["port"]),
+    "-o", "UserKnownHostsFile=/dev/null",
+    "-o", "StrictHostKeyChecking=no",
+    "-o", "LogLevel=quiet",
+    "build@localhost", "bash"
+])
