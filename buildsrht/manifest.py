@@ -83,7 +83,7 @@ class Manifest:
                 raise Exception("Expected secrets to be a UUID array")
             # Will throw exception on invalid UUIDs as well
             secrets = list(map(uuid.UUID, secrets))
-        if not isinstance(shell, bool):
+        if shell is not None and not isinstance(shell, bool):
             raise Exception("Expected shell to be a boolean")
         self.image = image
         self.arch = arch
