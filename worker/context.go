@@ -89,7 +89,8 @@ func (wctx *WorkerContext) RunBuild(
 	if err != nil {
 		panic(errors.Wrap(err, "GetJob"))
 	}
-	if err = job.SetRunner(conf("builds.sr.ht::worker", "name")); err != nil {
+	runner := conf("builds.sr.ht::worker", "name")
+	if err = job.SetRunner(runner); err != nil {
 		panic(errors.Wrap(err, "job.SetRunner"))
 	}
 	if err = job.SetStatus("running"); err != nil {
@@ -174,7 +175,12 @@ func (wctx *WorkerContext) RunBuild(
 	}
 
 	if manifest.Shell {
-		ctx.Log.Println("TODO: Print shell access details here")
+		ctx.Log.Println()
+		ctx.Log.Println("\x1B[1m\x1B[96mShell access for this build was requested.\x1B[0m")
+		ctx.Log.Println("To log in with SSH, use the following command:")
+		ctx.Log.Println()
+		ctx.Log.Printf("\tssh builds@%s connect %d", runner, job_id)
+		ctx.Log.Println()
 		<-goctx.Done()
 	}
 
