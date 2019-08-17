@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 	"syscall"
@@ -161,6 +162,19 @@ func (ctx *JobContext) SendTasks() error {
 	return nil
 }
 
+var shunsafe = regexp.MustCompile(`[^\w@%+=:,./-]`)
+
+func shquote(v string) string {
+	// Algorithm aped from shlex.py
+	if v == "" {
+		return "''"
+	}
+	if !shunsafe.MatchString(v) {
+		return v
+	}
+	return "'" + strings.ReplaceAll(v, "'", "'\"'\"'") + "'"
+}
+
 func (ctx *JobContext) SendEnv() error {
 	const home = "/home/build"
 	ctx.Log.Println("Sending build environment")
@@ -174,7 +188,7 @@ export JOB_ID=%d
 	for key, value := range ctx.Manifest.Environment {
 		switch v := value.(type) {
 		case string:
-			env += fmt.Sprintf("export %s=%s\n", key, v)
+			env += fmt.Sprintf("export %s=%s\n", key, shquote(v))
 		case float64:
 			env += fmt.Sprintf("export %s=%g\n", key, v)
 		case []interface{}:
