@@ -54,6 +54,9 @@ Server = http://lug.mtu.edu/archlinux/\$repo/os/\$arch
 Server = http://mirrors.kernel.org/archlinux/\$repo/os/\$arch
 EOF
 
+mkdir -p $root/etc/pacman.d/hooks/
+ln -s /dev/null $root/etc/pacman.d/hooks/90-linux.hook
+
 sed -i 's/#en_US.UTF-8/en_US.UTF-8/' $root/etc/locale.gen
 run_root locale-gen
 
