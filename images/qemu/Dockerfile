@@ -1,10 +1,10 @@
 FROM debian:sid
 
-RUN apt-get -y update && apt-get -y upgrade && apt-get install -y \
+RUN apt-get -y update --fix-missing && apt-get -y upgrade && apt-get install -y \
     build-essential pkg-config curl xz-utils
 
-RUN curl -O https://download.qemu.org/qemu-4.0.0.tar.xz \
-    && tar xvf qemu-4.0.0.tar.xz
+RUN curl -O https://download.qemu.org/qemu-4.1.0.tar.xz \
+    && tar xvf qemu-4.1.0.tar.xz
 
 RUN apt-get install -y \
     python \
@@ -18,7 +18,7 @@ RUN apt-get install -y \
     libpixman-1-dev \
     libglib2.0-dev
 
-RUN cd qemu-4.0.0 && ./configure \
+RUN cd qemu-4.1.0 && ./configure \
     --prefix=/ \
     --static \
     --python=/usr/bin/python2 \
@@ -43,7 +43,7 @@ RUN cd qemu-4.0.0 && ./configure \
     --disable-werror \
     --target-list="x86_64-softmmu,i386-softmmu,aarch64-softmmu,arm-softmmu,ppc64-softmmu,s390x-softmmu,riscv64-softmmu,mips-softmmu,mipsel-softmmu,mips64el-softmmu"
 
-RUN cd qemu-4.0.0 && make && make install
+RUN cd qemu-4.1.0 && make && make install
 
 FROM scratch
 COPY --from=0 /bin/qemu-system-x86_64 /bin/
