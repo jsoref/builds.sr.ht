@@ -16,7 +16,7 @@ boot() {
 install() {
 	port=$1
 	shift 1
-	guest_ssh -p $port build@localhost EDITOR=true yay \
+	guest_ssh -p $port build@localhost EDITOR=true PKGEXT=.pkg.tar yay \
 		--needed --noconfirm --noprovides -Syu "$@"
 }
 
