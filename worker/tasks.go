@@ -32,11 +32,9 @@ var (
 func (ctx *JobContext) Boot(r *redis.Client) func() {
 	port, err := r.Incr("builds.sr.ht.ssh-port").Result()
 	if err == nil && port < 22000 {
-		port = 22000
-		err = r.Set("builds.sr.ht.ssh-port", port, 0).Err()
+		err = r.Set("builds.sr.ht.ssh-port", 22100, 0).Err()
 	} else if err == nil && port >= 23000 {
-		port = 22000
-		err = r.Set("builds.sr.ht.ssh-port", port, 0).Err()
+		err = r.Set("builds.sr.ht.ssh-port", 22000, 0).Err()
 	}
 	if err != nil {
 		panic(errors.Wrap(err, "assign port"))
