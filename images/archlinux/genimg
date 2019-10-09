@@ -20,7 +20,7 @@ mkdir -p "$root"
 mkfs.ext4 /dev/nbd0
 mount /dev/nbd0 "$root"
 
-pacstrap root base base-devel git mercurial openssh
+pacstrap root base base-devel git mercurial openssh mkinitcpio
 
 run_root() {
     local cmd="$@"
