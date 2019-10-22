@@ -37,15 +37,14 @@ tasks:
       fi
   - deploy: |
       cd builds.sr.ht/images/ubuntu/$release
-      sshopts="-o StrictHostKeyChecking=no"
+      echo "StrictHostKeyChecking=no" >> ~/.ssh/config
       for server in "${slaves[@]}"
       do
         ssh $server mkdir -p /var/lib/images/ubuntu/$release/$arch
         # TODO: update kernel
-        rsync \
-          --rsh="ssh $sshopts" -rzP $arch/root.img.qcow2 \
-          ${server}:/var/lib/images/ubuntu/$release/$arch/new_root.img.qcow2
-        ssh $sshopts $server \
-          mv /var/lib/images/ubuntu/$release/$arch/new_root.img.qcow2 \
-             /var/lib/images/ubuntu/$release/$arch/root.img.qcow2
+        rsync -rzP $arch/root.img.qcow2 \
+            ${server}:/var/lib/images/ubuntu/$release/$arch/new_root.img.qcow2
+        ssh $server mv \
+            /var/lib/images/ubuntu/$release/$arch/new_root.img.qcow2 \
+            /var/lib/images/ubuntu/$release/$arch/root.img.qcow2
       done
