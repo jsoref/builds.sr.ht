@@ -108,8 +108,6 @@ run_root systemctl enable sshd
 
 linuxver=$(ls /mnt/boot | grep "vmlinuz.*.$arch" | cut -d- -f2-)
 
-run_root dracut -fv /boot/initramfs-$linuxver.img $linuxver
-
 cat >/mnt/boot/extlinux.conf <<EOF
 default fedora
 label fedora
