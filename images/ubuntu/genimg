@@ -39,7 +39,8 @@ trap cleanup EXIT
 
 if [ "$arch" = "amd64" ]
 then
-	dd if=/usr/lib/syslinux/mbr/mbr.bin of=/dev/nbd0 bs=1 count=440
+	#dd if=/usr/lib/syslinux/mbr/mbr.bin of=/dev/nbd0 bs=1 count=440
+	dd if=/usr/lib/syslinux/bios/mbr.bin of=/dev/nbd0 bs=1 count=440
 fi
 
 sfdisk --no-reread /dev/nbd0 <<EOF
@@ -133,7 +134,7 @@ run_root systemctl enable ssh
 
 run_root update-initramfs -u
 
-linuxver=$(ls /mnt/boot | grep vmlinuz | cut -d- -f2-)
+linuxver=$(ls /mnt/boot | grep 'vmlinuz-[0-9].*' | cut -d- -f2-)
 
 cat >/mnt/boot/extlinux.conf <<EOF
 default ubuntu
