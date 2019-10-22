@@ -39,8 +39,7 @@ trap cleanup EXIT
 
 if [ "$arch" = "amd64" ]
 then
-	#dd if=/usr/lib/syslinux/mbr/mbr.bin of=/dev/nbd0 bs=1 count=440
-	dd if=/usr/lib/syslinux/bios/mbr.bin of=/dev/nbd0 bs=1 count=440
+	dd if=/usr/lib/syslinux/mbr/mbr.bin of=/dev/nbd0 bs=1 count=440
 fi
 
 sfdisk --no-reread /dev/nbd0 <<EOF
