@@ -81,12 +81,12 @@ cat > /mnt/etc/hosts <<EOF
 127.0.0.1 build
 EOF
 
+run_root systemd-machine-id-setup
 run_root systemctl enable systemd-networkd.service
 run_root systemctl enable systemd-timesyncd.service
 
-run_root dnf -y install kernel
-run_root dnf -y install @development-tools git mercurial openssh-server sudo \
-	syslinux syslinux-extlinux
+run_root dnf -y install kernel grubby syslinux syslinux-extlinux
+run_root dnf -y install @development-tools git mercurial openssh-server sudo
 
 if [ "$arch" = "x86_64" ]
 then
