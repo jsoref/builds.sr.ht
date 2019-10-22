@@ -51,7 +51,7 @@ dnf -y \
 	--disablerepo='*' \
 	--enablerepo=fedora \
 	--enablerepo=updates install \
-	systemd passwd dnf fedora-release
+	systemd systemd-udev passwd dnf fedora-release
 
 mount --bind /dev /mnt/dev
 mount --bind /dev/pts /mnt/dev/pts
