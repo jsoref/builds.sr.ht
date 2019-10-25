@@ -45,6 +45,7 @@ in pkgs.vmTools.runInLinuxVM (
       done
 
       storePaths=$(perl ${pkgs.pathsFromGraph} /tmp/xchg/closure)
+      export USER=root # temporary hotfix
       echo filling Nix store...
       mkdir -p /mnt/nix/store
       set -f
