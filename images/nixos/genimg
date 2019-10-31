@@ -36,6 +36,6 @@ nix-channel --update
 nix-build image.nix
 # result/root.img.qcow2 is on a read-only mount. Copy and chmod it.
 mkdir -p "${release}/${arch}"
-cp "result/root.img.qcow2" "${release}/${arch}/root.img.qcow2"
+cp "result/nixos.qcow2" "${release}/${arch}/root.img.qcow2"
 chmod u+w "${release}/${arch}/root.img.qcow2"
 
