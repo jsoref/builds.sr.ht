@@ -6,8 +6,32 @@
 : "$openbsd_public_key"
 
 image_size="16g"
-run_syspatch=NO
+run_syspatch="${run_syspatch:-NO}"
 image_packages="bash git"
+snapshot="${snapshot:-NO}"
+pkg_add_params=""
+# needed for crossbuilds
+fake_version="${openbsd_version}"
+
+if [ "$snapshot" = "YES" ]; then
+	mirror_dir="snapshots"
+	run_syspatch=NO
+	pkg_add_params="-Dsnap"
+	fake_version="${fake_version}-current"
+else
+	mirror_dir="${openbsd_version}"
+fi
+
+echo "Will run syspatch: $run_syspatch"
+
+create_image() {
+	# Syntax changed in 6.6, hack here to allow bootstrapping
+	if [ `uname -r` = "6.5" ]; then
+		vmctl create "$1" -s "$2"
+	else
+		vmctl create -s "$2" "$1"
+	fi
+}
 
 BUILD_DIR="$PWD"
 mkdir -p "workdir"
@@ -17,42 +41,30 @@ cd_workdir() {
 	cd "$BUILD_DIR"/workdir
 }
 
-cleanup() {
-	sync || true
-	umount -f /mnt || true
-	vnconfig -u vnd0 || true
-}
-trap cleanup EXIT
-
 cd_workdir
 for f in $openbsd_sets $openbsd_kernel SHA256.sig SHA256
 do
-	test -f $f || ftp "${openbsd_installurl}/${openbsd_version}/${arch}/${f}"
+	test -f $f || ftp "${openbsd_installurl}/${mirror_dir}/${arch}/${f}"
 done
 
 signify -Cp /etc/signify/"$openbsd_public_key" \
 	-x SHA256.sig $openbsd_sets $openbsd_kernel
 
+# Create image that will host the filesystem
 rm -f root.img
-vmctl create root.img -s $image_size
+create_image root.img "$image_size"
 vnconfig -c vnd0 root.img
 fdisk -iy vnd0
 cat >/tmp/partitions <<EOF
 / 1G-* 100%
 EOF
 disklabel -w -A -T /tmp/partitions vnd0
-newfs vnd0a
-mount /dev/vnd0a /mnt
 
+# prepare root filesystem under /mnt
 for f in $openbsd_sets
 do
 	tar -zxphf "$f" -C /mnt
 done
-
-cp $openbsd_kernel /mnt/bsd
-# lifted from openbsd install.sub to make syspatch work
-cp SHA256.sig /mnt/var/db/installed.SHA256.sig
-sha256 /mnt/bsd | (umask 077; sed 's,/mnt,,' >/mnt/var/db/kernel.SHA256)
 
 tar -zxphf /mnt/var/sysmerge/etc.tgz -C /mnt
 tar -zxphf /mnt/var/sysmerge/xetc.tgz -C /mnt
@@ -84,22 +96,53 @@ pf=NO
 sndiod_flags=NO
 EOF
 
-# the username "build" is already used in OpenBSD base, but it probably isn't
-# anything too important; it seems to be used to build xenocara etc.
-chroot /mnt /usr/sbin/pkg_add -u
-chroot /mnt /usr/sbin/pkg_add $image_packages
-chroot /mnt /usr/sbin/userdel build
-# TODO: Remove bash
-chroot /mnt /usr/sbin/adduser \
-	-batch build wheel "Build user" "" -shell bash -s -noconfig
-echo "permit nopass keepenv :wheel" > /mnt/etc/doas.conf
-chroot /mnt /usr/sbin/usermod -p '' build
+cp $openbsd_kernel /mnt/bsd
+# lifted from openbsd install.sub to make syspatch work
+cp SHA256.sig /mnt/var/db/installed.SHA256.sig
+sha256 /mnt/bsd | (umask 077; sed 's,/mnt,,' >/mnt/var/db/kernel.SHA256)
+rm -rf /mnt/usr/share/relink/kernel
+mkdir -m 700 /mnt/usr/share/relink/kernel
+tar -C /mnt/usr/share/relink/kernel -xzf /mnt/usr/share/relink/kernel.tgz GENERIC.MP
+rm -f /mnt/usr/share/relink/kernel.tgz
+echo "Relinking kernel"
+chroot /mnt /bin/ksh -e -c "cd /usr/share/relink/kernel/GENERIC.MP; make newbsd; make newinstall" > /dev/null
 
 if [ "$run_syspatch" = "YES" ]
 then
-	chroot /mnt ksh -x /usr/libexec/reorder_kernel
 	chroot /mnt ksh -x /usr/sbin/syspatch
 fi
+
+# pkg_add uses sysctl -n kern.version to find the system version. Let's lie to it for a bit to allow building the image on older kernels
+cp /mnt/sbin/sysctl /mnt/sbin/sysctl.divert
+cat >/mnt/sbin/sysctl.fake <<EOF
+#!/bin/sh
+echo "OpenBSD ${fake_version} (GENERIC.MP)"
+EOF
+chmod +x /mnt/sbin/sysctl.fake
+
+if [ `uname -r` != "$openbsd_version" ]; then
+	echo "Wrong kernel version, fake sysctl output for crossbuild"
+	mv /mnt/sbin/sysctl.fake /mnt/sbin/sysctl
+fi
+
+chroot /mnt /usr/sbin/pkg_add $pkg_add_params -u
+chroot /mnt /usr/sbin/pkg_add $pkg_add_params $image_packages
+
+# Clean up if we did the hack
+mv -f /mnt/sbin/sysctl.divert /mnt/sbin/sysctl
+rm -f /mnt/sbin/sysctl.fake
+
+# the username "build" is already used in OpenBSD base, but it probably isn't
+# anything too important; it seems to be used to build xenocara etc.
+chroot /mnt /usr/sbin/userdel build
+# TODO: Remove bash
+chroot /mnt /usr/sbin/adduser \
+	-batch build wheel "Build user" "" -class pbuild -shell bash -s -noconfig
+echo "permit nopass keepenv :wheel" > /mnt/etc/doas.conf
+chroot /mnt /usr/sbin/usermod -p '' build
+
+# Remove useless kernel object files. This saves about 300MB of space in the final image
+rm -r /mnt/usr/share/relink/kernel/GENERIC.MP/
 
 cat >/mnt/usr/libexec/reorder_kernel <<EOF
 #!/bin/sh
@@ -109,9 +152,24 @@ EOF
 
 echo "boot" >/etc/boot.conf
 
-installboot -r /mnt vnd0
-trap : EXIT
-cleanup
-cd_workdir
+# dump root fs into vnd0a and resize it
+makefs /dev/vnd0a /mnt
+growfs -y /dev/vnd0a
+fsck -y /dev/vnd0a
+sync
 
-qemu-img convert -p -f raw -O qcow2 root.img ../$arch/root.img.qcow2
+# root fs done, install bootloader
+mount /dev/vnd0a /mnt
+installboot -r /mnt vnd0
+umount /mnt
+vnconfig -u vnd0
+
+cd_workdir
+if [ `uname -r` = "6.5" ]; then
+	qemu-img convert -p -f raw -O qcow2 root.img ../$arch/root.img.qcow2
+else
+	# OpenBSD 6.6 can convert this natively
+	vmctl create -i root.img ../$arch/root.img.qcow2
+fi
+# Make sure the result is readable in the next task
+chmod 644 ../$arch/root.img.qcow2
