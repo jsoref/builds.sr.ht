@@ -185,6 +185,12 @@ export JOB_ID=%d
 `, ctx.Job.Id)
 	for key, value := range ctx.Manifest.Environment {
 		switch v := value.(type) {
+		case bool:
+			if v {
+				env += fmt.Sprintf("export %s=true\n", key)
+			} else {
+				env += fmt.Sprintf("export %s=false\n", key)
+			}
 		case string:
 			env += fmt.Sprintf("export %s=%s\n", key, shquote(v))
 		case float64:
