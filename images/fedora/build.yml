@@ -8,7 +8,7 @@ sources:
   - https://git.sr.ht/~sircmpwn/builds.sr.ht
 environment:
   arch: x86_64
-  release: "29"
+  release: "31"
   slaves:
     - deploy@azusa.runners.sr.ht
 secrets:
@@ -28,7 +28,8 @@ tasks:
       MEMORY=1024 ./images/control fedora/$release sanity-check
   - deploy: |
       cd builds.sr.ht/images/fedora/$release
-      echo "StrictHostKeyChecking=no" >> ~/.ssh/config
+      echo "StrictHostKeyChecking=no" >>~/.ssh/config
+      chmod 600 ~/.ssh/config
       for server in "${slaves[@]}"
       do
         ssh $server mkdir -p /var/lib/images/fedora/$release/$arch
