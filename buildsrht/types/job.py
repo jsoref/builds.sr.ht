@@ -52,5 +52,6 @@ class Job(Base):
                 } for task in self.tasks
             ],
             "note": self.note,
-            "runner": self.runner
+            "runner": self.runner,
+            "tags": self.tags,
         }
