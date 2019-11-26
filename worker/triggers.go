@@ -14,10 +14,9 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/go-gomail/gomail"
+	gomail "gopkg.in/mail.v2"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-
 	ms "github.com/mitchellh/mapstructure"
 )
 
@@ -157,7 +156,7 @@ func (ctx *JobContext) processEmail(def map[string]interface{}) {
 		ctx.Log.Printf("Error sending email: %v\n", err)
 		return
 	}
-	ctx.Log.Println("Sent build results email.")
+	ctx.Log.Printf("Sent build results email to %s", *trigger.To)
 }
 
 func (ctx *JobContext) processWebhook(def map[string]interface{}) {
