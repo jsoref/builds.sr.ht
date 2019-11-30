@@ -1,5 +1,4 @@
 from flask import Blueprint, render_template, request, Response, abort
-from flask_login import current_user
 from srht.api import paginated_response
 from srht.database import db
 from srht.flask import csrf_bypass
@@ -129,7 +128,7 @@ def jobs_by_id_cancel_POST(job_id):
     job = Job.query.filter(Job.id == job_id).one_or_none()
     if not job:
         abort(404)
-    if job.owner_id != current_user.id:
+    if job.owner_id != current_token.user_id:
         abort(401)
     requests.post(f"http://{job.runner}:8080/job/{job.id}/cancel")
     return { }
