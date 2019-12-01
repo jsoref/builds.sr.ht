@@ -54,7 +54,6 @@ setup(
       'srht',
       'redis',
       'celery',
-      'flask_login',
       'pyyaml',
       'markdown',
       'bleach'
