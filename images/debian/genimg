@@ -63,7 +63,7 @@ mount /dev/nbd0p3 /mnt
 mkdir /mnt/boot
 mount /dev/nbd0p1 /mnt/boot
 
-if [ "$arch" = "x86_64" ]
+if [ "$arch" = "amd64" ]
 then
 	debootstrap --include=gnupg2 --arch=$arch $release /mnt
 else
