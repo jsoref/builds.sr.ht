@@ -56,7 +56,7 @@ COPY --from=0 /bin/qemu-system-mips /bin/
 COPY --from=0 /bin/qemu-system-mipsel /bin/
 COPY --from=0 /bin/qemu-system-mips64el /bin/
 COPY --from=0 /share/qemu/ /share/qemu/
-COPY --from=0 /lib/x86_64-linux-gnu/libnss_dns-2.28.so /lib/x86_64-linux-gnu/
+COPY --from=0 /lib/x86_64-linux-gnu/libnss_dns-2.29.so /lib/x86_64-linux-gnu/
 COPY --from=0 /lib/x86_64-linux-gnu/libnss_dns.so.2 /lib/x86_64-linux-gnu/
 COPY --from=0 /etc/nsswitch.conf /etc/
 
