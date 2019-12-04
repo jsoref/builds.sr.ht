@@ -183,6 +183,12 @@ function complete-build() {
 }
 export JOB_ID=%d
 `, ctx.Job.Id)
+	if ctx.Manifest.Environment == nil {
+		ctx.Manifest.Environment = make(map[string]interface{})
+	}
+	ctx.Manifest.Environment["JOB_ID"] = ctx.Job.Id
+	ctx.Manifest.Environment["JOB_URL"] = fmt.Sprintf(
+		"%s/~%s/job/%d", origin, ctx.Job.Username, ctx.Job.Id)
 	for key, value := range ctx.Manifest.Environment {
 		switch v := value.(type) {
 		case bool:
@@ -193,6 +199,8 @@ export JOB_ID=%d
 			}
 		case string:
 			env += fmt.Sprintf("export %s=%s\n", key, shquote(v))
+		case int:
+			env += fmt.Sprintf("export %s=%d\n", key, v)
 		case float64:
 			env += fmt.Sprintf("export %s=%g\n", key, v)
 		case []interface{}:

@@ -18,6 +18,7 @@ import (
 
 var (
 	config  ini.File
+	origin  string
 	workers int
 
 	jobs      map[int]*JobContext
@@ -50,6 +51,8 @@ func main() {
 	if err := db.Ping(); err != nil {
 		log.Fatalf("Failed to open a database connection: %v", err)
 	}
+
+	origin = conf("builds.sr.ht", "origin")
 
 	clusterRedis := conf("builds.sr.ht", "redis")
 	broker := celery.NewRedisCeleryBroker(clusterRedis)
