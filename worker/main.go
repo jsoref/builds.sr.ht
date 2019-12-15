@@ -62,8 +62,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-	localRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	redisHost, ok := config.Get("sr.ht", "redis-host")
+	if !ok {
+		redisHost = "localhost:6379"
+	}
+	localRedis := redis.NewClient(&redis.Options{Addr: redisHost})
 	if _, err := localRedis.Ping().Result(); err != nil {
 		panic(err)
 	}
