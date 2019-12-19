@@ -64,9 +64,13 @@ func main() {
 	}
 	redisHost, ok := config.Get("sr.ht", "redis-host")
 	if !ok {
-		redisHost = "localhost:6379"
+		redisHost = "redis://localhost:6379"
 	}
-	localRedis := redis.NewClient(&redis.Options{Addr: redisHost})
+	ropts, err := redis.ParseURL(redisHost)
+	if err != nil {
+		panic(err)
+	}
+	localRedis := redis.NewClient(ropts)
 	if _, err := localRedis.Ping().Result(); err != nil {
 		panic(err)
 	}
