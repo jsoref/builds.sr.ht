@@ -1,6 +1,7 @@
 #!/bin/sh -eux
 echo "$release" >/dev/null # fail on -u if release unset
 arch="${1:-x86_64}"
+linux="${linux:-linux-vanilla}"
 
 cleanup() {
 	# The order here is important if you don't want to hose your mounts
@@ -50,7 +51,7 @@ apk add -U -X http://dl-2.alpinelinux.org/alpine/$release/main/ \
 	--arch="$arch" \
 	--root=/mnt \
 	--initdb \
-	acct alpine-base alpine-conf alpine-sdk linux-vanilla git mercurial openssh \
+	acct alpine-base alpine-conf alpine-sdk $linux git mercurial openssh \
 	sudo syslinux tzdata gnupg haveged bash
 
 mount --bind /dev /mnt/dev
