@@ -125,10 +125,10 @@ printf '%s\n' "%wheel ALL=(ALL) NOPASSWD: ALL" >> /mnt/etc/sudoers
 rm -f /mnt/etc/motd
 
 cat >/mnt/boot/extlinux.conf <<EOF
-DEFAULT vanilla
-LABEL vanilla
-	LINUX vmlinuz-vanilla
-	INITRD initramfs-vanilla
+DEFAULT linux
+LABEL linux
+	LINUX vmlinuz-$(echo "$linux" | cut -d- -f2-)
+	INITRD initramfs-$(echo "$linux" | cut -d- -f2-)
 	APPEND root=/dev/vda3 rw modules=sd-mod,usb-storage,ext4 quiet rootfstype=ext4
 EOF
 
