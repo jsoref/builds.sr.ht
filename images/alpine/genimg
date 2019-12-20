@@ -143,6 +143,6 @@ pkg_version() {
 	echo ${name##$1-}
 }
 
-run_root apk add linux-vanilla=$(pkg_version linux-vanilla)
+run_root apk add $linux=$(pkg_version $linux)
 
 sync
