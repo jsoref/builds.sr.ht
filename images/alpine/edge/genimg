@@ -1,4 +1,4 @@
 #!/bin/sh -xeu
 export release=edge
-export kernel=linux-lts
+export linux=linux-lts
 exec ../genimg
