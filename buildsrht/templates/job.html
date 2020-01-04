@@ -155,7 +155,7 @@
     }
     if (window.location.hash === "#bottom") {
       window.setTimeout(function() {
-        document.body.scrollTop = document.body.scrollHeight;
+        document.documentElement.scrollTop = document.documentElement.scrollHeight;
       }, 100);
     }
   });
