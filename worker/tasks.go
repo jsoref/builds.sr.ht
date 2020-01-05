@@ -23,10 +23,15 @@ import (
 )
 
 var (
-	counterStore map[string]prometheus.Counter =
-		make(map[string]prometheus.Counter)
-	histogramStore map[string]prometheus.Histogram =
-		make(map[string]prometheus.Histogram)
+	buildsRun = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "buildsrht_image_runs_total",
+		Help: "The total number of builds run per arch and image",
+	}, []string{"image", "arch"})
+	settleTime = promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "buildsrht_vm_settle_duration_seconds",
+		Help:    "Duration taken by a VM to settle in seconds",
+		Buckets: []float64{1, 2, 3, 5, 10, 30, 60, 90, 120, 300},
+	}, []string{"image", "arch"})
 )
 
 func (ctx *JobContext) Boot(r *redis.Client) func() {
@@ -57,11 +62,7 @@ func (ctx *JobContext) Boot(r *redis.Client) func() {
 		panic(errors.Wrap(err, "boot"))
 	}
 
-	registerOrInc(
-		"buildsrht_images_" + strings.Replace(ctx.Manifest.Image, "/", "_", -1),
-		"The total number of builds run with " + ctx.Manifest.Image)
-	registerOrInc("buildsrht_arches_" + arch,
-		"The total number of builds run with " + arch)
+	buildsRun.WithLabelValues(ctx.Manifest.Image, arch).Inc()
 
 	return func() {
 		ctx.Log.Printf("Tearing down build VM")
@@ -80,18 +81,8 @@ func (ctx *JobContext) Settle() error {
 	if ctx.Manifest.Arch != nil {
 		arch = *ctx.Manifest.Arch
 	}
-	imageSettleTime := registerHistogram(
-		"buildsrht_settle_image_" + strings.Replace(
-			ctx.Manifest.Image, "/", "_", -1),
-		"Time to settle VMs running the " + ctx.Manifest.Image + " image",
-		[]float64{1, 2, 3, 5, 10, 30, 60, 90, 120, 300})
-	archSettleTime := registerHistogram("buildsrht_settle_arch_" + arch,
-		"Time to settle VMs running the " + arch + " arch",
-		[]float64{1, 2, 3, 5, 10, 30, 60, 90, 120, 300})
-	imageTimer := prometheus.NewTimer(imageSettleTime)
-	defer imageTimer.ObserveDuration()
-	archTimer := prometheus.NewTimer(archSettleTime)
-	defer archTimer.ObserveDuration()
+	settleTimer := prometheus.NewTimer(settleTime.WithLabelValues(ctx.Manifest.Image, arch))
+	defer settleTimer.ObserveDuration()
 
 	timeout, cancel := context.WithTimeout(ctx.Context, 120*time.Second)
 	defer cancel()
@@ -499,37 +490,4 @@ func (ctx *JobContext) RunTasks() error {
 		return err
 	}
 	return nil
-}
-
-func registerOrInc(key, help string) {
-	name := strings.Replace(key, "/", "_", -1)
-	name = strings.Replace(name, ".", "_", -1)
-	if counter, ok := counterStore[key]; !ok {
-		counter := promauto.NewCounter(prometheus.CounterOpts{
-			Name: name,
-			Help: help,
-		})
-		counterStore[key] = counter
-		counter.Inc()
-	} else {
-		counter.Inc()
-	}
-}
-
-func registerHistogram(key, help string,
-	buckets []float64) prometheus.Histogram {
-	name := strings.Replace(key, "/", "_", -1)
-	name = strings.Replace(name, ".", "_", -1)
-
-	if hist, ok := histogramStore[key]; !ok {
-		hist := promauto.NewHistogram(prometheus.HistogramOpts{
-			Buckets: buckets,
-			Name:    name,
-			Help:    help,
-		})
-		histogramStore[key] = hist
-		return hist
-	} else {
-		return hist
-	}
 }
