@@ -52,7 +52,7 @@ else:
 if username != info["username"]:
     fail("You are not permitted to connect to this job.")
 
-url = f"{get_origin('builds.sr.ht', external=True)}/jobs/~{username}/{job_id}"
+url = f"{get_origin('builds.sr.ht', external=True)}/~{username}/job/{job_id}"
 print(f"Connected to build job #{job_id} ({info['status']}): {url}")
 deadline = datetime.utcfromtimestamp(info["deadline"])
 
