@@ -29,8 +29,10 @@ if op not in ["connect", "tail"]:
     fail("Usage: ssh ... connect <job ID>")
 job_id = int(cmd[1])
 
+bind_address = cfg("builds.sr.ht::worker", "bind-address", "0.0.0.0:8080")
+
 def get_info(job_id):
-    r = requests.get(f"http://localhost:8080/job/{job_id}/info")
+    r = requests.get(f"http://{bind_address}/job/{job_id}/info")
     if r.status_code != 200:
         return None
     return r.json()
@@ -63,7 +65,7 @@ def connect(job_id, info):
     limit = naturaltime(datetime.utcnow() - deadline)
     print(f"Your VM will be terminated {limit}, or when you log out.")
     print()
-    requests.post(f"http://localhost:8080/job/{job_id}/claim")
+    requests.post(f"http://{bind_address}/job/{job_id}/claim")
     sys.stdout.flush()
     sys.stderr.flush()
     tty = os.open("/dev/tty", os.O_RDWR)
@@ -76,7 +78,7 @@ def connect(job_id, info):
         "-o", "LogLevel=quiet",
         "build@localhost", "bash"
     ])
-    requests.post(f"http://localhost:8080/job/{job_id}/terminate")
+    requests.post(f"http://{bind_address}/job/{job_id}/terminate")
 
 def tail(job_id, info):
     """Tails the build logs to stdout"""

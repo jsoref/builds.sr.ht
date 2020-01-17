@@ -2,8 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	"net/http"
 	"fmt"
+	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -39,7 +39,7 @@ func HttpServer() {
 					Task     int     `json:"task"`
 					Tasks    int     `json:"tasks"`
 					Username string  `json:"username"`
-				} {
+				}{
 					Deadline: job.Deadline.Unix(),
 					Manifest: job.Job.Manifest,
 					Note:     job.Job.Note,
@@ -99,5 +99,9 @@ func HttpServer() {
 		}
 	})
 	http.Handle("/metrics", promhttp.Handler())
-	http.ListenAndServe(":8080", nil)
+	bindAddress, ok := config.Get("builds.sr.ht::worker", "bind-address")
+	if !ok {
+		bindAddress = "0.0.0.0:8080"
+	}
+	http.ListenAndServe(bindAddress, nil)
 }
