@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-redis/redis"
@@ -73,6 +74,12 @@ func (wctx *WorkerContext) RunBuild(
 		cleanup func()
 	)
 
+	buildUser, ok := config.Get("git.sr.ht::dispatch", "/usr/bin/buildsrht-keys")
+	if !ok {
+		buildUser = "builds:builds"
+	}
+	buildUser = strings.Split(buildUser, ":")[0]
+
 	timer := prometheus.NewTimer(buildDuration)
 	defer timer.ObserveDuration()
 	buildsStarted.Inc()
@@ -112,7 +119,7 @@ func (wctx *WorkerContext) RunBuild(
 				}
 				ctx.ProcessTriggers()
 				if ctx.Settled {
-					ctx.Standby()
+					ctx.Standby(buildUser)
 				}
 				if ctx.Log != nil {
 					ctx.Log.Printf("Error: %v\n", err)
@@ -170,7 +177,7 @@ func (wctx *WorkerContext) RunBuild(
 		ctx.Log.Println("\x1B[1m\x1B[96mShell access for this build was requested.\x1B[0m")
 		ctx.Log.Println("To log in with SSH, use the following command:")
 		ctx.Log.Println()
-		ctx.Log.Printf("\tssh -t builds@%s connect %d", runner, job_id)
+		ctx.Log.Printf("\tssh -t %s@%s connect %d", buildUser, runner, job_id)
 		ctx.Log.Println()
 	}
 
@@ -208,16 +215,16 @@ func (wctx *WorkerContext) RunBuild(
 	buildsFinished.WithLabelValues("success").Inc()
 }
 
-func (ctx *JobContext) Standby() {
+func (ctx *JobContext) Standby(buildUser string) {
 	ctx.Log.Println("\x1B[1m\x1B[91mBuild failed.\x1B[0m")
 	ctx.Log.Println("The build environment will be kept alive for 10 minutes.")
 	ctx.Log.Println("To log in with SSH and examine it, use the following command:")
 	ctx.Log.Println()
-	ctx.Log.Printf("\tssh -t builds@%s connect %d", *ctx.Job.Runner, ctx.Job.Id)
+	ctx.Log.Printf("\tssh -t %s@%s connect %d", buildUser, *ctx.Job.Runner, ctx.Job.Id)
 	ctx.Log.Println()
 	ctx.Log.Println("After logging in, the deadline is increased to your remaining build time.")
 	select {
-	case <-time.After(10*time.Minute):
+	case <-time.After(10 * time.Minute):
 		break
 	case <-ctx.Context.Done():
 		ctx.Log.Println("Build cancelled. Terminating build environment.")

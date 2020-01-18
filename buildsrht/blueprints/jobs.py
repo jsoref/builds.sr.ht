@@ -264,6 +264,7 @@ def job_by_id(username, job_id):
     if not job:
         abort(404)
     logs = list()
+    build_user = cfg("git.sr.ht::dispatch", "/usr/bin/buildsrht-keys", "builds:builds").split(":")[0]
     def get_log(log_url, name):
         try:
             r = requests.head(log_url)
@@ -302,6 +303,7 @@ def job_by_id(username, job_id):
                 break
     return render_template("job.html",
             job=job,
+            build_user=build_user,
             status_map=status_map,
             icon_map=icon_map,
             logs=logs,
