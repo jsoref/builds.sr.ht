@@ -9,7 +9,6 @@ from buildsrht.runner import queue_build
 from buildsrht.types import Job, JobStatus, Task
 from buildsrht.types import Trigger, TriggerType, TriggerCondition
 from buildsrht.manifest import Manifest
-from urllib.parse import urlparse
 import json
 import re
 import requests
@@ -132,6 +131,5 @@ def jobs_by_id_cancel_POST(job_id):
         abort(404)
     if job.owner_id != current_token.user_id:
         abort(401)
-    bind_address = urlparse(cfg("builds.sr.ht::worker", "bind-address", "0.0.0.0:8080"))
-    requests.post(f"http://{job.runner}:{bind_address.port}/job/{job.id}/cancel")
+    requests.post(f"http://{job.runner}/job/{job.id}/cancel")
     return { }

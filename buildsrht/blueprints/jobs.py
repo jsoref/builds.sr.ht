@@ -10,7 +10,6 @@ from buildsrht.types import Job, JobStatus, Task, TaskStatus, User
 from buildsrht.manifest import Manifest
 from buildsrht.runner import queue_build
 from jinja2 import Markup, escape
-from urllib.parse import urlparse
 import hashlib
 import requests
 import yaml
@@ -172,8 +171,7 @@ def cancel(job_id):
         abort(404)
     if job.owner_id != current_user.id:
         abort(401)
-    bind_address = urlparse(cfg("builds.sr.ht::worker", "bind-address", "0.0.0.0:8080"))
-    requests.post(f"http://{job.runner}:{bind_address.port}/job/{job.id}/cancel")
+    requests.post(f"http://{job.runner}/job/{job.id}/cancel")
     return redirect("/~" + current_user.username + "/job/" + str(job.id))
 
 @jobs.route("/~<username>")

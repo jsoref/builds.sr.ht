@@ -4,11 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"path"
+	"strings"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func HttpServer() {
+	logDir := conf("builds.sr.ht::worker", "buildlogs")
 	http.HandleFunc("/job/", func(w http.ResponseWriter, r *http.Request) {
 		var (
 			jobId int
@@ -97,6 +100,10 @@ func HttpServer() {
 			w.WriteHeader(404)
 			w.Write([]byte("404 not found"))
 		}
+	})
+	http.HandleFunc("/logs/", func(w http.ResponseWriter, r *http.Request) {
+		file := path.Join(logDir, strings.TrimPrefix(r.URL.Path, "/logs"))
+		http.ServeFile(w, r, file)
 	})
 	http.Handle("/metrics", promhttp.Handler())
 	bindAddress, ok := config.Get("builds.sr.ht::worker", "bind-address")
