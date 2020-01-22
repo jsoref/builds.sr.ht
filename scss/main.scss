@@ -45,6 +45,7 @@ a[href^="mailto:"] {
   overflow-x: scroll;
   padding-top: 0.5rem;
   margin-bottom: 1rem;
+  @include anchor_with_contrast(#333);
 
   pre {
     background: transparent;
