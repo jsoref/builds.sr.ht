@@ -1,8 +1,9 @@
+from srht.search import search
 from buildsrht.types import Job
 
 def apply_search(query, terms):
-    if terms:
-        # TODO: More advanced search
-        for term in terms.split(" "):
-            query = query.filter(Job.note.ilike("%" + term + "%"))
-    return query
+    if not terms:
+        return query
+    default_props = [Job.note]
+    prop_map = {}
+    return search(query, terms, default_props, prop_map)
