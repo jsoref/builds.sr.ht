@@ -9,6 +9,7 @@ from srht.validation import Validation
 from buildsrht.types import Job, JobStatus, Task, TaskStatus, User
 from buildsrht.manifest import Manifest
 from buildsrht.runner import queue_build
+from buildsrht.search import apply_search
 from jinja2 import Markup, escape
 import hashlib
 import requests
@@ -61,11 +62,8 @@ icon_map = {
 
 def get_jobs(jobs):
     jobs = jobs.order_by(Job.created.desc())
-    search = request.args.get("search")
-    if search:
-        # TODO: More advanced search
-        for term in search.split(" "):
-            jobs = jobs.filter(Job.note.ilike("%" + term + "%"))
+    terms = request.args.get("search")
+    jobs = apply_search(jobs, terms)
     return jobs
 
 def jobs_page(jobs, sidebar="sidebar.html", **kwargs):
