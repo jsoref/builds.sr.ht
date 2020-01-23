@@ -14,9 +14,13 @@ def apply_search(query, terms):
         except ValueError:
             return q.filter(False)
 
+    def job_tags(q, v):
+        return q.filter(Job.tags.ilike(f"%{v}%"))
+
     default_props = [Job.note]
     prop_map = {
         "image": job_image,
         "status": job_status,
+        "tags": job_tags,
     }
     return search(query, terms, default_props, prop_map)
