@@ -1,6 +1,6 @@
 from ansi2html import Ansi2HTMLConverter
 from flask import Blueprint, render_template, request, abort, redirect
-from flask import Response
+from flask import Response, url_for
 from srht.config import cfg
 from srht.database import db
 from srht.flask import paginate_query, session
@@ -8,6 +8,7 @@ from srht.oauth import current_user, loginrequired
 from srht.validation import Validation
 from buildsrht.types import Job, JobStatus, Task, TaskStatus, User
 from buildsrht.manifest import Manifest
+from buildsrht.rss import generate_feed
 from buildsrht.runner import queue_build
 from buildsrht.search import apply_search
 from jinja2 import Markup, escape
@@ -66,6 +67,17 @@ def get_jobs(jobs):
     jobs = apply_search(jobs, terms)
     return jobs
 
+def jobs_for_feed(jobs):
+    jobs = get_jobs(jobs)
+    # return only terminated jobs in feed
+    terminated_statuses = [
+        JobStatus.success,
+        JobStatus.cancelled,
+        JobStatus.failed,
+        JobStatus.timeout,
+    ]
+    return jobs.filter(Job.status.in_(terminated_statuses))
+
 def jobs_page(jobs, sidebar="sidebar.html", **kwargs):
     jobs, pagination = paginate_query(get_jobs(jobs))
     search = request.args.get("search")
@@ -74,6 +86,13 @@ def jobs_page(jobs, sidebar="sidebar.html", **kwargs):
         sort_tasks=lambda tasks: sorted(tasks, key=lambda t: t.id),
         sidebar=sidebar, search=search, **pagination, **kwargs
     )
+
+def jobs_feed(jobs, title, endpoint, **urlvalues):
+    jobs = jobs_for_feed(jobs)
+    description = title
+    origin = cfg("builds.sr.ht", "origin")
+    link = origin + url_for(endpoint, **urlvalues)
+    return generate_feed(jobs, title, link, description)
 
 badge_success = """
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="124" height="20"><linearGradient id="b" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient><clipPath id="a"><rect width="124" height="20" rx="3" fill="#fff"/></clipPath><g clip-path="url(#a)"><path fill="#555" d="M0 0h71v20H0z"/><path fill="#4c1" d="M71 0h53v20H71z"/><path fill="url(#b)" d="M0 0h124v20H0z"/></g><g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="110"> <text x="365" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="610">__NAME__</text><text x="365" y="140" transform="scale(.1)" textLength="610">__NAME__</text><text x="965" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="430">success</text><text x="965" y="140" transform="scale(.1)" textLength="430">success</text></g></svg>
@@ -184,6 +203,17 @@ def user(username):
         { "name": "~" + user.username, "link": "" }
     ])
 
+@jobs.route("/~<username>/rss.xml")
+def user_rss(username):
+    user = User.query.filter(User.username == username).first()
+    if not user:
+        abort(404)
+    jobs = Job.query.filter(Job.owner_id == user.id)
+    if not current_user or current_user.id != user.id:
+        pass  # TODO: access controls
+    return jobs_feed(jobs, f"{user.username}'s jobs",
+                     "jobs.user", username=username)
+
 @jobs.route("/~<username>.svg")
 def user_svg(username):
     user = User.query.filter(User.username == username).first()
@@ -204,6 +234,20 @@ def tag(username, path):
     return jobs_page(jobs, user=user, breadcrumbs=[
         { "name": "~" + user.username, "url": "" }
     ] + tags(path))
+
+@jobs.route("/~<username>/<path:path>/rss.xml")
+def tag_rss(username, path):
+    user = User.query.filter(User.username == username).first()
+    if not user:
+        abort(404)
+    jobs = Job.query.filter(Job.owner_id == user.id)\
+        .filter(Job.tags.ilike(path + "%"))
+    if not current_user or current_user.id != user.id:
+        pass  # TODO: access controls
+    base_title = "/".join([f"~{user.username}"] +
+                          [t["name"] for t in tags(path)])
+    return jobs_feed(jobs, base_title + " jobs",
+                     "jobs.tag", username=username, path=path)
 
 @jobs.route("/~<username>/<path:path>.svg")
 def tag_svg(username, path):
