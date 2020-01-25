@@ -61,22 +61,26 @@ icon_map = {
     TaskStatus.skipped: "minus",
 }
 
-def get_jobs(jobs):
+def get_jobs(jobs, terms=None):
     jobs = jobs.order_by(Job.created.desc())
-    terms = request.args.get("search")
+    if terms is None:
+        terms = request.args.get("search")
     jobs = apply_search(jobs, terms)
     return jobs
 
 def jobs_for_feed(jobs):
-    jobs = get_jobs(jobs)
-    # return only terminated jobs in feed
-    terminated_statuses = [
-        JobStatus.success,
-        JobStatus.cancelled,
-        JobStatus.failed,
-        JobStatus.timeout,
-    ]
-    return jobs.filter(Job.status.in_(terminated_statuses))
+    terms = request.args.get("search")
+    jobs = get_jobs(jobs, terms)
+    if terms is not None and "status:" not in terms:
+        # by default, return only terminated jobs in feed
+        terminated_statuses = [
+            JobStatus.success,
+            JobStatus.cancelled,
+            JobStatus.failed,
+            JobStatus.timeout,
+        ]
+        jobs = jobs.filter(Job.status.in_(terminated_statuses))
+    return jobs, terms
 
 def jobs_page(jobs, sidebar="sidebar.html", **kwargs):
     jobs, pagination = paginate_query(get_jobs(jobs))
@@ -88,9 +92,14 @@ def jobs_page(jobs, sidebar="sidebar.html", **kwargs):
     )
 
 def jobs_feed(jobs, title, endpoint, **urlvalues):
-    jobs = jobs_for_feed(jobs)
+    jobs, terms = jobs_for_feed(jobs)
+    if terms is not None:
+        title = f"{title} (filtered by: {terms})"
     description = title
     origin = cfg("builds.sr.ht", "origin")
+    assert "search" not in urlvalues
+    if terms is not None:
+        urlvalues["search"] = terms
     link = origin + url_for(endpoint, **urlvalues)
     return generate_feed(jobs, title, link, description)
 
