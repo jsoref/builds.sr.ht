@@ -139,9 +139,16 @@ def svg_page(jobs):
 def index():
     if not current_user:
         return render_template("index-logged-out.html")
+    origin = cfg("builds.sr.ht", "origin")
+    rss_feed = {
+        "title": f"{current_user.username}'s jobs",
+        "url": origin + url_for("jobs.user_rss",
+                                username=current_user.username,
+                                search=request.args.get("search")),
+    }
     return jobs_page(
             Job.query.filter(Job.owner_id == current_user.id),
-            "index.html")
+            "index.html", rss_feed=rss_feed)
 
 @jobs.route("/submit")
 @loginrequired
@@ -208,9 +215,15 @@ def user(username):
     jobs = Job.query.filter(Job.owner_id == user.id)
     if not current_user or current_user.id != user.id:
         pass # TODO: access controls
+    origin = cfg("builds.sr.ht", "origin")
+    rss_feed = {
+        "title": f"{user.username}'s jobs",
+        "url": origin + url_for("jobs.user_rss", username=username,
+                                search=request.args.get("search")),
+    }
     return jobs_page(jobs, user=user, breadcrumbs=[
         { "name": "~" + user.username, "link": "" }
-    ])
+    ], rss_feed=rss_feed)
 
 @jobs.route("/~<username>/rss.xml")
 def user_rss(username):
@@ -240,9 +253,16 @@ def tag(username, path):
         .filter(Job.tags.ilike(path + "%"))
     if not current_user or current_user.id != user.id:
         pass # TODO: access controls
+    origin = cfg("builds.sr.ht", "origin")
+    rss_feed = {
+        "title": "/".join([f"~{user.username}"] +
+                          [t["name"] for t in tags(path)]),
+        "url": origin + url_for("jobs.tag_rss", username=username, path=path,
+                                search=request.args.get("search")),
+    }
     return jobs_page(jobs, user=user, breadcrumbs=[
         { "name": "~" + user.username, "url": "" }
-    ] + tags(path))
+    ] + tags(path), rss_feed=rss_feed)
 
 @jobs.route("/~<username>/<path:path>/rss.xml")
 def tag_rss(username, path):

@@ -1,4 +1,11 @@
 {% extends "layout.html" %}
+
+{%if rss_feed %}
+{% block head %}
+  <link rel="alternate" title="{{ rss_feed['title'] }}" type="application/rss+xml" href="{{ rss_feed['url'] }}">
+{% endblock %}
+{%endif%}
+
 {% block content %} 
 <section class="row">
   <div class="col-md-4">
