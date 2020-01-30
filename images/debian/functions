@@ -61,6 +61,8 @@ add_repository() {
 	fi
 	printf 'deb %s %s %s' "$repo" "$distro" "$cmpnt" \
 		| guest_ssh -p $port build@localhost sudo tee -a /etc/apt/sources.list
+	printf 'deb-src %s %s %s' "$repo" "$distro" "$cmpnt" \
+		| guest_ssh -p $port build@localhost sudo tee -a /etc/apt/sources.list
 	guest_ssh -p "$port" build@localhost sudo apt-get update
 }
 
