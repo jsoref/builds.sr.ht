@@ -61,16 +61,19 @@ icon_map = {
     TaskStatus.skipped: "minus",
 }
 
-def get_jobs(jobs, terms=None):
+def get_jobs(jobs, terms):
     jobs = jobs.order_by(Job.created.desc())
-    if terms is None:
-        terms = request.args.get("search")
-    jobs = apply_search(jobs, terms)
+    if terms:
+        jobs = apply_search(jobs, terms)
     return jobs
 
 def jobs_for_feed(jobs):
     terms = request.args.get("search")
-    jobs = get_jobs(jobs, terms)
+    try:
+        jobs = get_jobs(jobs, terms)
+    except ValueError:
+        jobs = jobs.filter(False)
+
     if terms is not None and "status:" not in terms:
         # by default, return only terminated jobs in feed
         terminated_statuses = [
@@ -83,13 +86,20 @@ def jobs_for_feed(jobs):
     return jobs, terms
 
 def jobs_page(jobs, sidebar="sidebar.html", **kwargs):
-    jobs, pagination = paginate_query(get_jobs(jobs))
     search = request.args.get("search")
+    search_error = None
+
+    try:
+        jobs = get_jobs(jobs, search)
+    except ValueError as ex:
+        search_error = str(ex)
+
+    jobs, pagination = paginate_query(jobs)
     return render_template("jobs.html",
         jobs=jobs, status_map=status_map, icon_map=icon_map, tags=tags,
         sort_tasks=lambda tasks: sorted(tasks, key=lambda t: t.id),
-        sidebar=sidebar, search=search, **pagination, **kwargs
-    )
+        sidebar=sidebar, search=search, search_error=search_error,
+        **pagination, **kwargs)
 
 def jobs_feed(jobs, title, endpoint, **urlvalues):
     jobs, terms = jobs_for_feed(jobs)
@@ -118,7 +128,7 @@ badge_unknown = """
 def svg_page(jobs):
     name = request.args.get("name",
             default=cfg("sr.ht", "site-name"))
-    job = (get_jobs(jobs)
+    job = (get_jobs(jobs, None)
         .filter(Job.status.in_([
             JobStatus.success,
             JobStatus.failed,

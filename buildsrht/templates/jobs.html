@@ -6,7 +6,7 @@
 {% endblock %}
 {%endif%}
 
-{% block content %} 
+{% block content %}
 <section class="row">
   <div class="col-md-4">
     {% include sidebar %}
@@ -27,8 +27,11 @@
           name="search"
           type="text"
           placeholder="Search jobs... status:failed image:bsd tags:sr.ht"
-          class="form-control"
+          class="form-control{% if search_error %} is-invalid{% endif %}"
           value="{{ search if search else "" }}" />
+        {% if search_error %}
+          <div class="invalid-feedback">{{ search_error }}</div>
+        {% endif %}
       </form>
       {% for job in jobs %}
       <div class="event">
