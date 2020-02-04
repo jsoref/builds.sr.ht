@@ -1,26 +1,22 @@
-from srht.search import search
+from srht.search import search_by
 from buildsrht.types import Job, JobStatus
 
 def apply_search(query, terms):
-    if not terms:
-        return query
+    def job_image(value):
+        return Job.image.ilike(f"%{value}%")
 
-    def job_image(q, v):
-        return q.filter(Job.image.ilike(f"%{v}%"))
+    def job_status(value):
+        status = getattr(JobStatus, value, None)
+        if status is None:
+            raise ValueError(f"Invalid status: '{value}'")
 
-    def job_status(q, v):
-        try:
-            return q.filter(Job.status == JobStatus(v))
-        except ValueError:
-            return q.filter(False)
+        return Job.status == status
 
-    def job_tags(q, v):
-        return q.filter(Job.tags.ilike(f"%{v}%"))
+    def job_tags(value):
+        return Job.tags.ilike(f"%{value}%")
 
-    default_props = [Job.note]
-    prop_map = {
+    return search_by(query, terms, [Job.note], {
         "image": job_image,
         "status": job_status,
         "tags": job_tags,
-    }
-    return search(query, terms, default_props, prop_map)
+    })
