@@ -8,16 +8,17 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/mail"
 	"strconv"
 	"strings"
 	"text/template"
 	"time"
 	"unicode/utf8"
 
-	gomail "gopkg.in/mail.v2"
+	ms "github.com/mitchellh/mapstructure"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	ms "github.com/mitchellh/mapstructure"
+	gomail "gopkg.in/mail.v2"
 )
 
 var (
@@ -90,14 +91,22 @@ func (ctx *JobContext) processEmail(def map[string]interface{}) {
 	}
 
 	m := gomail.NewMessage()
-	m.SetHeader("From", ctx.Conf("builds.sr.ht::worker", "trigger-from"))
+	sender, err := mail.ParseAddress(ctx.Conf("builds.sr.ht::worker", "trigger-from"))
+	if err != nil {
+		ctx.Log.Println("Failed to parse sender address")
+	}
+	m.SetAddressHeader("From", sender.Address, sender.Name)
 	subj := "builds.sr.ht"
 	if ctx.Job.Tags != nil {
 		subj = *ctx.Job.Tags
 	}
 	m.SetHeader("Subject", fmt.Sprintf(
 		"[%s] build %s", subj, ctx.Job.Status))
-	m.SetHeader("To", *trigger.To)
+	recipient, err := mail.ParseAddress(*trigger.To)
+	if err != nil {
+		ctx.Log.Println("Failed to parse recipient address")
+	}
+	m.SetAddressHeader("To", recipient.Address, recipient.Name)
 	var taskBuf bytes.Buffer
 	for _, _task := range ctx.Manifest.Tasks {
 		var name string
