@@ -7,8 +7,8 @@ import requests
 import sys
 import yaml
 
-opts, args = getopt(sys.argv[1:], "n:p:t:u:a:")
-usage = f"Usage: {sys.argv[0]} [-n note] [-u builds url] [-p images path] [-a arch] image"
+opts, args = getopt(sys.argv[1:], "n:p:t:u:a:f:")
+usage = f"Usage: {sys.argv[0]} [-n note] [-u builds url] [-p images path] [-a arch] [-f from image] image"
 
 if len(args) != 1:
     print(usage)
@@ -23,6 +23,7 @@ arch = opts.get("-a", "x86_64")
 note = opts.get("-n")
 path = opts.get("-p", "/var/lib/images")
 url = opts.get("-u", "https://builds.sr.ht")
+from_image = opts.get("-f", None)
 image = args[0]
 
 if "/" in image:
@@ -38,6 +39,9 @@ if release:
         manifest.environment = dict()
     manifest.environment["release"] = release
     manifest.environment["arch"] = arch
+
+if from_image:
+    manifest.image = from_image
 
 url = f"{url}/api/jobs"
 
