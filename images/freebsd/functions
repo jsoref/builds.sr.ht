@@ -9,14 +9,7 @@ boot() {
 		exit 1
 	fi
 	qemu=qemu-system-x86_64
-	#_boot $(cpu_opts x86_64)
-	# -cpu host doesn't work on AMD
-	if [ "$(uname -m)" = "x86_64" ] && [ -e /dev/kvm ]
-	then
-		_boot -cpu qemu64 -enable-kvm
-	else
-		_boot -cpu qemu64
-	fi
+	_boot $(cpu_opts x86_64)
 }
 
 install() {
