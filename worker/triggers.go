@@ -2,19 +2,23 @@ package main
 
 import (
 	"bytes"
+	"crypto/rand"
 	"crypto/tls"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/mail"
+	"os"
 	"strconv"
 	"strings"
 	"text/template"
 	"time"
 	"unicode/utf8"
 
+	"github.com/martinlindhe/base36"
 	ms "github.com/mitchellh/mapstructure"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -100,6 +104,7 @@ func (ctx *JobContext) processEmail(def map[string]interface{}) {
 	if ctx.Job.Tags != nil {
 		subj = *ctx.Job.Tags
 	}
+	m.SetHeader("Message-Id", GenerateMessageID())
 	m.SetHeader("Subject", fmt.Sprintf(
 		"[%s] build %s", subj, ctx.Job.Status))
 	recipient, err := mail.ParseAddress(*trigger.To)
@@ -242,4 +247,24 @@ func (ctx *JobContext) processWebhook(def map[string]interface{}) {
 	} else {
 		fmt.Printf("Error submitting webhook: %v\n", err)
 	}
+}
+
+// Generates an RFC 2822-compliant Message-Id based on the informational draft
+// "Recommendations for generating Message IDs", for lack of a better
+// authoritative source.
+func GenerateMessageID() string {
+	var (
+		now   bytes.Buffer
+		nonce []byte = make([]byte, 8)
+	)
+	binary.Write(&now, binary.BigEndian, time.Now().UnixNano())
+	rand.Read(nonce)
+	hostname, err := os.Hostname()
+	if err != nil {
+		hostname = "localhost"
+	}
+	return fmt.Sprintf("<%s.%s@%s>",
+		base36.EncodeBytes(now.Bytes()),
+		base36.EncodeBytes(nonce),
+		hostname)
 }
