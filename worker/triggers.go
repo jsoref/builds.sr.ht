@@ -104,7 +104,7 @@ func (ctx *JobContext) processEmail(def map[string]interface{}) {
 	if ctx.Job.Tags != nil {
 		subj = *ctx.Job.Tags
 	}
-	m.SetHeader("Message-Id", GenerateMessageID())
+	m.SetHeader("Message-ID", GenerateMessageID())
 	m.SetHeader("Subject", fmt.Sprintf(
 		"[%s] build %s", subj, ctx.Job.Status))
 	recipient, err := mail.ParseAddress(*trigger.To)
