@@ -1,1 +1,11 @@
-../functions
+#!/bin/sh
+
+. $self/freebsd/functions
+
+install() {
+	port=$1
+	shift 1
+	guest_ssh -p $port build@localhost \
+		"sudo IGNORE_OSVERSION=yes pkg update && \
+		sudo pkg upgrade -y && sudo pkg install -y $@"
+}
