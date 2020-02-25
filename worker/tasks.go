@@ -567,7 +567,7 @@ func (ctx *JobContext) UploadArtifacts() error {
 			ctx.Log.Printf("%v", err)
 			return err
 		}
-		pipe, err := ctx.Download(src)
+		pipe, err := ctx.Download(shquote(src))
 		if err != nil {
 			ctx.Log.Printf("Error reading artifact file: %v", err)
 			return err
