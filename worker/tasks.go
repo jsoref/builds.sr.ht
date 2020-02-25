@@ -580,7 +580,7 @@ func (ctx *JobContext) UploadArtifacts() error {
 		if err != nil {
 			return err
 		}
-		url := fmt.Sprintf("https://%s/%s", upstream, bucket, name)
+		url := fmt.Sprintf("https://%s/%s/%s", upstream, bucket, name)
 		err = ctx.Job.InsertArtifact(src, filepath.Base(src), url, size)
 		if err != nil {
 			return err
