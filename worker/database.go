@@ -117,3 +117,15 @@ func (job *Job) GetTaskStatus(name string) (string, error) {
 	}
 	return status, nil
 }
+
+func (job *Job) InsertArtifact(path string, name string,
+	url string, size int64) error {
+
+	_, err := job.db.Exec(`
+		INSERT INTO
+		"artifact" (created, job_id, path, name, url, size)
+		VALUES (NOW() AT TIME ZONE 'UTC',
+			$1, $2, $3, $4, $5)
+	`, job.Id, path, name, url, size)
+	return err
+}

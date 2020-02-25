@@ -1,6 +1,7 @@
 from buildsrht.types import JobStatus, OAuthToken, User
 from datetime import datetime, timedelta
 from flask import session
+from humanize import naturalsize
 from srht.config import cfg
 from srht.database import DbSession
 from srht.flask import SrhtFlask
@@ -37,6 +38,7 @@ class BuildApp(SrhtFlask):
                 "datetime": datetime,
                 "timedelta": timedelta,
                 "JobStatus": JobStatus,
+                "naturalsize": naturalsize,
             }
 
 app = BuildApp()

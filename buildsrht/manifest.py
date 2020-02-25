@@ -1,8 +1,9 @@
 from enum import Enum
+import os
+import re
 import subprocess
 import uuid
 import yaml
-import re
 
 class TriggerAction(Enum):
     email = 'email'
@@ -59,6 +60,7 @@ class Manifest:
         env = self.yaml.get("environment")
         secrets = self.yaml.get("secrets")
         shell = self.yaml.get("shell")
+        artifacts = self.yaml.get("artifacts")
         if not image:
             raise Exception("Missing image in manifest")
         if not isinstance(image, str):
@@ -85,6 +87,11 @@ class Manifest:
             secrets = list(map(uuid.UUID, secrets))
         if shell is not None and not isinstance(shell, bool):
             raise Exception("Expected shell to be a boolean")
+        if artifacts is not None and (
+                not isinstance(artifacts, list) or
+                any(not isinstance(p, str) or p == "" for p in artifacts) or
+                len(set(os.path.basename(p) for p in artifacts)) != len(artifacts)):
+            raise Exception("Expected artifacts to be a list of unique file paths")
         self.image = image
         self.arch = arch
         self.packages = packages
@@ -93,6 +100,7 @@ class Manifest:
         self.environment = env
         self.secrets = secrets
         self.shell = shell
+        self.artifacts = artifacts
         tasks = self.yaml.get("tasks")
         if not tasks or not isinstance(tasks, list):
             if (tasks is None or tasks == []) and not self.shell:
@@ -121,6 +129,7 @@ class Manifest:
             "tasks": [{ t.name: t.script } for t in self.tasks],
             "triggers": [t.to_dict() for t in self.triggers] if any(self.triggers) else None,
             "shell": self.shell,
+            "artifacts": self.artifacts,
         }
 
     def to_yaml(self):

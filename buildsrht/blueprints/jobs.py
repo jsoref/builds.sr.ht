@@ -1,4 +1,5 @@
 from ansi2html import Ansi2HTMLConverter
+from datetime import datetime, timedelta
 from flask import Blueprint, render_template, request, abort, redirect
 from flask import Response, url_for
 from srht.config import cfg
@@ -382,10 +383,11 @@ def job_by_id(username, job_id):
                     job.runner, job.id, task.name)
             if not get_log(log_url, task.name):
                 break
+    min_artifact_date = datetime.utcnow() - timedelta(days=90)
     return render_template("job.html",
-            job=job,
+            job=job, logs=logs,
             build_user=build_user,
             status_map=status_map,
             icon_map=icon_map,
-            logs=logs,
-            sort_tasks=lambda tasks: sorted(tasks, key=lambda t: t.id))
+            sort_tasks=lambda tasks: sorted(tasks, key=lambda t: t.id),
+            min_artifact_date=min_artifact_date)

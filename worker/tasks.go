@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -9,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -17,6 +20,7 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/kr/pty"
+	"github.com/minio/minio-go/v6"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -488,6 +492,100 @@ func (ctx *JobContext) RunTasks() error {
 	fail:
 		ctx.Job.SetTaskStatus(name, "failed")
 		return err
+	}
+	return nil
+}
+
+func (ctx *JobContext) UploadArtifacts() error {
+	if len(ctx.Manifest.Artifacts) == 0 {
+		return nil
+	}
+	if len(ctx.Manifest.Artifacts) > 8 {
+		ctx.Log.Println("Error: no more than 8 artifacts " +
+			"per build are accepted.")
+		return nil
+	}
+
+	var (
+		ok        bool
+		upstream  string
+		accessKey string
+		secretKey string
+		bucket    string
+		prefix    string
+	)
+	err := errors.New("Build artifacts were requested, but S3 " +
+		"is not configured for this build runner.")
+	if upstream, ok = config.Get("objects", "s3-upstream");
+		!ok || upstream == "" {
+		return err
+	}
+	if accessKey, ok = config.Get("objects", "s3-access-key");
+		!ok || accessKey == "" {
+		return err
+	}
+	if secretKey, ok = config.Get("objects", "s3-secret-key");
+		!ok || secretKey == "" {
+		return err
+	}
+	if bucket, ok = config.Get("builds.sr.ht::worker", "s3-bucket");
+		!ok || bucket == "" {
+		return err
+	}
+	if prefix, ok = config.Get("builds.sr.ht::worker", "s3-prefix"); !ok {
+		return err
+	}
+	mc, err := minio.New(upstream, accessKey, secretKey, true)
+	if err != nil {
+		return err
+	}
+
+	// TODO: Let users configure the bucket location
+	if err := mc.MakeBucket(bucket, "us-east-1"); err != nil {
+		if exists, err2 := mc.BucketExists(bucket); err2 != nil && exists {
+			return err
+		}
+	}
+
+	random := make([]byte, 8) // Generated to prevent artifact enumeration
+	if _, err := rand.Read(random); err != nil {
+		return err
+	}
+	for _, src := range ctx.Manifest.Artifacts {
+		ctx.Log.Printf("Uploading %s", src)
+		name := path.Join(prefix, "~" + ctx.Job.Username,
+			strconv.Itoa(ctx.Job.Id),
+			hex.EncodeToString(random),
+			filepath.Base(src))
+		size, err := ctx.FileSize(src)
+		if err != nil {
+			ctx.Log.Printf("Error reading artifact file: %v", err)
+			return err
+		}
+		if size > 1024*1024*1024 { // 1 GiB
+			err = errors.New("Artifact exceeds maximum file size")
+			ctx.Log.Printf("%v", err)
+			return err
+		}
+		pipe, err := ctx.Download(src)
+		if err != nil {
+			ctx.Log.Printf("Error reading artifact file: %v", err)
+			return err
+		}
+		_, err = mc.PutObject(bucket, name, io.LimitReader(pipe, size), size,
+			minio.PutObjectOptions{
+				ContentType: "application/octet-stream",
+			})
+		pipe.Close()
+		if err != nil {
+			return err
+		}
+		url := fmt.Sprintf("https://%s/%s", upstream, name)
+		err = ctx.Job.InsertArtifact(src, filepath.Base(src), url, size)
+		if err != nil {
+			return err
+		}
+		ctx.Log.Println(url)
 	}
 	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -189,6 +190,7 @@ func (wctx *WorkerContext) RunBuild(
 		ctx.InstallPackages,
 		ctx.CloneRepos,
 		ctx.RunTasks,
+		ctx.UploadArtifacts,
 	}
 	ctx.NTasks = len(tasks)
 	for i, task := range tasks {
@@ -276,4 +278,40 @@ func (ctx *JobContext) Tee(path string, data []byte) error {
 	}
 	pipe.Close()
 	return tee.Wait()
+}
+
+func (ctx *JobContext) FileSize(path string) (int64, error) {
+	wc := ctx.SSH("wc", "-c", path)
+	pipe, err := wc.StdoutPipe()
+	defer pipe.Close()
+	if err != nil {
+		return 0, err
+	}
+	if err := wc.Start(); err != nil {
+		return 0, err
+	}
+	stdout, err := ioutil.ReadAll(io.LimitReader(pipe, 1024))
+	if err != nil {
+		return 0, err
+	}
+	if len(stdout) == 0 {
+		return 0, errors.New("File not found")
+	}
+	parts := strings.Split(string(stdout), " ")
+	if len(parts) != 2 {
+		return 0, errors.New("Unexpected response from wc")
+	}
+	return strconv.ParseInt(parts[0], 10, 64)
+}
+
+func (ctx *JobContext) Download(path string) (io.ReadCloser, error) {
+	cat := ctx.SSH("cat", path)
+	pipe, err := cat.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
+	if err := cat.Start(); err != nil {
+		return nil, err
+	}
+	return pipe, nil
 }

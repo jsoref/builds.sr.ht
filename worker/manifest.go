@@ -2,6 +2,7 @@ package main
 
 type Manifest struct {
 	Arch         *string
+	Artifacts    []string
 	Environment  map[string]interface{}
 	Image        string
 	Packages     []string

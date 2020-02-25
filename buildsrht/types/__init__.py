@@ -12,3 +12,4 @@ from .task import Task, TaskStatus
 from .job_group import JobGroup
 from .trigger import Trigger, TriggerType, TriggerCondition
 from .secret import Secret, SecretType
+from .artifact import Artifact

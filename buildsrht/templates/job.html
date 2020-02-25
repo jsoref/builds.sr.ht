@@ -78,6 +78,36 @@
         </button>
       </form>
       {% endif %}
+      {% if any(job.artifacts) %}
+      <h4>Artifacts</h4>
+      <table class="table table-sm">
+      {% for artifact in job.artifacts %}
+        <tr>
+          <td>
+            <span title="{{artifact.path}}">
+              {{artifact.name}}
+            </span>
+          </td>
+          <td>
+            {{naturalsize(artifact.size, binary=True)}}
+          </td>
+          <td>
+            {% if artifact.created > min_artifact_date %}
+            <a
+              rel="noopener nofollow"
+              href="{{artifact.url}}"
+            >download »</a>
+            {% else %}
+            <span class="text-muted">(pruned after 90 days)</span>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </table>
+      <div class="alert alert-warning">
+        Build artifacts are pruned after 90 days.
+      </div>
+      {% endif %}
       <h4>Tasks</h4>
       <table class="table table-sm">
         <tr class="text-muted">
