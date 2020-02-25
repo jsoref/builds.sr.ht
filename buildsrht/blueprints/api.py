@@ -79,9 +79,7 @@ def jobs_POST():
         queue_build(job, manifest) # commits the session
     else:
         db.session.commit()
-    return {
-        "id": job.id
-    }
+    return job.to_dict()
 
 @api.route("/api/jobs/<job_id>")
 @oauth("jobs:read")

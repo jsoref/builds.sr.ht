@@ -183,21 +183,26 @@ func (ctx *JobContext) processWebhook(def map[string]interface{}) {
 		Status string `json:"status"`
 		Log    string `json:"log"`
 	}
+	type JobOwner struct {
+		CName string `json:"canonical_name"`
+		Name  string `json:"name"`
+	}
 	type JobStatus struct {
-		Id       int `json:"id"`
-		Status   string `json:"status"`
-		SetupLog string `json:"setup_log"`
+		Id       int          `json:"id"`
+		Status   string       `json:"status"`
+		SetupLog string       `json:"setup_log"`
 		Tasks    []TaskStatus `json:"tasks"`
-		Note     *string `json:"note"`
-		Runner   *string `json:"runner"`
+		Note     *string      `json:"note"`
+		Runner   *string      `json:"runner"`
+		Owner    JobOwner     `json:"owner"`
 	}
 
 	status := &JobStatus{
-		Id: ctx.Job.Id,
+		Id:     ctx.Job.Id,
 		Status: ctx.Job.Status,
 		SetupLog: fmt.Sprintf("http://%s/logs/%d/log",
 			*ctx.Job.Runner, ctx.Job.Id),
-		Note: ctx.Job.Note,
+		Note:   ctx.Job.Note,
 		Runner: ctx.Job.Runner,
 	}
 

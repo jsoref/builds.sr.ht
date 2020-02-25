@@ -54,4 +54,5 @@ class Job(Base):
             "note": self.note,
             "runner": self.runner,
             "tags": self.tags,
+            "owner": self.owner.to_dict(short=True),
         }
