@@ -6,7 +6,7 @@ from srht.flask import csrf_bypass
 from srht.validation import Validation
 from srht.oauth import oauth, current_token
 from buildsrht.runner import queue_build
-from buildsrht.types import Job, JobStatus, Task
+from buildsrht.types import Artifact, Job, JobStatus, Task
 from buildsrht.types import Trigger, TriggerType, TriggerCondition
 from buildsrht.manifest import Manifest
 import json
@@ -89,6 +89,15 @@ def jobs_by_id_GET(job_id):
         abort(404)
     # TODO: ACLs
     return job.to_dict()
+
+@api.route("/api/jobs/<job_id>/artifacts")
+@oauth("jobs:read")
+def artifacts_by_job_id_GET(job_id):
+    job = Job.query.filter(Job.id == job_id).first()
+    if not job:
+        abort(404)
+    artifacts = Artifact.query.filter(Artifact.job_id == job.id)
+    return paginated_response(Artifact.id, artifacts)
 
 @api.route("/api/jobs/<job_id>/manifest")
 def jobs_by_id_manifest_GET(job_id):

@@ -15,3 +15,13 @@ class Artifact(Base):
     """URL from which the file may be downloaded"""
     size = sa.Column(sa.Integer, nullable=False)
     """File size in bytes"""
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "created": self.created,
+            "path": self.path,
+            "name": self.name,
+            "url": self.url,
+            "size": self.size,
+        }
