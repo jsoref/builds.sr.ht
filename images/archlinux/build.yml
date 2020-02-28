@@ -4,6 +4,7 @@ packages:
   - qemu-headless
   - procps-ng
   - rsync
+  - reflector
 sources:
   - https://git.sr.ht/~sircmpwn/builds.sr.ht
 environment:

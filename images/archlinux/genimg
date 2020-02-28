@@ -47,12 +47,7 @@ mount --bind /run $root/run
 cp mkinitcpio.conf $root/etc
 cp pacman.conf $root/etc
 
-cat >$root/etc/pacman.d/mirrorlist <<EOF 
-Server = http://mirror.rackspace.com/archlinux/\$repo/os/\$arch
-Server = http://mirror.us.leaseweb.net/archlinux/\$repo/os/\$arch
-Server = http://lug.mtu.edu/archlinux/\$repo/os/\$arch
-Server = http://mirrors.kernel.org/archlinux/\$repo/os/\$arch
-EOF
+reflector --protocol https --latest 30 --sort rate --save $root/etc/pacman.d/mirrorlist
 
 mkdir -p $root/etc/pacman.d/hooks/
 ln -s /dev/null $root/etc/pacman.d/hooks/90-linux.hook
