@@ -81,7 +81,7 @@ def jobs_POST():
         db.session.commit()
     return job.to_dict()
 
-@api.route("/api/jobs/<job_id>")
+@api.route("/api/jobs/<int:job_id>")
 @oauth("jobs:read")
 def jobs_by_id_GET(job_id):
     job = Job.query.filter(Job.id == job_id).first()
