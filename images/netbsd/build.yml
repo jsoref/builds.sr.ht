@@ -9,7 +9,6 @@ environment:
   arch: amd64
   release: "8.x"
   slaves:
-    - deploy@mio.runners.sr.ht
     - deploy@yui.runners.sr.ht
     - deploy@azusa.runners.sr.ht
 secrets:

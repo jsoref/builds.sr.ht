@@ -15,6 +15,7 @@ environment:
   arch: x86_64
   slaves:
     - deploy@azusa.runners.sr.ht
+    - deploy@yui.runners.sr.ht
 triggers:
   - action: email
     condition: failure
