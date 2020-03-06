@@ -84,14 +84,14 @@ run_root setup-timezone -z UTC
 if [ "$release" = "edge" ]
 then
 	cat >/mnt/etc/apk/repositories <<EOF
-http://repo-cache.local/alpine/$release/main
-http://repo-cache.local/alpine/$release/community
-http://repo-cache.local/alpine/$release/testing
+http://dl-cdn.alpinelinux.org/alpine/$testing/main
+http://dl-cdn.alpinelinux.org/alpine/$testing/community
+http://dl-cdn.alpinelinux.org/alpine/$testing/testing
 EOF
 else
 	cat >/mnt/etc/apk/repositories <<EOF
-http://repo-cache.local/alpine/$release/main
-http://repo-cache.local/alpine/$release/community
+http://dl-cdn.alpinelinux.org/alpine/$testing/main
+http://dl-cdn.alpinelinux.org/alpine/$testing/community
 EOF
 fi
 
