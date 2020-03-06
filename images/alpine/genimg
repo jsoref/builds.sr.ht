@@ -95,8 +95,6 @@ http://repo-cache.local/alpine/$release/community
 EOF
 fi
 
-echo '172.17.0.1 repo-cache.local' >> /mnt/etc/hosts
-
 extlinux -i /mnt/boot
 
 run_root rc-update add ntpd default
