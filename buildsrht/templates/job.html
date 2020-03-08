@@ -146,20 +146,22 @@
       </div>
       {% endif %}
       {% endif %}
-      {% for log in logs %}
-      <details open>
-        {% if log["name"] %}
-        <summary id="task-{{log["name"]}}">{{ log["name"] }}</summary>
-        {% else %}
-        <summary id="setup" class="text-muted">setup</summary>
-        {% endif %}
-        <table class="table-code">
-          <tr>
-            {{log["log"]}}
-          </tr>
-        </table>
-      </details>
-      {% endfor %}
+      {% if job.status.value != "queued" %}
+        {% for log in logs %}
+        <details open>
+          {% if log["name"] %}
+          <summary id="task-{{log["name"]}}">{{ log["name"] }}</summary>
+          {% else %}
+          <summary id="setup" class="text-muted">setup</summary>
+          {% endif %}
+          <table class="table-code">
+            <tr>
+              {{log["log"]}}
+            </tr>
+          </table>
+        </details>
+        {% endfor %}
+      {% endif %}
       {% if job.status.value == "success" or job.status.value == "failed" %}
       <div class="alert {{ "alert-success" if job.status.value == "success" else "alert-danger" }}">
         Build complete: <strong>{{ job.status.value }}</strong> {{ job.updated | date }}
