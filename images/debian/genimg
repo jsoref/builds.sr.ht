@@ -107,7 +107,7 @@ cat > /mnt/etc/hosts <<EOF
 EOF
 
 run_root apt-key update
-run_root apt-get update --allow-releaseinfo-change
+run_root apt-get update
 run_root apt-get -y install locales
 run_root apt-get -y install $kpkg
 run_root apt-get -y install \
