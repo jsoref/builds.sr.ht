@@ -15,7 +15,7 @@
 {% block body %} 
 <div class="container-fluid">
   <section class="row">
-    <div class="col-md-3">
+    <div class="col-lg-3 col-md-12">
       <h2>
         #{{ job.id }}
         <span class="pull-right">
@@ -132,7 +132,7 @@
       </table>
       <a href="#bottom">go to bottom »</a>
     </div>
-    <div class="col-md-9">
+    <div class="col-lg-9 col-md-12">
       {% if current_user and current_user.id == job.owner_id %}
       {% if (job.status.value == "failed" and
           datetime.utcnow() < job.updated + timedelta(minutes=10)) %}
