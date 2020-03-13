@@ -557,9 +557,12 @@ func (ctx *JobContext) UploadArtifacts() error {
 			strconv.Itoa(ctx.Job.Id),
 			hex.EncodeToString(random),
 			filepath.Base(src))
-		size, err := ctx.FileSize(src)
+		size, err := ctx.FileSize(shquote(src))
 		if err != nil {
 			ctx.Log.Printf("Error reading artifact file: %v", err)
+			if strings.ContainsRune(src, '~') {
+				ctx.Log.Printf("You probably need to remove ~/ from the artifact path.")
+			}
 			return err
 		}
 		if size > 1024*1024*1024 { // 1 GiB
