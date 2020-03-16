@@ -31,12 +31,14 @@ add_repository() {
 	then
 		printf '%s\n' "$repo" \
 			| guest_ssh -p $port build@localhost \
-			"sudo tee -a /etc/apk/repositories"
+			"cat - /etc/apk/repositories | sudo tee /etc/apk/repositories.new"
 	else
 		printf '%s %s\n' "$name" "$repo" \
 			| guest_ssh -p $port build@localhost \
-			"sudo tee -a /etc/apk/repositories"
+			"cat - /etc/apk/repositories | sudo tee /etc/apk/repositories.new"
 	fi
+	guest_ssh -p $port build@localhost \
+		"sudo mv /etc/apk/repositories.new /etc/apk/repositories"
 }
 
 sanity_check() {
