@@ -67,6 +67,7 @@ setup(
       ]
   },
   scripts = [
+      'buildsrht-initdb',
       'buildsrht-keys',
       'buildsrht-migrate',
       'buildsrht-shell',
