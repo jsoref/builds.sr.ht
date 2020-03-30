@@ -25,10 +25,7 @@
       </h2>
       <dl>
         {% if job.note %}
-        <dt>Note</dt>
-        <dd>
-          <p>{{ job.note | md }}</p>
-        </dd>
+        <p>{{ job.note | md }}</p>
         {% endif %}
         <dt>Owner</dt>
         <dd>
