@@ -13,6 +13,7 @@ from buildsrht.rss import generate_feed
 from buildsrht.runner import queue_build
 from buildsrht.search import apply_search
 from jinja2 import Markup, escape
+import sqlalchemy as sa
 import hashlib
 import requests
 import yaml
@@ -91,7 +92,8 @@ def jobs_page(jobs, sidebar="sidebar.html", **kwargs):
     search_error = None
 
     try:
-        jobs = get_jobs(jobs, search)
+        jobs = (get_jobs(jobs, search)
+            .options(sa.orm.joinedload(Job.tasks)))
     except ValueError as ex:
         search_error = str(ex)
 
