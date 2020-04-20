@@ -86,7 +86,9 @@ EOF
 echo "build" > /mnt/etc/myname
 echo "10.0.2.2" > /mnt/etc/mygate
 echo "inet 10.0.2.15 255.255.255.128" > /mnt/etc/hostname.vio0
-echo "nameserver 1.1.1.1" > /mnt/etc/resolv.conf
+echo "nameserver 8.8.8.8" > /mnt/etc/resolv.conf
+echo "127.0.0.1 localhost.localdomain localhost" >/mnt/etc/hosts
+echo "::1 localhost.localdomain localhost" >>/mnt/etc/hosts
 echo "$openbsd_installurl" > /mnt/etc/installurl
 ln -sf /usr/share/zoneinfo/UTC /mnt/etc/localtime
 

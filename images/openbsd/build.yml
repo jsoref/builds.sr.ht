@@ -6,7 +6,7 @@ sources:
   - https://git.sr.ht/~sircmpwn/builds.sr.ht
 environment:
   arch: amd64
-  release: "6.5"
+  release: "6.6"
   slaves:
     - deploy@azusa.runners.sr.ht
     - deploy@yui.runners.sr.ht
