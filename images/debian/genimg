@@ -124,6 +124,12 @@ echo "PermitEmptyPasswords yes" >> /mnt/etc/ssh/sshd_config
 echo ssh >> /mnt/etc/securetty
 run_root systemctl enable ssh
 
+cat >/mnt/etc/docker/daemon.json <<EOF
+{
+	"bip": "172.18.0.1/16"
+}
+EOF
+
 run_root update-initramfs -u
 
 linuxver=$(ls /mnt/boot | grep vmlinuz | cut -d- -f2-)
