@@ -124,6 +124,8 @@ echo "PermitEmptyPasswords yes" >> /mnt/etc/ssh/sshd_config
 echo ssh >> /mnt/etc/securetty
 run_root systemctl enable ssh
 
+# Prevent docker from mucking up networking
+mkdir -p /mnt/etc/docker
 cat >/mnt/etc/docker/daemon.json <<EOF
 {
 	"bip": "172.18.0.1/16"
