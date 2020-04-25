@@ -11,7 +11,7 @@ sources:
   - https://git.sr.ht/~sircmpwn/builds.sr.ht
 environment:
   arch: amd64
-  release: eoan
+  release: focal
   slaves:
     - deploy@azusa.runners.sr.ht
     - deploy@yui.runners.sr.ht
