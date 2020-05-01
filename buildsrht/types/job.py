@@ -42,13 +42,19 @@ class Job(Base):
         return {
             "id": self.id,
             "status": self.status.value,
-            "setup_log": "http://{}/logs/{}/log".format(self.runner, self.id),
+            "setup_log": (
+                "http://{}/logs/{}/log".format(self.runner, self.id)
+                if self.runner else None
+            ),
             "tasks": [
                 {
                     "name": task.name,
                     "status": task.status.value,
-                    "log": "http://{}/logs/{}/{}/log".format(
-                        self.runner, self.id, task.name)
+                    "log": (
+                        "http://{}/logs/{}/{}/log".format(
+                            self.runner, self.id, task.name)
+                        if self.runner else None
+                    ),
                 } for task in self.tasks
             ],
             "note": self.note,
