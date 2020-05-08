@@ -2,6 +2,11 @@
 self=$(readlink -f $0)
 self=$(dirname "$self")
 
+if [ -f /etc/image-control.conf ]
+then
+	. /etc/image-control.conf
+fi
+
 base=$1
 cmd=$2
 shift 2
@@ -123,7 +128,7 @@ cmd_boot() {
 	then
 		means=$2
 	else
-		means="qemu-chroot"
+		means="${default_means:-docker}"
 	fi
 
 	if [ "$means" = "docker" ]
