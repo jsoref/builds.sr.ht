@@ -17,5 +17,5 @@ boot() {
 guest_ssh() {
 	port=$1
 	shift 2
-	PASS=password DIALSRV=$port drawterm -a none -u glenda -h 127.0.0.1 -Gc "$*"
+	PASS=password DIALSRV=$port drawterm -a none -u glenda -h 127.0.0.1 -c "$*"
 }
