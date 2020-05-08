@@ -13,6 +13,7 @@ then
 fi
 
 ssh_opts="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+guestport=22
 
 guest_ssh() {
 	ssh $ssh_opts "$@"
@@ -47,16 +48,16 @@ _docker_boot() {
 		--mount type=tmpfs,destination=/var/tmp \
 		--device /dev/kvm \
 		--cpus=2 \
-		-p 127.0.0.1:$port:$port \
+		-p $port:$port \
 		--rm \
 		--name "builds_job_${BUILD_JOB_ID:-unknown_$(date +"%s")}" \
 		qemu /bin/${qemu:-qemu-system-$arch} \
 		-m ${MEMORY:-4096} \
-		-net nic,model=virtio -net user,hostfwd=tcp::$port-:22 \
+		-smp cpus=2 \
+		-net nic,model=virtio -net user,hostfwd=tcp::$port-:$guestport \
 		-display none \
 		-device virtio-rng-pci \
 		-device virtio-balloon \
-		-smp cpus=2 \
 		-drive file="$wd/$arch/root.img.qcow2",media=disk,snapshot=on,${driveopts:-if=virtio} \
 		"$@" > /tmp/docker-$port.id
 }
@@ -65,7 +66,24 @@ _qemu_boot() {
 	${qemu:-qemu-system-$arch} \
 		-pidfile /tmp/qemu-$port.id \
 		-m ${MEMORY:-4096} \
-		-net nic,model=virtio -net user,hostfwd=tcp::$port-:22 \
+		-smp cpus=2 \
+		-net nic,model=virtio -net user,hostfwd=tcp:127.0.0.1:$port-:$guestport \
+		-display none \
+		-device virtio-rng-pci \
+		-device virtio-balloon \
+		-drive file="$wd/$arch/root.img.qcow2",media=disk,snapshot=on,${driveopts:-if=virtio} \
+		"$@" &
+}
+
+_qemu_chroot_boot() {
+	qemu-chroot \
+		-p /tmp/qemu-$port.id \
+		-b "$self/$base":/base \
+		-b /var/tmp:/var/tmp \
+		/bin/${qemu:-qemu-system-$arch} \
+		-m ${MEMORY:-4096} \
+		-smp cpus=2 \
+		-net nic,model=virtio -net user,hostfwd=tcp:127.0.0.1:$port-:$guestport \
 		-display none \
 		-device virtio-rng-pci \
 		-device virtio-balloon \
@@ -80,6 +98,9 @@ _boot() {
 	elif [ "$means" = "qemu" ]
 	then
 		_qemu_boot "$@"
+	elif [ "$means" = "qemu-chroot" ]
+	then
+		_qemu_chroot_boot "$@"
 	fi
 }
 
@@ -102,7 +123,7 @@ cmd_boot() {
 	then
 		means=$2
 	else
-		means="docker"
+		means="qemu-chroot"
 	fi
 
 	if [ "$means" = "docker" ]
@@ -111,6 +132,9 @@ cmd_boot() {
 	elif [ "$means" = "qemu" ]
 	then
 		wd="$self/$base"
+	elif [ "$means" = "qemu-chroot" ]
+	then
+		wd="/base"
 	else
 		printf "Unknown boot mode %s\n" "$means" >2
 		exit 1
@@ -156,7 +180,6 @@ cmd_cleanup() {
 			guest_ssh -p $port build@localhost $poweroff_cmd || true
 			sleep 2
 			kill $cid || true
-			kill -9 $cid || true
 			rm -f /tmp/qemu-$port.id
 		fi
 	fi

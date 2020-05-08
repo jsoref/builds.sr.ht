@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -253,6 +254,16 @@ func (ctx *JobContext) Control(
 
 func (ctx *JobContext) SSH(args ...string) *exec.Cmd {
 	sport := strconv.Itoa(ctx.Port)
+	// Kind of crappy, would be better to use something more general:
+	if strings.HasPrefix(ctx.Manifest.Image, "9front") {
+		return exec.CommandContext(ctx.Context,
+			"env", fmt.Sprintf("DIALSRV=%s", sport),
+			"PASS=password", "drawterm",
+			"-a", "none",
+			"-u", "glenda",
+			"-h", "127.0.0.1",
+			"-Gc", strings.Join(args, " "))
+	}
 	return exec.CommandContext(ctx.Context, "ssh",
 		append([]string{"-q", "-t",
 			"-p", sport,

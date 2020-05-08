@@ -95,7 +95,7 @@ func (ctx *JobContext) Settle() error {
 	go func() {
 		for {
 			attempt++
-			check := ctx.SSH("printf", "'hello world'")
+			check := ctx.SSH("echo", "'hello world'")
 			pipe, _ := check.StdoutPipe()
 			if err := check.Start(); err != nil {
 				done <- err
@@ -103,7 +103,7 @@ func (ctx *JobContext) Settle() error {
 			}
 			stdout, _ := ioutil.ReadAll(pipe)
 			if err := check.Wait(); err == nil {
-				if string(stdout) == "hello world" {
+				if string(stdout) == "hello world\n" {
 					ctx.Settled = true
 					done <- nil
 					return
@@ -127,14 +127,16 @@ func (ctx *JobContext) Settle() error {
 	return <-done
 }
 
-const preamble = `#!/usr/bin/env bash
-. ~/.buildenv
-set -xe
-`
-
 func (ctx *JobContext) SendTasks() error {
 	ctx.Log.Println("Sending tasks")
-	const home = "/home/build"
+	var home = "/home/build"
+	// TODO: Generalize preamble in a per-image config somewhere
+	var preamble = "#!/usr/bin/env bash\n. ~/.buildenv\nset -xe\n"
+	if strings.HasPrefix(ctx.Manifest.Image, "9front") {
+		home = "/usr/glenda"
+		preamble = "#!/bin/rc -xe\n"
+	}
+
 	taskdir := path.Join(home, ".tasks")
 	if err := ctx.SSH("mkdir", "-p", taskdir).Run(); err != nil {
 		return err
@@ -145,7 +147,7 @@ func (ctx *JobContext) SendTasks() error {
 			break
 		}
 		taskpath := path.Join(taskdir, name)
-		if err := ctx.Tee(taskpath, []byte(preamble+script)); err != nil {
+		if err := ctx.Tee(taskpath, []byte(preamble+script+"\n")); err != nil {
 			return err
 		}
 		if err := ctx.SSH("chmod", "755", taskpath).Run(); err != nil {
@@ -169,7 +171,11 @@ func shquote(v string) string {
 }
 
 func (ctx *JobContext) SendEnv() error {
-	const home = "/home/build"
+	var home = "/home/build"
+	// TODO: Generalize in a per-image config somewhere
+	if strings.HasPrefix(ctx.Manifest.Image, "9front") {
+		home = "/usr/glenda"
+	}
 	ctx.Log.Println("Sending build environment")
 	envpath := path.Join(home, ".buildenv")
 	env := fmt.Sprintf(`#!/bin/sh

@@ -1,0 +1,21 @@
+#!/bin/sh
+poweroff_cmd="fshalt"
+default_arch=amd64
+guestport=17019
+
+boot() {
+	if [ "$arch" != "amd64" ]
+	then
+		echo "Unsupported architecture $arch" >&2
+		exit 1
+	fi
+	driveopts="if=ide,index=0"
+	qemu=qemu-system-x86_64
+	_boot $(cpu_opts x86_64)
+}
+
+guest_ssh() {
+	port=$1
+	shift 2
+	PASS=password DIALSRV=$port drawterm -a none -u glenda -h 127.0.0.1 -Gc "$*"
+}
