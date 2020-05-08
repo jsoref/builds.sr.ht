@@ -265,7 +265,7 @@ func (ctx *JobContext) SSH(args ...string) *exec.Cmd {
 				"-a", "none",
 				"-u", "glenda",
 				"-h", "127.0.0.1",
-				"-Gc", strings.Join(args, " "))
+				"-c", strings.Join(args, " "))
 		case "ssh":
 			return exec.CommandContext(ctx.Context, "ssh",
 				append([]string{"-q", "-t",
