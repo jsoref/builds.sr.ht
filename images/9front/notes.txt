@@ -1,0 +1,31 @@
+This starts with a fairly bog-standard 9front installation. glenda's password is
+set to "password".
+
+Our /lib/ndb/local setup looks like this:
+
+	auth=build authdom=9front
+	ipnet=9front ip-10.0.0.0 ipmask=255.255.255.0
+		ipgw=10.0.2.2
+		dns=8.8.8.8
+		auth=build
+		dnsdom=9front
+		cpu=build
+	sys=build ether=525400123456 ip=10.0.2.15 dom=build.9front
+
+These settings match the expectations from qemu's user mode networking.
+
+The installation is configured as a CPU server. /usr/glenda/lib/profile is
+updated to start webfs for CPU logins.
+
+A heavily patched drawterm implementation is used to remove the MASSIVE GAPING
+HOLES in drawterm's security model:
+
+https://hg.sr.ht/~sircmpwn/drawterm
+
+Future work:
+- Import builds.sr.ht secrets into factotum?
+- Package support, whatever that might mean for 9front
+- Script to generate updated qcow2's with
+- Proxy SSH logins to drawterm for logging into failed builds
+- Patch 9front's Mercurial to support cloning via hg.sr.ht's updated protocols
+- Add golang? /shrug

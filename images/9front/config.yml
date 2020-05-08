@@ -1,0 +1,5 @@
+logincmd: drawterm
+git_variant: git9
+homedir: /usr/glenda
+preamble: |
+    #!/bin/rc -xe

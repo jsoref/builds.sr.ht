@@ -23,6 +23,7 @@ require (
 	github.com/vaughan0/go-ini v0.0.0-20130923145212-a98ad7ee00ec
 	golang.org/x/sys v0.0.0-20190422165155-953cdadca894
 	gopkg.in/mail.v2 v2.3.1
+	gopkg.in/yaml.v2 v2.2.8
 )
 
 go 1.13

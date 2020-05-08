@@ -129,15 +129,7 @@ func (ctx *JobContext) Settle() error {
 
 func (ctx *JobContext) SendTasks() error {
 	ctx.Log.Println("Sending tasks")
-	var home = "/home/build"
-	// TODO: Generalize preamble in a per-image config somewhere
-	var preamble = "#!/usr/bin/env bash\n. ~/.buildenv\nset -xe\n"
-	if strings.HasPrefix(ctx.Manifest.Image, "9front") {
-		home = "/usr/glenda"
-		preamble = "#!/bin/rc -xe\n"
-	}
-
-	taskdir := path.Join(home, ".tasks")
+	taskdir := path.Join(ctx.ImageConfig.Homedir, ".tasks")
 	if err := ctx.SSH("mkdir", "-p", taskdir).Run(); err != nil {
 		return err
 	}
@@ -147,7 +139,8 @@ func (ctx *JobContext) SendTasks() error {
 			break
 		}
 		taskpath := path.Join(taskdir, name)
-		if err := ctx.Tee(taskpath, []byte(preamble+script+"\n")); err != nil {
+		script = ctx.ImageConfig.Preamble+script+"\n"
+		if err := ctx.Tee(taskpath, []byte(script)); err != nil {
 			return err
 		}
 		if err := ctx.SSH("chmod", "755", taskpath).Run(); err != nil {
@@ -171,13 +164,8 @@ func shquote(v string) string {
 }
 
 func (ctx *JobContext) SendEnv() error {
-	var home = "/home/build"
-	// TODO: Generalize in a per-image config somewhere
-	if strings.HasPrefix(ctx.Manifest.Image, "9front") {
-		home = "/usr/glenda"
-	}
 	ctx.Log.Println("Sending build environment")
-	envpath := path.Join(home, ".buildenv")
+	envpath := path.Join(ctx.ImageConfig.Homedir, ".buildenv")
 	env := fmt.Sprintf(`#!/bin/sh
 function complete-build() {
 	exit 255
@@ -324,6 +312,66 @@ func (ctx *JobContext) ConfigureRepos() error {
 	return nil
 }
 
+func (ctx *JobContext) CloneGitRepo(srcurl, repo_name, ref string) error {
+	git := ctx.SSH("GIT_SSH_COMMAND='ssh -o " +
+		"UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'",
+		"git", "clone", srcurl, repo_name)
+	git.Stdout = ctx.LogFile
+	git.Stderr = ctx.LogFile
+	if err := git.Run(); err != nil {
+		ctx.Log.Println("Failed to clone repository. " +
+			"If this a private repository, make sure you've " +
+			"added a suitable SSH key.")
+		ctx.Log.Println("https://man.sr.ht/builds.sr.ht/private-repos.md")
+		return errors.Wrap(err, "git clone")
+	}
+	if ref != "" {
+		git := ctx.SSH("sh", "-euxc",
+			fmt.Sprintf("'cd %s && git checkout -q %s'", repo_name, ref))
+		git.Stdout = ctx.LogFile
+		git.Stderr = ctx.LogFile
+		if err := git.Run(); err != nil {
+			return errors.Wrap(err, "git checkout")
+		}
+	}
+	git = ctx.SSH("GIT_SSH_COMMAND='ssh -o " +
+		"UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'",
+		"sh", "-euxc",
+		fmt.Sprintf("'cd %s && git submodule update --init'", repo_name))
+	git.Stdout = ctx.LogFile
+	git.Stderr = ctx.LogFile
+	if err := git.Run(); err != nil {
+		return errors.Wrap(err, "git submodule update")
+	}
+	return nil
+}
+
+func (ctx *JobContext) CloneGit9Repo(srcurl, repo_name, ref string) error {
+	if strings.Contains(srcurl, "@") {
+		// Possible in theory, but we need to implement adding SSH key secrets
+		// to factotum, and factotum in general, first. And rewrite the URL to
+		// be git9 friendly.
+		return errors.New("SSH cloning is not implemented for Plan 9")
+	}
+	git := ctx.SSH("git/clone", srcurl, repo_name)
+	git.Stdout = ctx.LogFile
+	git.Stderr = ctx.LogFile
+	if err := git.Run(); err != nil {
+		ctx.Log.Println("Failed to clone repository.")
+		return errors.Wrap(err, "git clone")
+	}
+	if ref != "" {
+		git := ctx.SSH("sh", "-euxc",
+			fmt.Sprintf("'cd %s && git checkout -q %s'", repo_name, ref))
+		git.Stdout = ctx.LogFile
+		git.Stderr = ctx.LogFile
+		if err := git.Run(); err != nil {
+			return errors.Wrap(err, "git checkout")
+		}
+	}
+	return nil
+}
+
 func (ctx *JobContext) CloneRepos() error {
 	if ctx.Manifest.Sources == nil || len(ctx.Manifest.Sources) == 0 {
 		return nil
@@ -356,42 +404,19 @@ func (ctx *JobContext) CloneRepos() error {
 				srcurl = purl.String()
 			}
 		}
-		if scm == "git" {
+		switch scm {
+		case "git":
 			if len(directory_bits) == 1 {
 				// we're using the repo name from the url, which may have .git
 				repo_name = strings.TrimSuffix(repo_name, ".git")
 			}
-			git := ctx.SSH("GIT_SSH_COMMAND='ssh -o " +
-				"UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'",
-				"git", "clone", srcurl, repo_name)
-			git.Stdout = ctx.LogFile
-			git.Stderr = ctx.LogFile
-			if err := git.Run(); err != nil {
-				ctx.Log.Println("Failed to clone repository. " +
-					"If this a private repository, make sure you've " +
-					"added a suitable SSH key.")
-				ctx.Log.Println("https://man.sr.ht/builds.sr.ht/private-repos.md")
-				return errors.Wrap(err, "git clone")
+			switch ctx.ImageConfig.GitVariant {
+			case "git":
+				return ctx.CloneGitRepo(srcurl, repo_name, ref)
+			case "git9":
+				return ctx.CloneGit9Repo(srcurl, repo_name, ref)
 			}
-			if ref != "" {
-				git := ctx.SSH("sh", "-euxc",
-					fmt.Sprintf("'cd %s && git checkout -q %s'", repo_name, ref))
-				git.Stdout = ctx.LogFile
-				git.Stderr = ctx.LogFile
-				if err := git.Run(); err != nil {
-					return errors.Wrap(err, "git checkout")
-				}
-			}
-			git = ctx.SSH("GIT_SSH_COMMAND='ssh -o " +
-				"UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'",
-				"sh", "-euxc",
-				fmt.Sprintf("'cd %s && git submodule update --init'", repo_name))
-			git.Stdout = ctx.LogFile
-			git.Stderr = ctx.LogFile
-			if err := git.Run(); err != nil {
-				return errors.Wrap(err, "git submodule update")
-			}
-		} else if scm == "hg" {
+		case "hg":
 			hg := ctx.SSH("hg", "clone",
 				"-e", "'ssh -o UserKnownHostsFile=/dev/null " +
 				"-o StrictHostKeyChecking=no'", srcurl, repo_name)
@@ -413,7 +438,8 @@ func (ctx *JobContext) CloneRepos() error {
 					return errors.Wrap(err, "hg update")
 				}
 			}
-		} else {
+			return nil
+		default:
 			return errors.New("Unknown scm: " + scm)
 		}
 	}

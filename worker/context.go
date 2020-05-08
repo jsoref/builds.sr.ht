@@ -45,19 +45,20 @@ type WorkerContext struct {
 }
 
 type JobContext struct {
-	Cancel   context.CancelFunc
-	Claimed  bool
-	Conf     func(section, key string) string
-	Context  context.Context
-	Db       *sql.DB
-	Deadline time.Time
-	Job      *Job
-	Log      *log.Logger
-	LogDir   string
-	LogFile  *os.File
-	Manifest *Manifest
-	Port     int
-	Settled  bool
+	Cancel      context.CancelFunc
+	Claimed     bool
+	Conf        func(section, key string) string
+	Context     context.Context
+	Db          *sql.DB
+	Deadline    time.Time
+	ImageConfig *ImageConfig
+	Job         *Job
+	Log         *log.Logger
+	LogDir      string
+	LogFile     *os.File
+	Manifest    *Manifest
+	Port        int
+	Settled     bool
 
 	NTasks int
 	Task   int
@@ -155,6 +156,8 @@ func (wctx *WorkerContext) RunBuild(
 	jobsMutex.Lock()
 	jobs[job_id] = ctx
 	jobsMutex.Unlock()
+
+	ctx.ImageConfig = LoadImageConfig(manifest.Image)
 
 	ctx.LogDir = path.Join(
 		conf("builds.sr.ht::worker", "buildlogs"), strconv.Itoa(job_id))
@@ -254,24 +257,27 @@ func (ctx *JobContext) Control(
 
 func (ctx *JobContext) SSH(args ...string) *exec.Cmd {
 	sport := strconv.Itoa(ctx.Port)
-	// Kind of crappy, would be better to use something more general:
-	if strings.HasPrefix(ctx.Manifest.Image, "9front") {
-		return exec.CommandContext(ctx.Context,
-			"env", fmt.Sprintf("DIALSRV=%s", sport),
-			"PASS=password", "drawterm",
-			"-a", "none",
-			"-u", "glenda",
-			"-h", "127.0.0.1",
-			"-Gc", strings.Join(args, " "))
+	switch ctx.ImageConfig.LoginCmd {
+		case "drawterm":
+			return exec.CommandContext(ctx.Context,
+				"env", fmt.Sprintf("DIALSRV=%s", sport),
+				"PASS=password", "drawterm",
+				"-a", "none",
+				"-u", "glenda",
+				"-h", "127.0.0.1",
+				"-Gc", strings.Join(args, " "))
+		case "ssh":
+			return exec.CommandContext(ctx.Context, "ssh",
+				append([]string{"-q", "-t",
+					"-p", sport,
+					"-o", "UserKnownHostsFile=/dev/null",
+					"-o", "StrictHostKeyChecking=no",
+					"-o", "LogLevel=quiet",
+					"build@localhost",
+				}, args...)...)
+		default:
+			panic(errors.New("Unknown login command"))
 	}
-	return exec.CommandContext(ctx.Context, "ssh",
-		append([]string{"-q", "-t",
-			"-p", sport,
-			"-o", "UserKnownHostsFile=/dev/null",
-			"-o", "StrictHostKeyChecking=no",
-			"-o", "LogLevel=quiet",
-			"build@localhost",
-		}, args...)...)
 }
 
 func (ctx *JobContext) Tee(path string, data []byte) error {
