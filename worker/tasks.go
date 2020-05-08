@@ -412,9 +412,12 @@ func (ctx *JobContext) CloneRepos() error {
 			}
 			switch ctx.ImageConfig.GitVariant {
 			case "git":
-				return ctx.CloneGitRepo(srcurl, repo_name, ref)
+				err = ctx.CloneGitRepo(srcurl, repo_name, ref)
 			case "git9":
-				return ctx.CloneGit9Repo(srcurl, repo_name, ref)
+				err = ctx.CloneGit9Repo(srcurl, repo_name, ref)
+			}
+			if err != nil {
+				return err
 			}
 		case "hg":
 			hg := ctx.SSH("hg", "clone",
@@ -438,7 +441,6 @@ func (ctx *JobContext) CloneRepos() error {
 					return errors.Wrap(err, "hg update")
 				}
 			}
-			return nil
 		default:
 			return errors.New("Unknown scm: " + scm)
 		}
