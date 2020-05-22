@@ -10,14 +10,17 @@ run_syspatch="${run_syspatch:-NO}"
 image_packages="bash git"
 snapshot="${snapshot:-NO}"
 pkg_add_params=""
-# needed for crossbuilds
-fake_version="${openbsd_version}"
+
+openbsd_bootstrap="${openbsd_bootstrap:-NO}"
+# Force bootstrap mode when cross-building, unless we're building snapshots
+if [ "$(uname -r)" != "$openbsd_version" ] && [ "$snapshot" = "NO" ]; then
+  openbsd_bootstrap=YES
+fi
 
 if [ "$snapshot" = "YES" ]; then
 	mirror_dir="snapshots"
 	run_syspatch=NO
 	pkg_add_params="-Dsnap"
-	fake_version="${fake_version}-current"
 else
 	mirror_dir="${openbsd_version}"
 fi
@@ -25,12 +28,7 @@ fi
 echo "Will run syspatch: $run_syspatch"
 
 create_image() {
-	# Syntax changed in 6.6, hack here to allow bootstrapping
-	if [ `uname -r` = "6.5" ]; then
-		vmctl create "$1" -s "$2"
-	else
-		vmctl create -s "$2" "$1"
-	fi
+	vmctl create -s "$2" "$1"
 }
 
 BUILD_DIR="$PWD"
@@ -44,7 +42,7 @@ cd_workdir() {
 cd_workdir
 for f in $openbsd_sets $openbsd_kernel SHA256.sig SHA256
 do
-	test -f $f || ftp "${openbsd_installurl}/${mirror_dir}/${arch}/${f}"
+	test -f "$f" || ftp "${openbsd_installurl}/${mirror_dir}/${arch}/${f}"
 done
 
 signify -Cp /etc/signify/"$openbsd_public_key" \
@@ -98,53 +96,74 @@ pf=NO
 sndiod_flags=NO
 EOF
 
-cp $openbsd_kernel /mnt/bsd
-# lifted from openbsd install.sub to make syspatch work
-cp SHA256.sig /mnt/var/db/installed.SHA256.sig
-sha256 /mnt/bsd | (umask 077; sed 's,/mnt,,' >/mnt/var/db/kernel.SHA256)
-rm -rf /mnt/usr/share/relink/kernel
-mkdir -m 700 /mnt/usr/share/relink/kernel
-tar -C /mnt/usr/share/relink/kernel -xzf /mnt/usr/share/relink/kernel.tgz GENERIC.MP
-rm -f /mnt/usr/share/relink/kernel.tgz
-echo "Relinking kernel"
-chroot /mnt /bin/ksh -e -c "cd /usr/share/relink/kernel/GENERIC.MP; make newbsd; make newinstall" > /dev/null
+cp "$openbsd_kernel" /mnt/bsd
+if [ "${openbsd_bootstrap}" = "NO" ]; then
+  # We're not bootstrapping: syspatch can work
+  # lifted from openbsd install.sub to make syspatch work
+  cp SHA256.sig /mnt/var/db/installed.SHA256.sig
+  sha256 /mnt/bsd | (umask 077; sed 's,/mnt,,' >/mnt/var/db/kernel.SHA256)
+  rm -rf /mnt/usr/share/relink/kernel
+  mkdir -m 700 /mnt/usr/share/relink/kernel
+  tar -C /mnt/usr/share/relink/kernel -xzf /mnt/usr/share/relink/kernel.tgz GENERIC.MP
+  rm -f /mnt/usr/share/relink/kernel.tgz
+  echo "Relinking kernel"
+  chroot /mnt /bin/ksh -e -c "cd /usr/share/relink/kernel/GENERIC.MP; make newbsd; make newinstall" > /dev/null
 
-if [ "$run_syspatch" = "YES" ]
-then
-	chroot /mnt ksh -x /usr/sbin/syspatch
+  if [ "$run_syspatch" = "YES" ]
+  then
+    chroot /mnt ksh -x /usr/sbin/syspatch
+  fi
+
+  chroot /mnt /usr/sbin/pkg_add $pkg_add_params -u
+  chroot /mnt /usr/sbin/pkg_add $pkg_add_params $image_packages
+
+  # Remove useless kernel object files. This saves about 300MB of space in the final image
+  rm -rf /mnt/usr/share/relink/kernel/GENERIC.MP/
+else
+  echo "NOTE: Building bootstrap image"
+  # Manually "install" bash and git with dependencies since pkg_add may not work in chroot, unfortunately
+  # We have to use patterns here because the versions might change
+  # Hopefully this will work enough to run a non-bootstrap genimg
+  package_url="${openbsd_installurl}/${mirror_dir}/packages/${arch}"
+  pkg_db="/mnt/var/db/pkg"
+  ftp -o packagelist "${package_url}/"
+  set -- 'bash-[0-9].*.tgz' 'git-[0-9].*.tgz'
+  while [ $# -ne 0 ]; do
+    pkg="$1"
+    shift
+    package_file=$(grep -o "\"${pkg}\"" packagelist | tr -d '"')
+    package_name="${package_file%.tgz}"
+    ftp "${package_url}/${package_file}"
+    tar -C /mnt/usr/local -xpzf "${package_file}"
+    mkdir -p "${pkg_db}/${package_name}"
+    mv /mnt/usr/local/+CONTENTS "${pkg_db}/${package_name}"
+    mv /mnt/usr/local/+DESC "${pkg_db}/${package_name}"
+    for dep in $(grep @depend "${pkg_db}/${package_name}/+CONTENTS" | cut -d: -f3); do
+      # Add the dep to the install list only if it hasn't been already processed
+      if ! [ -d "${pkg_db}/${dep}" ]; then
+        set -- "$@" "${dep}.tgz"
+      fi
+      # pkg_add metadata
+      mkdir -p "${pkg_db}/${dep}"
+      echo "$package_name" >> "${pkg_db}/${dep}/+REQUIRED_BY"
+      echo "$dep" >> "${pkg_db}/${package_name}/+REQUIRING"
+    done
+  done
+  chown -R root:wheel "$pkg_db"
+  echo "/usr/local/bin/bash" >> /mnt/etc/shells
 fi
-
-# pkg_add uses sysctl -n kern.version to find the system version. Let's lie to it for a bit to allow building the image on older kernels
-cp /mnt/sbin/sysctl /mnt/sbin/sysctl.divert
-cat >/mnt/sbin/sysctl.fake <<EOF
-#!/bin/sh
-echo "OpenBSD ${fake_version} (GENERIC.MP)"
-EOF
-chmod +x /mnt/sbin/sysctl.fake
-
-if [ `uname -r` != "$openbsd_version" ]; then
-	echo "Wrong kernel version, fake sysctl output for crossbuild"
-	mv /mnt/sbin/sysctl.fake /mnt/sbin/sysctl
-fi
-
-chroot /mnt /usr/sbin/pkg_add $pkg_add_params -u
-chroot /mnt /usr/sbin/pkg_add $pkg_add_params $image_packages
-
-# Clean up if we did the hack
-mv -f /mnt/sbin/sysctl.divert /mnt/sbin/sysctl
-rm -f /mnt/sbin/sysctl.fake
 
 # the username "build" is already used in OpenBSD base, but it probably isn't
 # anything too important; it seems to be used to build xenocara etc.
-chroot /mnt /usr/sbin/userdel build
-# TODO: Remove bash
-chroot /mnt /usr/sbin/adduser \
-	-batch build wheel "Build user" "" -class pbuild -shell bash -s -noconfig
-echo "permit nopass keepenv :wheel" > /mnt/etc/doas.conf
-chroot /mnt /usr/sbin/usermod -p '' build
+# There is no "build" group.
+sed -i '/^build:/d' /mnt/etc/master.passwd
+cp -r /mnt/etc/skel /mnt/home/build
+chown -R 1000:1000 /mnt/home/build
+echo "build:*:1000:" >> /mnt/etc/group
+echo "build::1000:1000:pbuild:0:0:Build user:/home/build:/usr/local/bin/bash" >> /mnt/etc/master.passwd
+echo "permit nopass keepenv build" > /mnt/etc/doas.conf
 
-# Remove useless kernel object files. This saves about 300MB of space in the final image
-rm -r /mnt/usr/share/relink/kernel/GENERIC.MP/
+pwd_mkdb -p -d /mnt/etc /mnt/etc/master.passwd
 
 cat >/mnt/usr/libexec/reorder_kernel <<EOF
 #!/bin/sh
@@ -152,7 +171,8 @@ echo "KARL disabled"
 exit 0
 EOF
 
-echo "boot" >/etc/boot.conf
+# Disable boot wait. Saves 5 seconds
+echo "boot" > /mnt/etc/boot.conf
 
 # dump root fs into vnd0a and resize it
 makefs /dev/vnd0a /mnt
@@ -162,16 +182,13 @@ sync
 
 # root fs done, install bootloader
 mount /dev/vnd0a /mnt
-installboot -r /mnt vnd0
+# For some reason we need chroot here or the resulting image won't boot. Fortunately, it seems to work even
+# when cross-building
+chroot /mnt installboot -v vnd0
 umount /mnt
 vnconfig -u vnd0
 
 cd_workdir
-if [ `uname -r` = "6.5" ]; then
-	qemu-img convert -p -f raw -O qcow2 root.img ../$arch/root.img.qcow2
-else
-	# OpenBSD 6.6 can convert this natively
-	vmctl create -i root.img ../$arch/root.img.qcow2
-fi
+vmctl create -i root.img "../$arch/root.img.qcow2"
 # Make sure the result is readable in the next task
-chmod 644 ../$arch/root.img.qcow2
+chmod 644 "../$arch/root.img.qcow2"

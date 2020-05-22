@@ -1,4 +1,5 @@
-image: openbsd/latest
+# To bootstrap, first manually build and deploy with this manifest using the previous version, then rebuild
+image: openbsd/6.7
 packages:
   - qemu
   - rsync
@@ -6,7 +7,10 @@ sources:
   - https://git.sr.ht/~sircmpwn/builds.sr.ht
 environment:
   arch: amd64
-  release: "6.6"
+  release: "6.7"
+  # genimg automatically generates a "bootstrap image" if building using a different version, but it
+  # can also be forced.
+  # openbsd_bootstrap: YES
   slaves:
     - deploy@azusa.runners.sr.ht
     - deploy@yui.runners.sr.ht
