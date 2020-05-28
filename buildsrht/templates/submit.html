@@ -93,6 +93,11 @@ for (let i = 0; i < el.classList.length; i += 1) {
   cm.display.wrapper.classList.add(el.classList[i]);
 };
 
+cm.display.wrapper.setAttribute("autocapitalize", "off");
+cm.display.wrapper.setAttribute("autocomplete", "off");
+cm.display.wrapper.setAttribute("spellcheck", "false");
+cm.display.wrapper.setAttribute("autocorrect", "off");
+
 document.querySelector('button[type="submit"]').addEventListener('click', ev => {
   ev.preventDefault();
   let form = document.getElementById('manifest-form');
