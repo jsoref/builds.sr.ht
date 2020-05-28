@@ -1,4 +1,13 @@
 {% extends "layout.html" %}
+{% block head %}
+<link rel="stylesheet" href="/static/codemirror.css">
+<style>
+.CodeMirror {
+  height: 30rem;
+  border: 1px solid #888;
+}
+</style>
+{% endblock %}
 {% block content %} 
 <section class="row">
   <div class="col-md-4">
@@ -10,7 +19,7 @@
       <a href="https://man.sr.ht/builds.sr.ht/#integrations">integrations</a>.
     </p>
   </div>
-  <form class="col-md-8" action="/submit" method="POST">
+  <form class="col-md-8" id="manifest-form" action="/submit" method="POST">
     {{csrf_token()}}
     <div class="form-group">
       <textarea
@@ -18,9 +27,13 @@
         class="form-control {{valid.cls("manifest")}}"
         placeholder="Enter or paste build manifest..."
         name="manifest"
-        id="manifest"
+        id="editor"
       >{{manifest if manifest else ""}}</textarea>
       {{valid.summary("manifest")}}
+      <script>
+        /* Reduce effects of FOUC for JS users */
+        document.getElementById('editor').style.display = 'none';
+      </script>
     </div>
     <div class="form-group">
       <label for="note">Add note</label>
@@ -42,29 +55,51 @@
       </button>
     </div>
   </form>
-  <script src="/static/ace.js"></script>
-  <script>
-    var manifest = document.getElementById("manifest");
-    var form = document.querySelector("form");
-    var input = document.createElement("input");
-    input.type = "hidden";
-    input.value = manifest.value;
-    input.name = "manifest";
-    form.appendChild(input);
-    var editor = ace.edit(manifest, {
-      mode: "ace/mode/yaml",
-    });
-    editor.on("change", e => {
-      input.value = editor.getValue();
-    });
-    document.querySelector(".ace-tm").className += " " + manifest.className;
-  </script>
-  <style>
-    .ace-tm {
-      height: 400px;
-      font-size: 0.9rem;
-      border-radius: 0;
-    }
-  </style>
 </section>
+{% endblock %}
+{% block scripts %}
+<script src="/static/codemirror.js"></script>
+<script src="/static/yaml.js"></script>
+<script>
+const el = document.getElementById('editor');
+let cm = CodeMirror(elt => {
+  el.parentNode.replaceChild(elt, el);
+}, {
+  value: el.value,
+  mode: 'yaml',
+  lineNumbers: true,
+  autofocus: true,
+  indentWithTabs: false,
+  smartIndent: true,
+  extraKeys: {
+    Tab: (cm) => {
+      if (cm.getMode().name === 'null') {
+        cm.execCommand('insertTab');
+      } else {
+        if (cm.somethingSelected()) {
+          cm.execCommand('indentMore');
+        } else {
+          cm.execCommand('insertSoftTab');
+        }
+      }
+    },
+    'Shift-Tab': (cm) => cm.execCommand('indentLess')
+  },
+});
+
+for (let i = 0; i < el.classList.length; i += 1) {
+  cm.display.wrapper.classList.add(el.classList[i]);
+};
+
+document.querySelector('button[type="submit"]').addEventListener('click', ev => {
+  ev.preventDefault();
+  let form = document.getElementById('manifest-form');
+  let node = document.createElement('input');
+  node.type = 'hidden';
+  node.name = 'manifest';
+  node.value = cm.getValue();
+  form.appendChild(node);
+  form.submit();
+});
+</script>
 {% endblock %}
