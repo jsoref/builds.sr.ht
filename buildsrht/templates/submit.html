@@ -73,6 +73,7 @@ let cm = CodeMirror(elt => {
   autofocus: true,
   indentWithTabs: false,
   smartIndent: true,
+  inputStyle: "textarea",
   extraKeys: {
     Tab: (cm) => {
       if (cm.getMode().name === 'null') {
