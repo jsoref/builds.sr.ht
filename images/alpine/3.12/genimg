@@ -1,0 +1,4 @@
+#!/bin/sh -xeu
+export release=v3.12
+export linux=linux-lts
+exec ../genimg
