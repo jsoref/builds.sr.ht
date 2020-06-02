@@ -32,13 +32,13 @@
           <a href="/~{{ job.owner.username }}">
             ~{{ job.owner.username }}
           </a>
-        </dt>
+        </dd>
         <dt>Created</dt>
-        <dd>{{ job.created | date }}</dt>
+        <dd>{{ job.created | date }}</dd>
         <dt>Updated</dt>
-        <dd>{{ job.updated | date }}</dt>
+        <dd>{{ job.updated | date }}</dd>
         <dt>Build manifest</dt>
-        <dd><a href="/api/jobs/{{ job.id }}/manifest">view manifest »</a></dt>
+        <dd><a href="/api/jobs/{{ job.id }}/manifest">view manifest »</a></dd>
       </dl>
       {% if current_user and job.status.value in [
         "success", "failed", "timeout", "cancelled"
