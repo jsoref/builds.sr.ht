@@ -330,7 +330,7 @@ def logify(text, task, log_url):
         linenos = Markup('<pre>')
     for no in range(1, nlines + 1):
         linenos += Markup(f'<a href="#{escape(task)}-{no-1}" '
-                + f'id="#{escape(task)}-{no-1}">{no}</a>')
+                + f'id="{escape(task)}-{no-1}">{no}</a>')
         if no != nlines:
             linenos += Markup("\n")
     linenos += Markup("</pre>")
