@@ -179,6 +179,10 @@ export JOB_ID=%d
 	ctx.Manifest.Environment["JOB_URL"] = fmt.Sprintf(
 		"%s/~%s/job/%d", origin, ctx.Job.Username, ctx.Job.Id)
 	for key, value := range ctx.Manifest.Environment {
+		if value == nil {
+			env += fmt.Sprintf("export %s=\"\"\n", key)
+			continue
+		}
 		switch v := value.(type) {
 		case bool:
 			if v {
