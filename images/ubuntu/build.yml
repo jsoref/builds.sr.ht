@@ -1,4 +1,4 @@
-image: ubuntu/next
+image: ubuntu/latest
 packages:
   - debootstrap
   - e2fsprogs
@@ -11,7 +11,7 @@ sources:
   - https://git.sr.ht/~sircmpwn/builds.sr.ht
 environment:
   arch: amd64
-  release: focal
+  release: latest
   slaves:
     - deploy@azusa.runners.sr.ht
     - deploy@yui.runners.sr.ht
@@ -42,7 +42,6 @@ tasks:
       for server in "${slaves[@]}"
       do
         ssh $server mkdir -p /var/lib/images/ubuntu/$release/$arch
-        # TODO: update kernel
         rsync -rzP $arch/root.img.qcow2 \
             ${server}:/var/lib/images/ubuntu/$release/$arch/new_root.img.qcow2
         ssh $server mv \
