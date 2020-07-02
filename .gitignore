@@ -13,3 +13,6 @@ pip-selfcheck.json
 .pgp
 logs
 *.qcow2
+vmlinuz
+vmlinux
+*.img
