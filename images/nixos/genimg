@@ -18,13 +18,14 @@ then
 	sudo mkdir /nix
 	sudo chown build /nix
 	# Install nix
-	curl https://nixos.org/nix/install | sh
+	curl -L https://nixos.org/nix/install > ~/install-nix
+	sh ~/install-nix --no-daemon --no-channel-add
 	# Activate nix
 	. ~/.nix-profile/etc/profile.d/nix.sh
 fi
 
-# Test nix and show the channel
-nix-channel --list
+# Check that nix works
+nix ping-store
 
 # We switch to a nixos channel.
 # This is important because the nixos-* channels,
