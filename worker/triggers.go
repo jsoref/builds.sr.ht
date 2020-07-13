@@ -85,7 +85,9 @@ func (ctx *JobContext) ProcessTriggers() {
 
 func (ctx *JobContext) processEmail(def map[string]interface{}) {
 	type EmailTrigger struct {
-		To *string
+		To        *string
+		Cc        *string
+		InReplyTo *string `mapstructure:"in_reply_to"`
 	}
 	var trigger EmailTrigger
 	ms.Decode(def, &trigger)
@@ -100,18 +102,42 @@ func (ctx *JobContext) processEmail(def map[string]interface{}) {
 		ctx.Log.Println("Failed to parse sender address")
 	}
 	m.SetAddressHeader("From", sender.Address, sender.Name)
+
 	subj := "builds.sr.ht"
 	if ctx.Job.Tags != nil {
 		subj = *ctx.Job.Tags
 	}
+
 	m.SetHeader("Message-ID", GenerateMessageID())
+	if trigger.InReplyTo != nil {
+		m.SetHeader("In-Reply-To", *trigger.InReplyTo)
+	}
+
 	m.SetHeader("Subject", fmt.Sprintf(
 		"[%s] build %s", subj, ctx.Job.Status))
-	recipient, err := mail.ParseAddress(*trigger.To)
+
+	recipients, err := mail.ParseAddressList(*trigger.To)
 	if err != nil {
-		ctx.Log.Println("Failed to parse recipient address")
+		ctx.Log.Println("Failed to parse recipient addresses")
 	}
-	m.SetAddressHeader("To", recipient.Address, recipient.Name)
+	var toRcpts []string
+	for _, rcpt := range recipients {
+		toRcpts = append(toRcpts, m.FormatAddress(rcpt.Address, rcpt.Name))
+	}
+	m.SetHeader("To", toRcpts...)
+
+	if trigger.Cc != nil {
+		recipients, err = mail.ParseAddressList(*trigger.Cc)
+		if err != nil {
+			ctx.Log.Println("Failed to parse recipient addresses")
+		}
+		var ccRcpts []string
+		for _, rcpt := range recipients {
+			ccRcpts = append(ccRcpts, m.FormatAddress(rcpt.Address, rcpt.Name))
+		}
+		m.SetHeader("Cc", ccRcpts...)
+	}
+
 	var taskBuf bytes.Buffer
 	for _, _task := range ctx.Manifest.Tasks {
 		var name string
