@@ -144,6 +144,9 @@ func (ctx *JobContext) processEmail(def map[string]interface{}) {
 		for name, _ = range _task {
 			break
 		}
+		if strings.HasPrefix(name, "_") {
+			continue
+		}
 		taskStatus, err := ctx.Job.GetTaskStatus(name)
 		if err != nil {
 			ctx.Log.Println("Failed to find task status")
