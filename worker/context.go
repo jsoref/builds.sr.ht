@@ -314,7 +314,7 @@ func (ctx *JobContext) FileSize(path string) (int64, error) {
 	if len(stdout) == 0 {
 		return 0, errors.New("File not found")
 	}
-	parts := strings.Split(string(stdout), " ")
+	parts := strings.Split(strings.Trim(string(stdout), " \t"), " ")
 	if len(parts) != 2 {
 		return 0, errors.New("Unexpected response from wc")
 	}
