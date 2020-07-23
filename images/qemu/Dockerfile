@@ -56,7 +56,10 @@ COPY --from=0 /bin/qemu-system-mips /bin/
 COPY --from=0 /bin/qemu-system-mipsel /bin/
 COPY --from=0 /bin/qemu-system-mips64el /bin/
 COPY --from=0 /share/qemu/ /share/qemu/
-COPY --from=0 /lib/x86_64-linux-gnu/libnss_dns-2.30.so /lib/x86_64-linux-gnu/
+# It is safe and recommended to update the libnss_dns version if you
+# don't have this version on your system.
+# Please send a patch in as well! :)
+COPY --from=0 /lib/x86_64-linux-gnu/libnss_dns-2.31.so /lib/x86_64-linux-gnu/
 COPY --from=0 /lib/x86_64-linux-gnu/libnss_dns.so.2 /lib/x86_64-linux-gnu/
 COPY --from=0 /etc/nsswitch.conf /etc/
 
