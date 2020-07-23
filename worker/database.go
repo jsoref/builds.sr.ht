@@ -19,6 +19,7 @@ type Job struct {
 	Runner     *string
 	Tags       *string
 	Secrets    bool
+	Image      string
 
 	Username string
 }
@@ -36,13 +37,35 @@ type Secret struct {
 	Mode       *int
 }
 
+type JobGroup struct {
+	db *sql.DB
+
+	Id       int
+	OwnerId  int
+	Created  time.Time
+	Updated  time.Time
+	Note     *string
+	Complete bool
+
+	Jobs []*Job
+}
+
+type Trigger struct {
+	Id        int
+	Created   time.Time
+	Updated   time.Time
+	Action    string
+	Condition string
+	Details   string
+}
+
 func GetJob(db *sql.DB, id int) (*Job, error) {
 	row := db.QueryRow(`
 		SELECT
 			"job"."id", "job"."created", "job"."updated", "job"."manifest",
 			"job"."owner_id", "job"."job_group_id", "job"."note",
 			"job"."status", "job"."runner", "job"."tags", "job"."secrets",
-			"user".username
+			"job"."image", "user".username
 		FROM "job"
 		JOIN "user" ON "job"."owner_id" = "user"."id"
 		WHERE "job"."id" = $1;
@@ -52,7 +75,7 @@ func GetJob(db *sql.DB, id int) (*Job, error) {
 	if err := row.Scan(
 		&job.Id, &job.Created, &job.Updated, &job.Manifest, &job.OwnerId,
 		&job.JobGroupId, &job.Note, &job.Status, &job.Runner, &job.Tags,
-		&job.Secrets, &job.Username); err != nil {
+		&job.Secrets, &job.Image, &job.Username); err != nil {
 
 		return nil, err
 	}
@@ -75,6 +98,27 @@ func GetSecret(db *sql.DB, uuid string) (*Secret, error) {
 		return nil, err
 	}
 	return &secret, nil
+}
+
+func GetJobGroup(db *sql.DB, jobGroupId int) (*JobGroup, error) {
+	row := db.QueryRow(`
+		SELECT
+			jg.id, jg.created, jg.updated, jg.owner_id, jg.note,
+			sum(CASE WHEN j.status not in ('pending', 'queued')
+				THEN 1 ELSE 0 END) = count(j) as complete
+		FROM job_group jg
+		JOIN job j ON j.job_group_id = jg.id
+		WHERE jg.id = $1
+		GROUP BY jg.id;
+	`, jobGroupId)
+	var jg JobGroup
+	jg.db = db
+	if err := row.Scan(&jg.Id, &jg.Created, &jg.Updated, &jg.OwnerId, &jg.Note,
+		&jg.Complete); err != nil {
+
+		return nil, err
+	}
+	return &jg, nil
 }
 
 func (job *Job) SetRunner(runner string) error {
@@ -128,4 +172,57 @@ func (job *Job) InsertArtifact(path string, name string,
 			$1, $2, $3, $4, $5)
 	`, job.Id, path, name, url, size)
 	return err
+}
+
+func (jg *JobGroup) GetTriggers() ([]*Trigger, error) {
+	rows, err := jg.db.Query(`
+		SELECT
+			id, created, updated, details, condition, trigger_type
+		FROM trigger
+		WHERE job_group_id = $1;
+	`, jg.Id)
+	if err != nil {
+		return nil, err
+	}
+	var triggers []*Trigger
+	for rows.Next() {
+		trigger := &Trigger{}
+		if err := rows.Scan(&trigger.Id, &trigger.Created, &trigger.Updated,
+			&trigger.Details, &trigger.Condition, &trigger.Action); err != nil {
+
+			return nil, err
+		}
+		triggers = append(triggers, trigger)
+	}
+	return triggers, nil
+}
+
+func (jg *JobGroup) GetJobs() error {
+	rows, err := jg.db.Query(`
+		SELECT
+			"job"."id", "job"."created", "job"."updated", "job"."manifest",
+			"job"."owner_id", "job"."job_group_id", "job"."note",
+			"job"."status", "job"."runner", "job"."tags", "job"."secrets",
+			"job".image, "user".username
+		FROM "job"
+		JOIN "user" ON "job"."owner_id" = "user"."id"
+		WHERE "job"."job_group_id" = $1;
+	`, jg.Id)
+	if err != nil {
+		return err
+	}
+	var jobs []*Job
+	for rows.Next() {
+		job := &Job{}
+		if err := rows.Scan(
+			&job.Id, &job.Created, &job.Updated, &job.Manifest, &job.OwnerId,
+			&job.JobGroupId, &job.Note, &job.Status, &job.Runner, &job.Tags,
+			&job.Secrets, &job.Image, &job.Username); err != nil {
+
+			return err
+		}
+		jobs = append(jobs, job)
+	}
+	jg.Jobs = jobs
+	return nil
 }

@@ -6,6 +6,7 @@ require (
 	github.com/go-redis/redis v6.15.2+incompatible
 	github.com/golang/protobuf v1.2.0 // indirect
 	github.com/gomodule/redigo v2.0.0+incompatible // indirect
+	github.com/jpillora/longestcommon v0.0.0-20161227235612-adb9d91ee629
 	github.com/kr/pty v1.1.3
 	github.com/lib/pq v1.0.0
 	github.com/martinlindhe/base36 v1.0.0

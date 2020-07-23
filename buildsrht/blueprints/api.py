@@ -144,6 +144,7 @@ def jobs_by_id_cancel_POST(job_id):
 @api.route("/api/job-group", methods=["POST"])
 @oauth("jobs:write")
 def job_group_POST():
+    # TODO: implement starting the job group right away
     valid = Validation(request)
     jobs = valid.require("jobs")
     valid.expect(not jobs or isinstance(jobs, list) and all(isinstance(j, int) for j in jobs),
@@ -152,6 +153,7 @@ def job_group_POST():
     valid.expect(not triggers or isinstance(triggers, list),
             "Expected triggers to be an array of triggers")
     note = valid.optional("note")
+    execute = valid.optional("execute", default=False)
 
     if not valid.ok:
         return valid.response
@@ -167,6 +169,10 @@ def job_group_POST():
         valid.expect(job, f"Job ID {job_id} not found")
         if not job:
             continue
+        valid.expect(job.status == JobStatus.pending,
+                f"Job ID {job.id} has already been started; submit jobs with execute=false to create groups")
+        valid.expect(job.owner_id == current_token.user_id,
+                f"Job ID {job_id} is not owned by you")
         valid.expect(not job.job_group_id,
                 f"Job ID {job_id} is already assigned to a job group")
         job.job_group_id = job_group.id
@@ -189,6 +195,11 @@ def job_group_POST():
         return valid.response
 
     db.session.commit()
+    if execute:
+        for job in job_group.jobs:
+            queue_build(job, Manifest(yaml.safe_load(job.manifest)))
+        db.session.commit()
+
     return job_group.to_dict()
 
 @api.route("/api/job-group/<int:job_group_id>")
@@ -202,7 +213,7 @@ def job_group_by_id_GET(job_group_id):
     return job_group.to_dict()
 
 @api.route("/api/job-group/<int:job_group_id>/start", methods=["POST"])
-@oauth("jobs:read")
+@oauth("jobs:write")
 def job_group_by_id_start_POST(job_group_id):
     job_group = (JobGroup.query
             .filter(JobGroup.id == job_group_id)
@@ -212,5 +223,18 @@ def job_group_by_id_start_POST(job_group_id):
     for job in job_group.jobs:
         if job.status == JobStatus.pending:
             queue_build(job, Manifest(yaml.safe_load(job.manifest)))
+    db.session.commit()
+    return job_group.to_dict()
+
+@api.route("/api/job-group/<int:job_group_id>/cancel", methods=["POST"])
+@oauth("jobs:write")
+def job_group_by_id_cancel_POST(job_group_id):
+    job_group = (JobGroup.query
+            .filter(JobGroup.id == job_group_id)
+            .filter(JobGroup.owner_id == current_token.user_id)).one_or_none()
+    if not job_group:
+        return {}, 404
+    for job in job_group.jobs:
+        requests.post(f"http://{job.runner}/job/{job.id}/cancel")
     db.session.commit()
     return job_group.to_dict()
