@@ -11,3 +11,12 @@ class JobGroup(Base):
     owner_id = sa.Column(sa.Integer, sa.ForeignKey('user.id'), nullable=False)
     owner = sa.orm.relationship('User', backref=sa.orm.backref('job_groups'))
     note = sa.Column(sa.Unicode(4096))
+
+    def to_dict(self):
+        # When updating this, also update worker/triggers.go
+        return {
+            "id": self.id,
+            "note": self.note,
+            "owner": self.owner.to_dict(short=True),
+            "jobs": [job.to_dict(short=True) for job in self.jobs],
+        }

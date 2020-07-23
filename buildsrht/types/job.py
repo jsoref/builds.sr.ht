@@ -37,28 +37,30 @@ class Job(Base):
         self.owner_id = owner.id
         self.manifest = manifest
 
-    def to_dict(self):
+    def to_dict(self, short=False):
         # When updating this, also update worker/triggers.go
         return {
             "id": self.id,
             "status": self.status.value,
-            "setup_log": (
-                "http://{}/logs/{}/log".format(self.runner, self.id)
-                if self.runner else None
-            ),
-            "tasks": [
-                {
-                    "name": task.name,
-                    "status": task.status.value,
-                    "log": (
-                        "http://{}/logs/{}/{}/log".format(
-                            self.runner, self.id, task.name)
-                        if self.runner else None
-                    ),
-                } for task in self.tasks
-            ],
-            "note": self.note,
-            "runner": self.runner,
-            "tags": self.tags,
-            "owner": self.owner.to_dict(short=True),
+            **({
+                "setup_log": (
+                    "http://{}/logs/{}/log".format(self.runner, self.id)
+                    if self.runner else None
+                ),
+                "tasks": [
+                    {
+                        "name": task.name,
+                        "status": task.status.value,
+                        "log": (
+                            "http://{}/logs/{}/{}/log".format(
+                                self.runner, self.id, task.name)
+                            if self.runner else None
+                        ),
+                    } for task in self.tasks
+                ],
+                "note": self.note,
+                "runner": self.runner,
+                "tags": self.tags,
+                "owner": self.owner.to_dict(short=True),
+            } if not short else {}),
         }

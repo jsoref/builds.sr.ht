@@ -225,6 +225,12 @@ func (ctx *JobContext) processWebhook(def map[string]interface{}) {
 		Runner   *string      `json:"runner"`
 		Owner    JobOwner     `json:"owner"`
 	}
+	type JobGroupStatus struct {
+		Id       int          `json:"id"`
+		Note     *string      `json:"note"`
+		Owner    JobOwner     `json:"owner"`
+		Jobs     []JobStatus  `json:"jobs"`
+	}
 
 	status := &JobStatus{
 		Id:     ctx.Job.Id,
