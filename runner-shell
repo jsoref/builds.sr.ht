@@ -19,8 +19,6 @@ def fail(reason):
     print(f"Please reach out to {owner} <{email}> for support.")
     sys.exit(1)
 
-b64key = sys.argv[1]
-
 cmd = os.environ.get("SSH_ORIGINAL_COMMAND") or ""
 cmd = shlex.split(cmd)
 if len(cmd) < 2:
@@ -43,16 +41,7 @@ info = get_info(job_id)
 if not info:
     fail("No such job found.")
 
-meta_origin = get_origin("meta.sr.ht")
-r = requests.get(f"{meta_origin}/api/ssh-key/{b64key}")
-if r.status_code == 200:
-    username = r.json()["owner"]["name"]
-elif r.status_code == 404:
-    fail("We don't recognize your SSH key. Make sure you've added it to " +
-        f"your account.\n{get_origin('meta.sr.ht', external=True)}/keys")
-else:
-    fail("Temporary authentication failure. Try again later.")
-
+username = sys.argv[1]
 if username != info["username"]:
     fail("You are not permitted to connect to this job.")
 

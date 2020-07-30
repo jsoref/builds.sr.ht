@@ -50,6 +50,7 @@ setup(
       'buildsrht-initdb',
       'buildsrht-keys',
       'buildsrht-migrate',
-      'buildsrht-shell',
+      'master-shell',
+      'runner-shell',
   ]
 )

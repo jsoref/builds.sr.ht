@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+from buildsrht.manifest import Manifest
+from buildsrht.runner import queue_build
+from buildsrht.types import Job, Task, User
+from getopt import getopt, GetoptError
+from srht.config import cfg, get_origin
+from srht.database import DbSession
+import os
+import shlex
+import sys
+import yaml
+
+db = DbSession(cfg("builds.sr.ht", "connection-string"))
+db.init()
+
+def fail(reason):
+    owner = cfg("sr.ht", "owner-name")
+    email = cfg("sr.ht", "owner-email")
+    print(reason)
+    print(f"Please reach out to {owner} <{email}> for support.")
+    sys.exit(1)
+
+username = sys.argv[1]
+user = User.query.filter(User.username == username).one_or_none()
+if not user:
+    fail(f"Unknown user {username}")
+cmd = os.environ.get("SSH_ORIGINAL_COMMAND") or ""
+cmd = shlex.split(cmd)
+
+if cmd[0] == "submit":
+    try:
+        opts, args = getopt(cmd[1:], "n:")
+    except GetoptError as ex:
+        fail(str(ex))
+
+    if os.isatty(sys.stdin.fileno()):
+        print("Enter build manifest:")
+    _manifest = sys.stdin.read()
+    try:
+        manifest = Manifest(yaml.safe_load(_manifest))
+    except Exception as ex:
+        fail(str(ex))
+    job = Job(user, _manifest)
+    job.image = manifest.image
+    job.note = [y for x, y in opts if x == "-n"] or None
+    db.session.add(job)
+    db.session.flush()
+    for task in manifest.tasks:
+        t = Task(job, task.name)
+        db.session.add(t)
+        db.session.flush() # assigns IDs for ordering purposes
+    queue_build(job, manifest) # commits the session
+    url = f"{get_origin('builds.sr.ht', external=True)}/~{username}/job/{job.id}"
+    print(url)
+else:
+    fail(f"Unknown command {cmd[0]}")
