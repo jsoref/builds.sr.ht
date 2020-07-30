@@ -38,6 +38,7 @@ if cmd[0] == "submit":
     if os.isatty(sys.stdin.fileno()):
         print("Enter build manifest:")
     _manifest = sys.stdin.read()
+    _manifest = _manifest.replace("\t", "    ") # Appease YAML
     try:
         manifest = Manifest(yaml.safe_load(_manifest))
     except Exception as ex:
