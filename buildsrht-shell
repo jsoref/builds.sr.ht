@@ -3,6 +3,7 @@ from buildsrht.manifest import Manifest
 from datetime import datetime
 from humanize import naturaltime
 from srht.config import cfg, get_origin
+from srht.redis import redis
 import os
 import requests
 import shlex
@@ -22,12 +23,13 @@ b64key = sys.argv[1]
 
 cmd = os.environ.get("SSH_ORIGINAL_COMMAND") or ""
 cmd = shlex.split(cmd)
-if len(cmd) != 2:
+if len(cmd) < 2:
     fail("Usage: ssh ... connect <job ID>")
 op = cmd[0]
 if op not in ["connect", "tail"]:
     fail("Usage: ssh ... connect <job ID>")
 job_id = int(cmd[1])
+cmd = cmd[2:]
 
 bind_address = cfg("builds.sr.ht::worker", "bind-address", "0.0.0.0:8080")
 
@@ -54,8 +56,9 @@ else:
 if username != info["username"]:
     fail("You are not permitted to connect to this job.")
 
-url = f"{get_origin('builds.sr.ht', external=True)}/~{username}/job/{job_id}"
-print(f"Connected to build job #{job_id} ({info['status']}): {url}")
+if len(cmd) == 0:
+    url = f"{get_origin('builds.sr.ht', external=True)}/~{username}/job/{job_id}"
+    print(f"Connected to build job #{job_id} ({info['status']}): {url}")
 deadline = datetime.utcfromtimestamp(info["deadline"])
 
 manifest = Manifest(yaml.safe_load(info["manifest"]))
@@ -63,22 +66,29 @@ manifest = Manifest(yaml.safe_load(info["manifest"]))
 def connect(job_id, info):
     """Opens a shell on the build VM"""
     limit = naturaltime(datetime.utcnow() - deadline)
-    print(f"Your VM will be terminated {limit}, or when you log out.")
-    print()
+    if len(cmd) == 0:
+        print(f"Your VM will be terminated {limit}, or when you log out.")
+        print()
     requests.post(f"http://{bind_address}/job/{job_id}/claim")
     sys.stdout.flush()
     sys.stderr.flush()
-    tty = os.open("/dev/tty", os.O_RDWR)
-    os.dup2(0, tty)
+    try:
+        tty = os.open("/dev/tty", os.O_RDWR)
+        os.dup2(0, tty)
+    except:
+        pass # non-interactive
+    redis.incr(f"builds.sr.ht-shell-{job_id}")
     subprocess.call([
         "ssh", "-qt",
         "-p", str(info["port"]),
         "-o", "UserKnownHostsFile=/dev/null",
         "-o", "StrictHostKeyChecking=no",
         "-o", "LogLevel=quiet",
-        "build@localhost", "bash"
-    ])
-    requests.post(f"http://{bind_address}/job/{job_id}/terminate")
+        "build@localhost",
+    ] + cmd)
+    n = redis.decr(f"builds.sr.ht-shell-{job_id}")
+    if n == 0:
+        requests.post(f"http://{bind_address}/job/{job_id}/terminate")
 
 def tail(job_id, info):
     """Tails the build logs to stdout"""

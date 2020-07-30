@@ -8,7 +8,7 @@ key_type = sys.argv[3]
 b64key = sys.argv[4]
 
 default_shell = os.path.join(os.path.dirname(sys.argv[0]), "buildsrht-shell")
-shell = cfg("git.sr.ht", "shell", default=default_shell)
+shell = cfg("builds.sr.ht", "shell", default=default_shell)
 keys = ("command=\"{} '{}'\",".format(shell, b64key) +
     "no-port-forwarding,no-X11-forwarding,no-agent-forwarding" +
     " {} {} somebody".format(key_type, b64key) + "\n")
