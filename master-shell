@@ -26,6 +26,8 @@ if not user:
     fail(f"Unknown user {username}")
 cmd = os.environ.get("SSH_ORIGINAL_COMMAND") or ""
 cmd = shlex.split(cmd)
+if len(cmd) == 0:
+    fail(f"Hi ~{username}! You've successfully authenticated, but I do not provide an interactive shell. Goodbye!")
 
 if cmd[0] == "submit":
     try:
