@@ -407,7 +407,7 @@ func (ctx *JobContext) processGroupEmail(group *JobGroup, status string,
 				tags = jt
 			} else {
 				for i, _ := range jt {
-					if tags[i] != jt[i] {
+					if i < len(tags) && tags[i] != jt[i] {
 						tags = tags[:i]
 						break
 					}
