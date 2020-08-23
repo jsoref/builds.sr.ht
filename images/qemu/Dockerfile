@@ -7,7 +7,6 @@ RUN curl -O https://download.qemu.org/qemu-4.1.0.tar.xz \
     && tar xvf qemu-4.1.0.tar.xz
 
 RUN apt-get install -y \
-    python \
     libaio-dev \
     libcap-dev \
     libcap-ng-dev \
@@ -21,7 +20,7 @@ RUN apt-get install -y \
 RUN cd qemu-4.1.0 && ./configure \
     --prefix=/ \
     --static \
-    --python=/usr/bin/python2 \
+    --python=/usr/bin/python3 \
     --audio-drv-list="" \
     --disable-docs \
     --disable-debug-info \
