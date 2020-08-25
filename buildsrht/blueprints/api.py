@@ -90,7 +90,7 @@ def jobs_by_id_GET(job_id):
     # TODO: ACLs
     return job.to_dict()
 
-@api.route("/api/jobs/<job_id>/artifacts")
+@api.route("/api/jobs/<int:job_id>/artifacts")
 @oauth("jobs:read")
 def artifacts_by_job_id_GET(job_id):
     job = Job.query.filter(Job.id == job_id).first()
@@ -99,7 +99,7 @@ def artifacts_by_job_id_GET(job_id):
     artifacts = Artifact.query.filter(Artifact.job_id == job.id)
     return paginated_response(Artifact.id, artifacts)
 
-@api.route("/api/jobs/<job_id>/manifest")
+@api.route("/api/jobs/<int:job_id>/manifest")
 def jobs_by_id_manifest_GET(job_id):
     # TODO: ACLs
     job = Job.query.filter(Job.id == job_id).first()
@@ -107,7 +107,7 @@ def jobs_by_id_manifest_GET(job_id):
         abort(404)
     return Response(job.manifest, content_type="text/plain")
 
-@api.route("/api/jobs/<job_id>/start", methods=["POST"])
+@api.route("/api/jobs/<int:job_id>/start", methods=["POST"])
 @oauth("jobs:write")
 def jobs_by_id_start_POST(job_id):
     job = Job.query.filter(Job.id == job_id).first()
