@@ -19,17 +19,17 @@ secrets:
   - d0adc1d4-af78-4852-920f-1134392f5d10 # package signing key
 tasks:
   - archive: |
-      cd ${project}
+      cd $project
       pkgver=$(~/sr.ht-apkbuilds/pkgkit pkgver)
       echo "pkgver=$pkgver" >> ~/.buildenv
       git archive \
-        -o ~/sr.ht-apkbuilds/sr.ht/${project}/${project}-$pkgver.tar.gz \
-        --prefix=${project}-$pkgver/ HEAD
+        -o ~/sr.ht-apkbuilds/sr.ht/$project/$project-$pkgver.tar.gz \
+        --prefix=$project-$pkgver/ HEAD
   - pkgkit: |
       cd sr.ht-apkbuilds
       ./pkgkit add-repo -s sr.ht ~/.abuild/alpine@sr.ht.rsa
       cd sr.ht/$project
-      sed -e 's?::https://git.sr.ht/.*archive.*??g' -i APKBUILD
+      sed -e 's?::https://git.sr.ht/.*pkgname/archive.*??g' -i APKBUILD
   - package: |
       cd sr.ht-apkbuilds
       ./pkgkit build -cuv "$pkgver" "$project"
