@@ -1,2 +1,0 @@
-- Remove latest symlink
-- Drop 19.10
