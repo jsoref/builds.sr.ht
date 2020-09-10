@@ -24,10 +24,12 @@ class BuildApp(SrhtFlask):
         super().__init__("builds.sr.ht", __name__,
                 oauth_service=BuildOAuthService())
 
+        from buildsrht.blueprints.admin import admin
         from buildsrht.blueprints.api import api
         from buildsrht.blueprints.jobs import jobs
         from buildsrht.blueprints.secrets import secrets
 
+        self.register_blueprint(admin)
         self.register_blueprint(api)
         self.register_blueprint(jobs)
         self.register_blueprint(secrets)

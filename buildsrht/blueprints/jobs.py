@@ -5,7 +5,7 @@ from flask import Response, url_for
 from srht.config import cfg
 from srht.database import db
 from srht.flask import paginate_query, session
-from srht.oauth import current_user, loginrequired
+from srht.oauth import current_user, loginrequired, UserType
 from srht.validation import Validation
 from buildsrht.types import Job, JobStatus, Task, TaskStatus, User
 from buildsrht.manifest import Manifest
@@ -215,7 +215,7 @@ def cancel(job_id):
     job = Job.query.filter(Job.id == job_id).one_or_none()
     if not job:
         abort(404)
-    if job.owner_id != current_user.id:
+    if job.owner_id != current_user.id and current_user.user_type != UserType.admin:
         abort(401)
     requests.post(f"http://{job.runner}/job/{job.id}/cancel")
     return redirect("/~" + current_user.username + "/job/" + str(job.id))
