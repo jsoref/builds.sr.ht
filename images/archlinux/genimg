@@ -3,10 +3,11 @@ root=root
 arch=x86_64
 
 cleanup() {
-	# The order here is important if you don't want to hose your mounts
-	umount -Rf "$root" || true
-	qemu-nbd --disconnect /dev/nbd0 || true
-	rm -rf "$root" || true
+    # The order here is important if you don't want to hose your mounts
+    umount -Rf "$root"/boot || true
+    umount -Rf "$root" || true
+    qemu-nbd --disconnect /dev/nbd0 || true
+    rm -rf "$root" || true
 }
 
 mkdir -p "$arch"
@@ -16,11 +17,21 @@ modprobe nbd
 qemu-nbd --connect=/dev/nbd0 $arch/root.img.qcow2
 trap cleanup EXIT
 
-mkdir -p "$root"
-mkfs.ext4 /dev/nbd0
-mount /dev/nbd0 "$root"
+dd if=/usr/lib/syslinux/bios/mbr.bin of=/dev/nbd0 bs=1 count=440
 
-pacstrap root base base-devel git mercurial openssh mkinitcpio linux
+sfdisk --no-reread /dev/nbd0 << EOF
+1M,100M,L,*
+,,L
+EOF
+
+mkdir -p "$root"
+mkfs.ext4 /dev/nbd0p1
+mkfs.ext4 /dev/nbd0p2
+mount /dev/nbd0p2 "$root"
+mkdir -p "$root"/boot
+mount /dev/nbd0p1 "$root"/boot
+
+pacstrap root base base-devel git mercurial openssh mkinitcpio linux syslinux
 
 run_root() {
     local cmd="$@"
@@ -81,6 +92,21 @@ echo 'export EDITOR=true' > $root/home/build/.bashrc
 sed -e 's/#PermitEmptyPasswords no/PermitEmptyPasswords yes/' -i $root/etc/ssh/sshd_config
 run_root systemctl enable sshd
 
+cat >> "$root"/etc/fstab << EOF
+/dev/vda1 /boot ext4 rw,relatime,data=ordered 0 0
+/dev/vda2 / ext4 rw,relatime,data=ordered 0 0
+EOF
+
+extlinux -i "$root"/boot
+
+cat > "$root"/boot/extlinux.conf <<- EOF
+default archlinux
+label archlinux
+linux vmlinuz-linux
+initrd initramfs-linux.img
+append root=/dev/vda2 rw quiet
+EOF
+
 echo "makeopts=(--skippgpcheck)" >> $root/etc/makepkg.conf
 
 run_normal curl -O https://aur.archlinux.org/cgit/aur.git/snapshot/yay-bin.tar.gz
@@ -89,5 +115,3 @@ run_normal 'cd yay-bin && makepkg -si --noconfirm --skippgpcheck'
 run_normal rm -r yay-bin yay-bin.tar.gz
 
 pkill gpg-agent || true
-cp $root/boot/vmlinuz-linux ./$arch/kernel
-cp $root/boot/initramfs-linux.img ./$arch/initrd
