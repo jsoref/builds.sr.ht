@@ -27,11 +27,6 @@ guest_ssh() {
 cpu_opts() {
 	if [ "$(uname -m)" = "$1" ] && [ -e /dev/kvm ]
 	then
-		# TODO: re-enable cpu_opts for archlinux
-		if [ "$base" = "archlinux" ] && [  "$means" = "qemu" ]
-		then
-			return
-		fi
 		printf "%s" "-cpu host -enable-kvm"
 		return
 	fi
