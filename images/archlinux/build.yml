@@ -19,6 +19,7 @@ triggers:
   - action: email
     condition: failure
     to: Drew DeVault <sir@cmpwn.com>
+    cc: Thorben Günther <admin@xenrox.net>
 tasks:
   - genimg: |
       cd builds.sr.ht/images/archlinux
