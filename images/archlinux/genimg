@@ -97,6 +97,15 @@ cat >> "$root"/etc/fstab << EOF
 /dev/vda2 / ext4 rw,relatime,data=ordered 0 0
 EOF
 
+mkdir -p "$root"/etc/docker
+cat > "$root"/etc/docker/daemon.json << EOF
+{
+	"bip": "172.18.0.1/16"
+}
+EOF
+run_root groupadd -r docker
+run_root gpasswd -a build docker
+
 extlinux -i "$root"/boot
 
 cat > "$root"/boot/extlinux.conf <<- EOF
