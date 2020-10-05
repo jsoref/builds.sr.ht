@@ -31,7 +31,7 @@ mount /dev/nbd0p2 "$root"
 mkdir -p "$root"/boot
 mount /dev/nbd0p1 "$root"/boot
 
-pacstrap root base base-devel git mercurial openssh mkinitcpio linux syslinux
+pacstrap root base base-devel git mercurial openssh mkinitcpio linux syslinux pacutils
 
 run_root() {
     local cmd="$@"

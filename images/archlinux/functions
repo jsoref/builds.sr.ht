@@ -20,8 +20,10 @@ boot() {
 install() {
 	port=$1
 	shift 1
+	guest_ssh -p $port build@localhost sudo pacsync
+	guest_ssh -p $port build@localhost sudo pacinstall --sysupgrade --yolo
 	guest_ssh -p $port build@localhost EDITOR=true PKGEXT=.pkg.tar yay \
-		--needed --noconfirm --noprovides -Syu "$@"
+		--needed --noconfirm --noprovides -S "$@"
 }
 
 add_repository() {
