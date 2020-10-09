@@ -106,12 +106,14 @@ cat > /mnt/etc/hosts <<EOF
 127.0.0.1 build
 EOF
 
+echo 'APT::Install-Recommends "False";' > /mnt/etc/apt/apt.conf.d/60recommends
+
 run_root apt-key update
 run_root apt-get update
 run_root apt-get -y install locales
 run_root apt-get -y install $kpkg
-run_root apt-get -y install \
-	build-essential git mercurial ssh sudo dirmngr apt-transport-https curl
+run_root apt-get -y install build-essential git mercurial ssh sudo \
+	gnupg dirmngr ca-certificates apt-transport-https curl
 
 run_root ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 run_root systemctl enable systemd-timesyncd.service
