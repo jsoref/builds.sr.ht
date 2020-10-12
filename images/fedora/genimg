@@ -1,4 +1,10 @@
 #!/bin/sh -eux
+
+set -e
+
+# Network Block Device used to interact with the QCOW2 image.
+NBD_DEVICE=/dev/nbd0
+
 echo "$release" >/dev/null # fail on -u if release unset
 arch=${1:-x86_64}
 case $arch in
@@ -21,37 +27,52 @@ cleanup() {
 	umount /mnt/sys 2>/dev/null || true
 	umount /mnt/boot 2>/dev/null || true
 	umount /mnt 2>/dev/null || true
-	qemu-nbd --disconnect /dev/nbd0 || true
+	qemu-nbd --disconnect $NBD_DEVICE || true
+}
+
+run_root() {
+	chroot /mnt /usr/bin/env \
+		PATH=/sbin:/usr/sbin:/bin:/usr/bin \
+		sh -c "$*"
 }
 
 mkdir -p "$arch"
 
-qemu-img create -f qcow2 $arch/root.img.qcow2 20G
+qemu-img create -f qcow2 "$arch/root.img.qcow2" 20G
 modprobe nbd max_part=16
-qemu-nbd --connect=/dev/nbd0 $arch/root.img.qcow2
+qemu-nbd --connect=$NBD_DEVICE "$arch/root.img.qcow2"
 trap cleanup EXIT
 
-sfdisk --no-reread /dev/nbd0 <<EOF
+# Looks like qemu-nbd is non-blocking. Wait one second to make sure $NBD_DEVICE
+# is available.
+sleep 1
+
+sfdisk --no-reread $NBD_DEVICE <<EOF
 1M,100M,L,*
 ,2048M,S
 ,,L
 EOF
 
-mkfs.ext4 /dev/nbd0p1
-mkswap /dev/nbd0p2
-mkfs.ext4 /dev/nbd0p3
+mkfs.ext4 ${NBD_DEVICE}p1
+mkswap ${NBD_DEVICE}p2
+mkfs.ext4 ${NBD_DEVICE}p3
 
-mount /dev/nbd0p3 /mnt
+mount ${NBD_DEVICE}p3 /mnt
 mkdir /mnt/boot
-mount /dev/nbd0p1 /mnt/boot
+mount ${NBD_DEVICE}p1 /mnt/boot
+
+if [ "$release" -gt 32 ]; then
+	conditional_packages=systemd-networkd
+fi
 
 dnf -y \
-	--releasever=$release \
+	--releasever="$release" \
 	--installroot=/mnt \
 	--disablerepo='*' \
 	--enablerepo=fedora \
 	--enablerepo=updates install \
-	systemd systemd-udev passwd dnf fedora-release
+	--setopt=install_weak_deps=False \
+	basesystem systemd systemd-udev passwd dnf fedora-release $conditional_packages
 
 mount --bind /dev /mnt/dev
 mount --bind /dev/pts /mnt/dev/pts
@@ -60,11 +81,8 @@ mount --bind /proc /mnt/proc
 mount --bind /run /mnt/run
 mount --bind /sys /mnt/sys
 
-run_root() {
-	chroot /mnt /usr/bin/env \
-		PATH=/sbin:/usr/sbin:/bin:/usr/bin \
-		sh -c "$*"
-}
+# Remove systemd-networkd symlink, which is useless in our chroot.
+rm -f /mnt/etc/resolv.conf
 
 echo 'nameserver 8.8.8.8' > /mnt/etc/resolv.conf
 cat >/mnt/etc/systemd/network/25-$iface.network <<EOF
@@ -75,6 +93,7 @@ Name=$iface
 Address=10.0.2.15/24
 Gateway=10.0.2.2
 EOF
+
 echo build > /mnt/etc/hostname
 cat > /mnt/etc/hosts <<EOF
 127.0.0.1 localhost
@@ -83,16 +102,21 @@ EOF
 
 run_root systemd-machine-id-setup
 run_root systemctl enable systemd-networkd.service
+run_root ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 run_root systemctl enable systemd-timesyncd.service
 
-run_root dnf -y install kernel grubby syslinux syslinux-extlinux
 run_root dnf -y install @development-tools git mercurial openssh-server sudo
+run_root dnf -y install kernel grub2
 
-if [ "$arch" = "x86_64" ]
-then
-	run_root extlinux -i /boot
-	run_root dd if=/usr/share/syslinux/mbr.bin of=/dev/nbd0 bs=1 count=440
-fi
+# Add support for virtio block devices at boot time.
+cat > /mnt/etc/dracut.conf.d/virtio-blk.conf <<EOF
+add_drivers="virtio-blk"
+EOF
+kernel_version=$(ls /mnt/boot | grep "vmlinuz.*.$arch" | cut -d- -f2-)
+run_root dracut --force --kver "$kernel_version"
+
+run_root grub2-install --target=i386-pc $NBD_DEVICE
+run_root grub2-mkconfig -o /boot/grub2/grub.cfg
 
 run_root ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 run_root systemctl enable systemd-timesyncd.service
@@ -106,20 +130,13 @@ echo "PermitEmptyPasswords yes" >>/mnt/etc/ssh/sshd_config
 echo ssh >>/mnt/etc/securetty
 run_root systemctl enable sshd
 
-linuxver=$(ls /mnt/boot | grep "vmlinuz.*.$arch" | cut -d- -f2-)
-
-cat >/mnt/boot/extlinux.conf <<EOF
-default fedora
-label fedora
-	linux vmlinuz-$linuxver
-	initrd initramfs-$linuxver.img
-	append root=/dev/vda3 rw quiet
-EOF
-
+boot_uuid=$(blkid --match-tag UUID --output value ${NBD_DEVICE}p1)
+swap_uuid=$(blkid --match-tag UUID --output value ${NBD_DEVICE}p2)
+root_uuid=$(blkid --match-tag UUID --output value ${NBD_DEVICE}p3)
 cat >>/mnt/etc/fstab <<EOF
-/dev/vda1 /boot ext4 rw,relatime,data=ordered 0 0
-/dev/vda2 swap swap defaults 0 0
-/dev/vda3 / ext4 rw,relatime,data=ordered 0 0
+UUID=$boot_uuid /boot ext4 rw,relatime,data=ordered 0 0
+UUID=$swap_uuid swap  swap defaults                 0 0
+UUID=$root_uuid /     ext4 rw,relatime,data=ordered 0 0
 EOF
 
 cat >/mnt/home/build/.gitconfig <<EOF
