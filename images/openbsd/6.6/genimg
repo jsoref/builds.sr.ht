@@ -1,9 +1,0 @@
-#!/bin/sh
-export arch="${1:-amd64}"
-export openbsd_version="6.6"
-# QEMU requires xbase
-export openbsd_sets="base66.tgz comp66.tgz xbase66.tgz xshare66.tgz"
-export openbsd_kernel="bsd.mp"
-export openbsd_installurl="https://cdn.openbsd.org/pub/OpenBSD"
-export openbsd_public_key="openbsd-66-base.pub"
-exec ../genimg "$@"
