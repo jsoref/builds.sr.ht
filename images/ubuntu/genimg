@@ -149,6 +149,12 @@ cat >>/mnt/etc/fstab <<EOF
 /dev/vda3 / ext4 rw,relatime,data=ordered 0 0
 EOF
 
+cat >/mnt/home/build/.gitconfig <<EOF
+[user]
+  name = builds.sr.ht
+  email = builds@sr.ht
+EOF
+
 if [ "$arch" != "amd64" ]
 then
 	cp /mnt/boot/vmlinuz $arch/vmlinuz

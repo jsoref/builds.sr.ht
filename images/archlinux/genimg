@@ -123,4 +123,10 @@ run_normal tar xf yay-bin.tar.gz
 run_normal 'cd yay-bin && makepkg -si --noconfirm --skippgpcheck'
 run_normal rm -r yay-bin yay-bin.tar.gz
 
+cat > "$root"/home/build/.gitconfig << EOF
+[user]
+  name = builds.sr.ht
+  email = builds@sr.ht
+EOF
+
 pkill gpg-agent || true

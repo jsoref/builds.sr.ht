@@ -92,6 +92,12 @@ pw -R /mnt groupadd sudo
 pw -R /mnt useradd -n build -u 1000 -s /usr/local/bin/bash -m -w none -G sudo
 echo "%sudo ALL=(ALL) NOPASSWD: ALL" >>/mnt/usr/local/etc/sudoers
 
+cat >/mnt/home/build/.gitconfig <<EOF
+[user]
+  name = builds.sr.ht
+  email = builds@sr.ht
+EOF
+
 cleanup
 trap : EXIT
 

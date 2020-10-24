@@ -150,4 +150,10 @@ pkg_version() {
 
 run_root apk add $linux=$(pkg_version $linux)
 
+cat >/mnt/home/build/.gitconfig <<EOF
+[user]
+  name = builds.sr.ht
+  email = builds@sr.ht
+EOF
+
 sync

@@ -174,6 +174,12 @@ EOF
 # Disable boot wait. Saves 5 seconds
 echo "boot" > /mnt/etc/boot.conf
 
+cat >/mnt/home/build/.gitconfig <<EOF
+[user]
+  name = builds.sr.ht
+  email = builds@sr.ht
+EOF
+
 # dump root fs into vnd0a and resize it
 makefs /dev/vnd0a /mnt
 growfs -y /dev/vnd0a
