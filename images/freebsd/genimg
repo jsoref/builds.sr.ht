@@ -3,17 +3,7 @@
 echo "$release" >/dev/null # fail on -u if unset
 arch="${1:-amd64}"
 
-case "$release" in
-*-RELEASE)
-	snapshot="$(printf "%s" "$release" | sed -e s/-RELEASE/-STABLE/)"
-	;;
-*)
-	printf "Unsupported release %s\n" "$release"
-	exit 1
-esac
-
 dist_base="https://download.freebsd.org/ftp/releases/$arch/$release"
-ports_base="https://download.freebsd.org/ftp/snapshots/$arch/$snapshot"
 
 dist_files="kernel.txz base.txz"
 dist_dir="/usr/freebsd-dist/$arch/$release"
@@ -95,8 +85,7 @@ env ASSUME_ALWAYS_YES=YES pkg -c /mnt bootstrap -f
 # TODO: remove bash
 env ASSUME_ALWAYS_YES=YES pkg -c /mnt install git mercurial bash sudo curl
 
-fetch -m -o "$dist_dir/ports.txz" "$ports_base/ports.txz"
-tar -C /mnt -xJf "$dist_dir/ports.txz"
+git clone https://github.com/freebsd/freebsd-ports /mnt/usr/ports --depth=1 --single-branch
 
 pw -R /mnt groupadd sudo
 pw -R /mnt useradd -n build -u 1000 -s /usr/local/bin/bash -m -w none -G sudo
