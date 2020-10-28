@@ -1,9 +1,19 @@
 #!/bin/sh -eux
 
 echo "$release" >/dev/null # fail on -u if unset
-echo "$dist_base" >/dev/null # fail on -u if unset
-echo "$ports_base" >/dev/null # fail on -u if unset
 arch="${1:-amd64}"
+
+case "$release" in
+*-RELEASE)
+	snapshot="$(printf "%s" "$release" | sed -e s/-RELEASE/-STABLE/)"
+	;;
+*)
+	printf "Unsupported release %s\n" "$release"
+	exit 1
+esac
+
+dist_base="https://download.freebsd.org/ftp/releases/$arch/$release"
+ports_base="https://download.freebsd.org/ftp/snapshots/$arch/$snapshot"
 
 dist_files="kernel.txz base.txz"
 dist_dir="/usr/freebsd-dist/$arch/$release"
