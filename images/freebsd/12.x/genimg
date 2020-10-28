@@ -1,4 +1,4 @@
 #!/bin/sh
 arch="${1:-amd64}"
-export release="12.1-RELEASE"
+export release="12.2-RELEASE"
 exec ../genimg "$@"
