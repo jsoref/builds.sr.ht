@@ -1,3 +1,0 @@
-#!/bin/sh
-export release=19.09
-exec ../genimg "$@"
