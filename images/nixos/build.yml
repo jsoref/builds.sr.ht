@@ -11,7 +11,7 @@ sources:
 secrets:
   - fa00a8d3-7b63-42d5-8060-3bb31c3e3018
 environment:
-  release: unstable
+  release: "20.09"
   arch: x86_64
   slaves:
     - deploy@azusa.runners.sr.ht

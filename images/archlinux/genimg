@@ -46,7 +46,7 @@ run_normal() {
 }
 
 echo 'Server = http://lug.mtu.edu/archlinux/$repo/os/$arch' >> $root/etc/pacman.d/mirrorlist
-echo 'nameserver 8.8.8.8' >> $root/etc/resolv.conf
+echo 'nameserver 8.8.8.8' > $root/etc/resolv.conf
 echo '127.0.0.1 localhost.localdomain localhost' > $root/etc/hosts
 echo '::1 localhost.localdomain localhost' >> $root/etc/hosts
 
