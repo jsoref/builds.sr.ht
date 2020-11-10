@@ -88,7 +88,7 @@ run_root() {
 		sh -c "$*"
 }
 
-echo 'nameserver 8.8.8.8' >> /mnt/etc/resolv.conf
+echo 'nameserver 8.8.8.8'> /mnt/etc/resolv.conf
 cat > /mnt/etc/network/interfaces <<EOF
 auto lo
 iface lo inet loopback
