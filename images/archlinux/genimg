@@ -128,5 +128,6 @@ cat > "$root"/home/build/.gitconfig << EOF
   name = builds.sr.ht
   email = builds@sr.ht
 EOF
+chown build:build /home/build/.gitconfig
 
 pkill gpg-agent || true
