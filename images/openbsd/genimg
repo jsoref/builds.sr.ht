@@ -179,7 +179,7 @@ cat >/mnt/home/build/.gitconfig <<EOF
   name = builds.sr.ht
   email = builds@sr.ht
 EOF
-chown build:build /home/build/.gitconfig
+chown build:build /mnt/home/build/.gitconfig
 
 # dump root fs into vnd0a and resize it
 makefs /dev/vnd0a /mnt
