@@ -40,12 +40,18 @@ a[href^="mailto:"] {
 
 .table-code {
   display: block;
-  background: #333;
   width: 100%;
   overflow-x: scroll;
   padding-top: 0.5rem;
   margin-bottom: 1rem;
+
+  background-color: #333;
   @include anchor_with_contrast(#333);
+
+  @media(prefers-color-scheme: dark) {
+    background-color: darken($gray-900, 10);
+    @include anchor_with_contrast(darken($gray-900, 10));
+  }
 
   pre {
     background: transparent;
