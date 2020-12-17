@@ -8,13 +8,7 @@ boot() {
 		echo "Unsupported architecture $arch" >&2
 		exit 1
 	fi
-	# TODO: re-enable cpu_opts
-	if [ "$means" = "qemu" ]
-	then
-		_boot
-	else
-		_boot $(cpu_opts x86_64)
-	fi
+	_boot $(cpu_opts x86_64)
 }
 
 install() {

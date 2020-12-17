@@ -6,13 +6,7 @@ boot() {
 	case "$arch" in
 		amd64)
 			qemu=qemu-system-x86_64
-			# TODO: re-enable cpu_opts
-			if [ "$means" = "qemu" ]
-			then
-				_boot
-			else
-				_boot $(cpu_opts x86_64)
-			fi
+			_boot $(cpu_opts x86_64)
 			;;
 		arm64)
 			driveopts="id=root,if=none"
