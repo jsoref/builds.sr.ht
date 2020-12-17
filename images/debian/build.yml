@@ -3,9 +3,10 @@ packages:
   - debootstrap
   - e2fsprogs
   - qemu-user-static
+  - qemu-utils
   - binfmt-support
   - rsync
-  - extlinux
+  - syslinux-common
 sources:
   - https://git.sr.ht/~sircmpwn/builds.sr.ht
 environment:
