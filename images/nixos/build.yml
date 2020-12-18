@@ -1,11 +1,8 @@
-image: alpine/edge
+image: nixos/unstable
 arch: x86_64
 packages:
-  - e2fsprogs
-  - qemu-img
-  - qemu-system-x86_64
-  - rsync
-  - sfdisk
+  - nixos.qemu_kvm
+  - nixos.rsync
 sources:
   - https://git.sr.ht/~sircmpwn/builds.sr.ht
 secrets:
@@ -21,15 +18,6 @@ triggers:
     condition: failure
     to: Drew DeVault <sir@cmpwn.com>
 tasks:
-  - kvm: |
-      if grep -i amd /proc/cpuinfo
-      then
-          sudo modprobe kvm_amd
-      else
-          sudo modprobe kvm_intel
-      fi
-      sleep 1
-      sudo chown build:build /dev/kvm
   - genimg: |
       cd builds.sr.ht/images/nixos
       ./genimg "${release}" "$(uname -m)"
