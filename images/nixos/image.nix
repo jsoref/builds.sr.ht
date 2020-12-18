@@ -1,8 +1,8 @@
-{ pkgs ? import <nixpkgs> {}, ... }:
+{ pkgs ? import <nixpkgs> {} }:
 
 let
-  makeDiskImage = import <nixpkgs/nixos/lib/make-disk-image.nix>;
-  evalConfig = import <nixpkgs/nixos/lib/eval-config.nix>;
+  makeDiskImage = import "${pkgs.path}/nixos/lib/make-disk-image.nix";
+  evalConfig = import "${pkgs.path}/nixos/lib/eval-config.nix";
   config = (evalConfig {
     modules = [ (import ./qemu-system-configuration.nix) ];
   }).config;
