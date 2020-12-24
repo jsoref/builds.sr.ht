@@ -1,7 +1,5 @@
 #!/bin/sh -eux
 
-set -e
-
 # Network Block Device used to interact with the QCOW2 image.
 NBD_DEVICE=/dev/nbd0
 
