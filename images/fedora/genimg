@@ -59,6 +59,7 @@ mount ${NBD_DEVICE}p3 /mnt
 mkdir /mnt/boot
 mount ${NBD_DEVICE}p1 /mnt/boot
 
+conditional_packages=''
 if [ "$release" -gt 32 ]; then
 	conditional_packages=systemd-networkd
 fi
