@@ -25,7 +25,7 @@ guest_ssh() {
 }
 
 cpu_opts() {
-	if [ "$(uname -m)" = "$1" ] && [ -e /dev/kvm ] && [ -z "${SANITY_CHECK:-}" ]
+	if [ "$(uname -m)" = "$1" ] && [ -e /dev/kvm ]
 	then
 		printf "%s" "-cpu host -enable-kvm"
 		return
@@ -206,7 +206,6 @@ case "$cmd" in
 		cmd_cleanup "$@"
 		;;
 	sanity-check)
-		SANITY_CHECK=1
 		sanity_check "$@"
 		;;
 	install)
