@@ -34,6 +34,10 @@ var (
 		Name: "buildsrht_triggers_webhooks",
 		Help: "The total number of webhooks which have been delivered",
 	})
+	webhooksFailed = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "buildsrht_triggers_webhooks_failed",
+		Help: "The total number of webhooks which were not delivered",
+	})
 )
 
 // When updating this, also update buildsrht/types/job.py
@@ -294,7 +298,8 @@ func (ctx *JobContext) processWebhook(def map[string]interface{}) {
 		}
 		webhooksExecuted.Inc()
 	} else {
-		fmt.Printf("Error submitting webhook: %v\n", err)
+		ctx.Log.Printf("Error submitting webhook: %v\n", err)
+		webhooksFailed.Inc()
 	}
 }
 
