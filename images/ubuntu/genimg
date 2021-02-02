@@ -113,7 +113,7 @@ run_root apt-get -y install locales
 run_root apt-get -y install linux-base
 run_root apt-get -y install linux-image-generic
 run_root apt-get -y install \
-	build-essential git mercurial ssh sudo dirmngr
+	build-essential git mercurial ssh sudo dirmngr curl
 
 if [ "$arch" = "amd64" ]
 then
