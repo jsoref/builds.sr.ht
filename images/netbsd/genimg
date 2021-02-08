@@ -50,7 +50,8 @@ run_root useradd -mG wheel build
 sed -e 's;build.*;build::1000:100::0:0:,,,:/home/build:/bin/sh;g' \
 	-i /mnt/etc/master.passwd
 
-echo "nameserver 1.1.1.1" >/mnt/etc/resolv.conf
+echo "nameserver 8.8.8.8" >/mnt/etc/resolv.conf
+echo "nameserver 8.8.4.4" >>/mnt/etc/resolv.conf
 cat <<EOF >/mnt/etc/ifconfig.vioif0
 up
 10.0.2.15 netmask 255.255.255.0

@@ -83,7 +83,8 @@ mount --bind /sys /mnt/sys
 # Remove systemd-networkd symlink, which is useless in our chroot.
 rm -f /mnt/etc/resolv.conf
 
-echo 'nameserver 8.8.8.8' > /mnt/etc/resolv.conf
+echo 'nameserver 8.8.8.8' >/mnt/etc/resolv.conf
+echo 'nameserver 8.8.4.4' >>/mnt/etc/resolv.conf
 cat >/mnt/etc/systemd/network/25-$iface.network <<EOF
 [Match]
 Name=$iface

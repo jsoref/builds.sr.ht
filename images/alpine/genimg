@@ -79,7 +79,7 @@ iface eth0 inet static
 	netmask 255.255.255.0
 	gateway 10.0.2.2
 EOF
-run_root setup-dns -d example.org -n 1.1.1.1
+run_root setup-dns -d example.org 8.8.8.8 8.8.4.4
 run_root setup-timezone -z UTC
 if [ "$release" = "edge" ]
 then

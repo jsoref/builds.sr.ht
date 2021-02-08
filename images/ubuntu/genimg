@@ -83,6 +83,7 @@ run_root() {
 
 rm -f /mnt/etc/resolv.conf
 echo 'nameserver 8.8.8.8' >/mnt/etc/resolv.conf
+echo 'nameserver 8.8.4.4' >>/mnt/etc/resolv.conf
 cat >/mnt/etc/systemd/network/25-ens3.network <<EOF
 [Match]
 Name=ens3
