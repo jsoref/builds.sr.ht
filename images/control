@@ -53,7 +53,7 @@ _docker_boot() {
 		--mount type=tmpfs,destination=/var/tmp \
 		--device /dev/kvm \
 		--cpus=2 \
-		-p $port:$port \
+		-p 127.0.0.1:$port:$port \
 		--rm \
 		--name "builds_job_${BUILD_JOB_ID:-unknown_$(date +"%s")}" \
 		qemu /bin/${qemu:-qemu-system-$arch} \
