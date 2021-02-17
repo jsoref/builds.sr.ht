@@ -61,6 +61,7 @@ class Manifest:
         secrets = self.yaml.get("secrets")
         shell = self.yaml.get("shell")
         artifacts = self.yaml.get("artifacts")
+        oauth = self.yaml.get("oauth")
         if not image:
             raise Exception("Missing image in manifest")
         if not isinstance(image, str):
@@ -92,6 +93,8 @@ class Manifest:
                 any(not isinstance(p, str) or p == "" for p in artifacts) or
                 len(set(os.path.basename(p) for p in artifacts)) != len(artifacts)):
             raise Exception("Expected artifacts to be a list of unique file paths")
+        if oauth is not None and not isinstance(oauth, str):
+            raise Exception("Expected oauth to be a string")
         self.image = image
         self.arch = arch
         self.packages = packages
@@ -101,6 +104,7 @@ class Manifest:
         self.secrets = secrets
         self.shell = shell
         self.artifacts = artifacts
+        self.oauth = oauth
         tasks = self.yaml.get("tasks")
         if not tasks or not isinstance(tasks, list):
             if (tasks is None or tasks == []) and not self.shell:
@@ -130,6 +134,7 @@ class Manifest:
             "triggers": [t.to_dict() for t in self.triggers] if any(self.triggers) else None,
             "shell": self.shell,
             "artifacts": self.artifacts,
+            "oauth": self.oauth,
         }
 
     def to_yaml(self):

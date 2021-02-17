@@ -20,6 +20,7 @@ type Manifest struct {
 	Sources      []string
 	Tasks        []map[string]string
 	Triggers     []map[string]interface{}
+	OAuth        string
 }
 
 type ImageConfig struct {
@@ -38,6 +39,11 @@ func LoadImageConfig(image string) *ImageConfig {
 		Preamble:   `#!/usr/bin/env bash
 . ~/.buildenv
 set -xe
+
+acurl() (
+	set +x
+	curl --oauth2-bearer "$OAUTH2_TOKEN" "$@"
+)
 `,
 	}
 	f, err := os.Open(path.Join(images, image, "config.yml"))

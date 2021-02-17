@@ -18,6 +18,7 @@ import (
 	"syscall"
 	"time"
 
+	"git.sr.ht/~sircmpwn/core-go/auth"
 	"github.com/go-redis/redis"
 	"github.com/kr/pty"
 	"github.com/minio/minio-go/v6"
@@ -166,18 +167,29 @@ func shquote(v string) string {
 func (ctx *JobContext) SendEnv() error {
 	ctx.Log.Println("Sending build environment")
 	envpath := path.Join(ctx.ImageConfig.Homedir, ".buildenv")
-	env := fmt.Sprintf(`#!/bin/sh
-function complete-build() {
+	env := `#!/bin/sh
+complete-build() {
 	exit 255
 }
-export JOB_ID=%d
-`, ctx.Job.Id)
+`
 	if ctx.Manifest.Environment == nil {
 		ctx.Manifest.Environment = make(map[string]interface{})
 	}
 	ctx.Manifest.Environment["JOB_ID"] = ctx.Job.Id
 	ctx.Manifest.Environment["JOB_URL"] = fmt.Sprintf(
 		"%s/~%s/job/%d", origin, ctx.Job.Username, ctx.Job.Id)
+
+	if ctx.Job.Secrets && ctx.Manifest.OAuth != "" {
+		ot := auth.OAuth2Token{
+			Version:  auth.TokenVersion,
+			Expires:  auth.ToTimestamp(ctx.Deadline),
+			Grants:   ctx.Manifest.OAuth,
+			ClientID: "",
+			Username: ctx.Job.Username,
+		}
+		ctx.Manifest.Environment["OAUTH2_TOKEN"] = ot.Encode()
+	}
+
 	for key, value := range ctx.Manifest.Environment {
 		if value == nil {
 			env += fmt.Sprintf("export %s=\"\"\n", key)

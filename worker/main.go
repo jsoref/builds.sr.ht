@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/vaughan0/go-ini"
+	"git.sr.ht/~sircmpwn/core-go/crypto"
 
 	_ "github.com/lib/pq"
 	celery "github.com/shicky/gocelery"
@@ -40,6 +41,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	crypto.InitCrypto(config)
 
 	jobs = make(map[int]*JobContext, 1)
 
