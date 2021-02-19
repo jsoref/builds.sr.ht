@@ -4,7 +4,7 @@
 0 21 * * * chronic /usr/local/bin/submit_image_build -n "Daily scheduled build image refresh" -a amd64 debian/sid
 30 21 * * * chronic /usr/local/bin/submit_image_build -n "Daily scheduled build image refresh" nixos/unstable
 0 22 * * * chronic /usr/local/bin/submit_image_build -n "Daily scheduled build image refresh" -a amd64 ubuntu/next
-30 22 * * 0 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" fedora/rawhide
+30 22 * * * chronic /usr/local/bin/submit_image_build -n "Daily scheduled build image refresh" fedora/rawhide
 
 # Weekly refreshes
 30 19 * * 0 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" nixos/19.03
