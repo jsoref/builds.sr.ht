@@ -253,6 +253,10 @@ func (ctx *JobContext) processWebhook(def map[string]interface{}) {
 			*ctx.Job.Runner, ctx.Job.Id),
 		Note:   ctx.Job.Note,
 		Runner: ctx.Job.Runner,
+		Owner: JobOwner {
+			CName: "~" + ctx.Job.Username,
+			Name: ctx.Job.Username,
+		},
 	}
 
 	for _, _task := range ctx.Manifest.Tasks {
