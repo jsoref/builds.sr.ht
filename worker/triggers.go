@@ -21,6 +21,7 @@ import (
 	"github.com/martinlindhe/base36"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"git.sr.ht/~sircmpwn/core-go/crypto"
 	gomail "gopkg.in/mail.v2"
 	ms "github.com/mitchellh/mapstructure"
 )
@@ -285,11 +286,15 @@ func (ctx *JobContext) processWebhook(def map[string]interface{}) {
 		return
 	}
 
+	nonce, sig := crypto.SignWebhook(data)
+
 	ctx.Log.Println("Sending webhook...")
 	client := &http.Client{Timeout: time.Second*10}
-	if resp, err := client.Post(trigger.Url,
-		"application/json", bytes.NewReader(data)); err == nil {
+	req, err := http.NewRequest("POST", trigger.Url, bytes.NewReader(data))
+	req.Header.Add("X-Payload-Nonce", nonce)
+	req.Header.Add("X-Payload-Signature", sig)
 
+	if resp, err := client.Do(req); err == nil {
 		defer resp.Body.Close()
 		respData, _ := ioutil.ReadAll(io.LimitReader(resp.Body, 2048))
 		ctx.Log.Printf("Webhook response: %d\n", resp.StatusCode)
