@@ -11,11 +11,20 @@ openbsd_installurl="${openbsd_installurl:-"https://cdn.openbsd.org/pub/OpenBSD"}
 short_version="$(echo "$openbsd_version" | tr -d .)"
 
 image_size="16g"
-run_syspatch="${run_syspatch:-NO}"
 image_packages="bash git"
 snapshot="${snapshot:-NO}"
 pkg_add_params=""
 openbsd_public_key="openbsd-${short_version}-base.pub"
+
+# Run syspatch by default on architectures where it's supported
+case "$arch" in
+	amd64|arm64|i386)
+		run_syspatch=${run_syspatch:-YES}
+		;;
+	*)
+		run_syspatch=${run_syspatch:-NO}
+		;;
+esac
 
 openbsd_bootstrap="${openbsd_bootstrap:-NO}"
 # Force bootstrap mode when cross-building, unless we're building snapshots
