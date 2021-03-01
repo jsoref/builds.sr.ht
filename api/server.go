@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 
 	"git.sr.ht/~sircmpwn/core-go/config"
 	"git.sr.ht/~sircmpwn/core-go/email"
@@ -22,6 +23,10 @@ func main() {
 		next graphql.Resolver, scope model.AccessScope,
 		kind model.AccessKind) (interface{}, error) {
 		return server.Access(ctx, obj, next, scope.String(), kind.String())
+	}
+	gqlConfig.Directives.Worker = func(ctx context.Context, obj interface{},
+		next graphql.Resolver) (interface{}, error) {
+		return nil, fmt.Errorf("Access denied")
 	}
 	schema := api.NewExecutableSchema(gqlConfig)
 
