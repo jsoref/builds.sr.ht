@@ -226,7 +226,6 @@ type Query {
   # Returns a specific user
   userByID(id: Int!): User @access(scope: PROFILE, kind: RO)
   userByName(username: String!): User @access(scope: PROFILE, kind: RO)
-  userByEmail(email: String!): User @access(scope: PROFILE, kind: RO)
 
   # Returns jobs submitted by the authenticated user.
   jobs(cursor: Cursor): JobCursor! @access(scope: JOBS, kind: RO)

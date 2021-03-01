@@ -119,14 +119,13 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Job         func(childComplexity int, id *int) int
-		Jobs        func(childComplexity int, cursor *model1.Cursor) int
-		Me          func(childComplexity int) int
-		Secrets     func(childComplexity int, cursor *model1.Cursor) int
-		UserByEmail func(childComplexity int, email string) int
-		UserByID    func(childComplexity int, id int) int
-		UserByName  func(childComplexity int, username string) int
-		Version     func(childComplexity int) int
+		Job        func(childComplexity int, id *int) int
+		Jobs       func(childComplexity int, cursor *model1.Cursor) int
+		Me         func(childComplexity int) int
+		Secrets    func(childComplexity int, cursor *model1.Cursor) int
+		UserByID   func(childComplexity int, id int) int
+		UserByName func(childComplexity int, username string) int
+		Version    func(childComplexity int) int
 	}
 
 	SSHKey struct {
@@ -205,7 +204,6 @@ type QueryResolver interface {
 	Me(ctx context.Context) (*model.User, error)
 	UserByID(ctx context.Context, id int) (*model.User, error)
 	UserByName(ctx context.Context, username string) (*model.User, error)
-	UserByEmail(ctx context.Context, email string) (*model.User, error)
 	Jobs(ctx context.Context, cursor *model1.Cursor) (*model.JobCursor, error)
 	Job(ctx context.Context, id *int) (*model.Job, error)
 	Secrets(ctx context.Context, cursor *model1.Cursor) (*model.SecretCursor, error)
@@ -650,18 +648,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Secrets(childComplexity, args["cursor"].(*model1.Cursor)), true
-
-	case "Query.userByEmail":
-		if e.complexity.Query.UserByEmail == nil {
-			break
-		}
-
-		args, err := ec.field_Query_userByEmail_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.UserByEmail(childComplexity, args["email"].(string)), true
 
 	case "Query.userByID":
 		if e.complexity.Query.UserByID == nil {
@@ -1250,7 +1236,6 @@ type Query {
   # Returns a specific user
   userByID(id: Int!): User @access(scope: PROFILE, kind: RO)
   userByName(username: String!): User @access(scope: PROFILE, kind: RO)
-  userByEmail(email: String!): User @access(scope: PROFILE, kind: RO)
 
   # Returns jobs submitted by the authenticated user.
   jobs(cursor: Cursor): JobCursor! @access(scope: JOBS, kind: RO)
@@ -1673,21 +1658,6 @@ func (ec *executionContext) field_Query_secrets_args(ctx context.Context, rawArg
 		}
 	}
 	args["cursor"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_userByEmail_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["email"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["email"] = arg0
 	return args, nil
 }
 
@@ -3976,73 +3946,6 @@ func (ec *executionContext) _Query_userByName(ctx context.Context, field graphql
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().UserByName(rctx, args["username"].(string))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			scope, err := ec.unmarshalNAccessScope2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐAccessScope(ctx, "PROFILE")
-			if err != nil {
-				return nil, err
-			}
-			kind, err := ec.unmarshalNAccessKind2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐAccessKind(ctx, "RO")
-			if err != nil {
-				return nil, err
-			}
-			if ec.directives.Access == nil {
-				return nil, errors.New("directive access is not implemented")
-			}
-			return ec.directives.Access(ctx, nil, directive0, scope, kind)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(*model.User); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *git.sr.ht/~sircmpwn/builds.sr.ht/api/graph/model.User`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.User)
-	fc.Result = res
-	return ec.marshalOUser2ᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_userByEmail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_userByEmail_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().UserByEmail(rctx, args["email"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			scope, err := ec.unmarshalNAccessScope2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐAccessScope(ctx, "PROFILE")
@@ -7398,17 +7301,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_userByName(ctx, field)
-				return res
-			})
-		case "userByEmail":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_userByEmail(ctx, field)
 				return res
 			})
 		case "jobs":

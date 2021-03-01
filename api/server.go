@@ -11,6 +11,7 @@ import (
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/graph"
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/graph/api"
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/graph/model"
+	"git.sr.ht/~sircmpwn/builds.sr.ht/api/loaders"
 )
 
 func main() {
@@ -32,6 +33,7 @@ func main() {
 	mail := email.NewQueue()
 	server.NewServer("builds.sr.ht", appConfig).
 		WithDefaultMiddleware().
+		WithMiddleware(loaders.Middleware).
 		WithMiddleware(email.Middleware(mail)).
 		WithSchema(schema, scopes).
 		WithQueues(mail).

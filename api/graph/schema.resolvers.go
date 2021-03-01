@@ -9,6 +9,7 @@ import (
 
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/graph/api"
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/graph/model"
+	"git.sr.ht/~sircmpwn/builds.sr.ht/api/loaders"
 	"git.sr.ht/~sircmpwn/core-go/auth"
 	coremodel "git.sr.ht/~sircmpwn/core-go/model"
 )
@@ -77,15 +78,11 @@ func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 }
 
 func (r *queryResolver) UserByID(ctx context.Context, id int) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	return loaders.ForContext(ctx).UsersByID.Load(id)
 }
 
 func (r *queryResolver) UserByName(ctx context.Context, username string) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *queryResolver) UserByEmail(ctx context.Context, email string) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	return loaders.ForContext(ctx).UsersByName.Load(username)
 }
 
 func (r *queryResolver) Jobs(ctx context.Context, cursor *coremodel.Cursor) (*model.JobCursor, error) {
@@ -116,13 +113,3 @@ func (r *Resolver) User() api.UserResolver { return &userResolver{r} }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *userResolver) CanonicalName(ctx context.Context, obj *model.User) (string, error) {
-	panic(fmt.Errorf("not implemented"))
-}
