@@ -9,7 +9,8 @@ import (
 
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/graph/api"
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/graph/model"
-	model1 "git.sr.ht/~sircmpwn/core-go/model"
+	"git.sr.ht/~sircmpwn/core-go/auth"
+	coremodel "git.sr.ht/~sircmpwn/core-go/model"
 )
 
 func (r *mutationResolver) Submit(ctx context.Context, manifest string, tags []*string, note *string, secrets *bool, execute *bool) (*model.Job, error) {
@@ -53,11 +54,26 @@ func (r *mutationResolver) CreateArtifact(ctx context.Context, jobID int, path s
 }
 
 func (r *queryResolver) Version(ctx context.Context) (*model.Version, error) {
-	panic(fmt.Errorf("not implemented"))
+	return &model.Version{
+		Major:           0,
+		Minor:           0,
+		Patch:           0,
+		DeprecationDate: nil,
+	}, nil
 }
 
 func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	user := auth.ForContext(ctx)
+	return &model.User{
+		ID:       user.UserID,
+		Created:  user.Created,
+		Updated:  user.Updated,
+		Username: user.Username,
+		Email:    user.Email,
+		URL:      user.URL,
+		Location: user.Location,
+		Bio:      user.Bio,
+	}, nil
 }
 
 func (r *queryResolver) UserByID(ctx context.Context, id int) (*model.User, error) {
@@ -72,7 +88,7 @@ func (r *queryResolver) UserByEmail(ctx context.Context, email string) (*model.U
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) Jobs(ctx context.Context, cursor *model1.Cursor) (*model.JobCursor, error) {
+func (r *queryResolver) Jobs(ctx context.Context, cursor *coremodel.Cursor) (*model.JobCursor, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -80,7 +96,11 @@ func (r *queryResolver) Job(ctx context.Context, id *int) (*model.Job, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) Secrets(ctx context.Context, cursor *model1.Cursor) (*model.SecretCursor, error) {
+func (r *queryResolver) Secrets(ctx context.Context, cursor *coremodel.Cursor) (*model.SecretCursor, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *userResolver) Jobs(ctx context.Context, obj *model.User, cursor *coremodel.Cursor) (*model.JobCursor, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -90,8 +110,12 @@ func (r *Resolver) Mutation() api.MutationResolver { return &mutationResolver{r}
 // Query returns api.QueryResolver implementation.
 func (r *Resolver) Query() api.QueryResolver { return &queryResolver{r} }
 
+// User returns api.UserResolver implementation.
+func (r *Resolver) User() api.UserResolver { return &userResolver{r} }
+
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type userResolver struct{ *Resolver }
 
 // !!! WARNING !!!
 // The code below was going to be deleted when updating resolvers. It has been copied here so you have
@@ -99,6 +123,6 @@ type queryResolver struct{ *Resolver }
 //  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
 //    it when you're done.
 //  - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *queryResolver) SecretsForJob(ctx context.Context, job int) ([]model.Secret, error) {
+func (r *userResolver) CanonicalName(ctx context.Context, obj *model.User) (string, error) {
 	panic(fmt.Errorf("not implemented"))
 }

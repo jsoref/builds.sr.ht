@@ -132,21 +132,6 @@ type TriggerInput struct {
 	Webhook   *WebhookTriggerInput `json:"webhook"`
 }
 
-type User struct {
-	ID            int        `json:"id"`
-	Created       time.Time  `json:"created"`
-	Updated       time.Time  `json:"updated"`
-	CanonicalName string     `json:"canonicalName"`
-	Username      string     `json:"username"`
-	Email         string     `json:"email"`
-	URL           *string    `json:"url"`
-	Location      *string    `json:"location"`
-	Bio           *string    `json:"bio"`
-	Jobs          *JobCursor `json:"jobs"`
-}
-
-func (User) IsEntity() {}
-
 type Version struct {
 	Major           int        `json:"major"`
 	Minor           int        `json:"minor"`
