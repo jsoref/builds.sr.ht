@@ -14,7 +14,7 @@ import (
 	"git.sr.ht/~sircmpwn/core-go/crypto"
 
 	_ "github.com/lib/pq"
-	celery "github.com/shicky/gocelery"
+	celery "github.com/gocelery/gocelery"
 )
 
 var (
@@ -80,7 +80,7 @@ func main() {
 	ctx := &WorkerContext{db, localRedis, conf}
 	client.Register("buildsrht.runner.run_build", ctx.RunBuild)
 
-	log.Println("Starting worker...")
+	log.Printf("Starting %d workers...", workers)
 	go HttpServer()
 	client.StartWorker()
 	log.Println("Waiting for tasks.")
@@ -90,8 +90,7 @@ func main() {
 
 	<-c
 
-	log.Println("Cleaning up...")
-
+	log.Println("Waiting for workers to terminate...")
 	client.StopWorker()
 }
 

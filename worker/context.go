@@ -67,7 +67,7 @@ type JobContext struct {
 }
 
 func (wctx *WorkerContext) RunBuild(
-	job_id int, _manifest map[string]interface{}) {
+	job_id int, _manifest map[string]interface{}) error {
 
 	var (
 		err error
@@ -219,6 +219,7 @@ func (wctx *WorkerContext) RunBuild(
 	ctx.LogFile.Close()
 
 	buildsFinished.WithLabelValues("success").Inc()
+	return nil
 }
 
 func (ctx *JobContext) Standby(buildUser string) {
