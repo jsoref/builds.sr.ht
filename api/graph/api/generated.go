@@ -125,7 +125,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Job        func(childComplexity int, id *int) int
+		Job        func(childComplexity int, id int) int
 		Jobs       func(childComplexity int, cursor *model1.Cursor) int
 		Me         func(childComplexity int) int
 		Secrets    func(childComplexity int, cursor *model1.Cursor) int
@@ -219,7 +219,7 @@ type QueryResolver interface {
 	UserByID(ctx context.Context, id int) (*model.User, error)
 	UserByName(ctx context.Context, username string) (*model.User, error)
 	Jobs(ctx context.Context, cursor *model1.Cursor) (*model.JobCursor, error)
-	Job(ctx context.Context, id *int) (*model.Job, error)
+	Job(ctx context.Context, id int) (*model.Job, error)
 	Secrets(ctx context.Context, cursor *model1.Cursor) (*model.SecretCursor, error)
 }
 type UserResolver interface {
@@ -644,7 +644,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Job(childComplexity, args["id"].(*int)), true
+		return e.complexity.Query.Job(childComplexity, args["id"].(int)), true
 
 	case "Query.jobs":
 		if e.complexity.Query.Jobs == nil {
@@ -1277,7 +1277,7 @@ type Query {
   jobs(cursor: Cursor): JobCursor! @access(scope: JOBS, kind: RO)
 
   # Returns information about a specific job.
-  job(id: Int): Job @access(scope: JOBS, kind: RO)
+  job(id: Int!): Job @access(scope: JOBS, kind: RO)
 
   # Returns secrets owned by the authenticated user.
   secrets(cursor: Cursor): SecretCursor! @access(scope: SECRETS, kind: RO)
@@ -1655,10 +1655,10 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 func (ec *executionContext) field_Query_job_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *int
+	var arg0 int
 	if tmp, ok := rawArgs["id"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -4188,7 +4188,7 @@ func (ec *executionContext) _Query_job(ctx context.Context, field graphql.Collec
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().Job(rctx, args["id"].(*int))
+			return ec.resolvers.Query().Job(rctx, args["id"].(int))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			scope, err := ec.unmarshalNAccessScope2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐAccessScope(ctx, "JOBS")

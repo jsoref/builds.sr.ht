@@ -239,7 +239,7 @@ type Query {
   jobs(cursor: Cursor): JobCursor! @access(scope: JOBS, kind: RO)
 
   # Returns information about a specific job.
-  job(id: Int): Job @access(scope: JOBS, kind: RO)
+  job(id: Int!): Job @access(scope: JOBS, kind: RO)
 
   # Returns secrets owned by the authenticated user.
   secrets(cursor: Cursor): SecretCursor! @access(scope: SECRETS, kind: RO)

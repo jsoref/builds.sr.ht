@@ -2,6 +2,7 @@ package loaders
 
 //go:generate ./gen UsersByIDLoader int api/graph/model.User
 //go:generate ./gen UsersByNameLoader string api/graph/model.User
+//go:generate ./gen JobsByIDLoader int api/graph/model.Job
 
 import (
 	"context"
@@ -26,6 +27,7 @@ type contextKey struct {
 type Loaders struct {
 	UsersByID   UsersByIDLoader
 	UsersByName UsersByNameLoader
+	JobsByID    JobsByIDLoader
 }
 
 func fetchUsersByID(ctx context.Context) func(ids []int) ([]*model.User, []error) {
@@ -118,6 +120,51 @@ func fetchUsersByName(ctx context.Context) func(names []string) ([]*model.User, 
 	}
 }
 
+func fetchJobsByID(ctx context.Context) func(ids []int) ([]*model.Job, []error) {
+	return func(ids []int) ([]*model.Job, []error) {
+		jobs := make([]*model.Job, len(ids))
+		if err := database.WithTx(ctx, &sql.TxOptions{
+			Isolation: 0,
+			ReadOnly: true,
+		}, func (tx *sql.Tx) error {
+			var (
+				err  error
+				rows *sql.Rows
+			)
+			query := database.
+				Select(ctx, (&model.Job{})).
+				From(`job`).
+				Where(sq.Expr(`job.id = ANY(?)`, pq.Array(ids)))
+			if rows, err = query.RunWith(tx).QueryContext(ctx); err != nil {
+				return err
+			}
+			defer rows.Close()
+
+			jobsByID := map[int]*model.Job{}
+			for rows.Next() {
+				job := model.Job{}
+				if err := rows.Scan(database.Scan(ctx, &job)...); err != nil {
+					return err
+				}
+				jobsByID[job.ID] = &job
+			}
+			if err = rows.Err(); err != nil {
+				return err
+			}
+
+			for i, id := range ids {
+				jobs[i] = jobsByID[id]
+			}
+
+			return nil
+		}); err != nil {
+			panic(err)
+		}
+
+		return jobs, nil
+	}
+}
+
 func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), loadersCtxKey, &Loaders{
@@ -130,6 +177,11 @@ func Middleware(next http.Handler) http.Handler {
 				maxBatch: 100,
 				wait:     1 * time.Millisecond,
 				fetch:    fetchUsersByName(r.Context()),
+			},
+			JobsByID: JobsByIDLoader{
+				maxBatch: 100,
+				wait:     1 * time.Millisecond,
+				fetch:    fetchJobsByID(r.Context()),
 			},
 		})
 		r = r.WithContext(ctx)

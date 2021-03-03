@@ -32,7 +32,6 @@ func (r *jobResolver) Artifacts(ctx context.Context, obj *model.Job) ([]*model.A
 	panic(fmt.Errorf("not implemented"))
 }
 
-// TODO: Add logs { last128KiB } to the query cost compuation
 func (r *jobResolver) Log(ctx context.Context, obj *model.Job) (*model.Log, error) {
 	if obj.Runner == nil {
 		return nil, nil
@@ -140,8 +139,8 @@ func (r *queryResolver) Jobs(ctx context.Context, cursor *coremodel.Cursor) (*mo
 	return &model.JobCursor{jobs, cursor}, nil
 }
 
-func (r *queryResolver) Job(ctx context.Context, id *int) (*model.Job, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *queryResolver) Job(ctx context.Context, id int) (*model.Job, error) {
+	return loaders.ForContext(ctx).JobsByID.Load(id)
 }
 
 func (r *queryResolver) Secrets(ctx context.Context, cursor *coremodel.Cursor) (*model.SecretCursor, error) {
