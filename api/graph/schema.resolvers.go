@@ -5,14 +5,40 @@ package graph
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/graph/api"
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/graph/model"
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/loaders"
 	"git.sr.ht/~sircmpwn/core-go/auth"
+	"git.sr.ht/~sircmpwn/core-go/database"
 	coremodel "git.sr.ht/~sircmpwn/core-go/model"
 )
+
+func (r *jobResolver) Owner(ctx context.Context, obj *model.Job) (model.Entity, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *jobResolver) Group(ctx context.Context, obj *model.Job) (*model.JobGroup, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *jobResolver) Tasks(ctx context.Context, obj *model.Job) ([]*model.Task, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *jobResolver) Artifacts(ctx context.Context, obj *model.Job) ([]*model.Artifact, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *jobResolver) Log(ctx context.Context, obj *model.Job) (*string, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *jobResolver) Secrets(ctx context.Context, obj *model.Job) ([]model.Secret, error) {
+	panic(fmt.Errorf("not implemented"))
+}
 
 func (r *mutationResolver) Submit(ctx context.Context, manifest string, tags []*string, note *string, secrets *bool, execute *bool) (*model.Job, error) {
 	panic(fmt.Errorf("not implemented"))
@@ -86,7 +112,27 @@ func (r *queryResolver) UserByName(ctx context.Context, username string) (*model
 }
 
 func (r *queryResolver) Jobs(ctx context.Context, cursor *coremodel.Cursor) (*model.JobCursor, error) {
-	panic(fmt.Errorf("not implemented"))
+	if cursor == nil {
+		cursor = coremodel.NewCursor(nil)
+	}
+
+	var jobs []*model.Job
+	if err := database.WithTx(ctx, &sql.TxOptions{
+		Isolation: 0,
+		ReadOnly:  true,
+	}, func(tx *sql.Tx) error {
+		job := (&model.Job{}).As(`j`)
+		query := database.
+			Select(ctx, job).
+			From(`job j`).
+			Where(`j.owner_id = ?`, auth.ForContext(ctx).UserID)
+		jobs, cursor = job.QueryWithCursor(ctx, tx, query, cursor)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return &model.JobCursor{jobs, cursor}, nil
 }
 
 func (r *queryResolver) Job(ctx context.Context, id *int) (*model.Job, error) {
@@ -101,6 +147,9 @@ func (r *userResolver) Jobs(ctx context.Context, obj *model.User, cursor *coremo
 	panic(fmt.Errorf("not implemented"))
 }
 
+// Job returns api.JobResolver implementation.
+func (r *Resolver) Job() api.JobResolver { return &jobResolver{r} }
+
 // Mutation returns api.MutationResolver implementation.
 func (r *Resolver) Mutation() api.MutationResolver { return &mutationResolver{r} }
 
@@ -110,6 +159,7 @@ func (r *Resolver) Query() api.QueryResolver { return &queryResolver{r} }
 // User returns api.UserResolver implementation.
 func (r *Resolver) User() api.UserResolver { return &userResolver{r} }
 
+type jobResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }

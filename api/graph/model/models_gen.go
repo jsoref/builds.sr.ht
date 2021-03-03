@@ -46,24 +46,6 @@ type EmailTriggerInput struct {
 	InReplyTo *string `json:"inReplyTo"`
 }
 
-type Job struct {
-	ID        int       `json:"id"`
-	Created   time.Time `json:"created"`
-	Updated   time.Time `json:"updated"`
-	Status    JobStatus `json:"status"`
-	Manifest  string    `json:"manifest"`
-	Note      *string   `json:"note"`
-	Tags      []*string `json:"tags"`
-	Image     string    `json:"image"`
-	Runner    *string   `json:"runner"`
-	Owner     Entity    `json:"owner"`
-	Group     *JobGroup `json:"group"`
-	Tasks     []*Task   `json:"tasks"`
-	Artifacts []Secret  `json:"artifacts"`
-	Log       *string   `json:"log"`
-	Secrets   []Secret  `json:"secrets"`
-}
-
 type JobCursor struct {
 	Results []*Job        `json:"results"`
 	Cursor  *model.Cursor `json:"cursor"`

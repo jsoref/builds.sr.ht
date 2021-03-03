@@ -91,7 +91,7 @@ type Job {
   owner: Entity! @access(scope: PROFILE, kind: RO)
   group: JobGroup
   tasks: [Task]!
-  artifacts: [Secret]!
+  artifacts: [Artifact]!
 
   # The job's top-level log file, not associated with any tasks
   log: String @access(scope: LOGS, kind: RO)

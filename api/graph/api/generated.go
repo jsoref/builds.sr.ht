@@ -38,6 +38,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Job() JobResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
 	User() UserResolver
@@ -187,6 +188,14 @@ type ComplexityRoot struct {
 	}
 }
 
+type JobResolver interface {
+	Owner(ctx context.Context, obj *model.Job) (model.Entity, error)
+	Group(ctx context.Context, obj *model.Job) (*model.JobGroup, error)
+	Tasks(ctx context.Context, obj *model.Job) ([]*model.Task, error)
+	Artifacts(ctx context.Context, obj *model.Job) ([]*model.Artifact, error)
+	Log(ctx context.Context, obj *model.Job) (*string, error)
+	Secrets(ctx context.Context, obj *model.Job) ([]model.Secret, error)
+}
 type MutationResolver interface {
 	Submit(ctx context.Context, manifest string, tags []*string, note *string, secrets *bool, execute *bool) (*model.Job, error)
 	Start(ctx context.Context, jobID int) (*model.Job, error)
@@ -1101,7 +1110,7 @@ type Job {
   owner: Entity! @access(scope: PROFILE, kind: RO)
   group: JobGroup
   tasks: [Task]!
-  artifacts: [Secret]!
+  artifacts: [Artifact]!
 
   # The job's top-level log file, not associated with any tasks
   log: String @access(scope: LOGS, kind: RO)
@@ -2166,14 +2175,14 @@ func (ec *executionContext) _Job_status(ctx context.Context, field graphql.Colle
 		Object:     "Job",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
+		IsMethod:   true,
 		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Status, nil
+		return obj.Status(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2268,14 +2277,14 @@ func (ec *executionContext) _Job_tags(ctx context.Context, field graphql.Collect
 		Object:     "Job",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
+		IsMethod:   true,
 		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Tags, nil
+		return obj.Tags(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2287,9 +2296,9 @@ func (ec *executionContext) _Job_tags(ctx context.Context, field graphql.Collect
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*string)
+	res := resTmp.([]string)
 	fc.Result = res
-	return ec.marshalNString2ᚕᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2ᚕstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Job_image(ctx context.Context, field graphql.CollectedField, obj *model.Job) (ret graphql.Marshaler) {
@@ -2370,15 +2379,15 @@ func (ec *executionContext) _Job_owner(ctx context.Context, field graphql.Collec
 		Object:     "Job",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return obj.Owner, nil
+			return ec.resolvers.Job().Owner(rctx, obj)
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			scope, err := ec.unmarshalNAccessScope2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐAccessScope(ctx, "PROFILE")
@@ -2433,14 +2442,14 @@ func (ec *executionContext) _Job_group(ctx context.Context, field graphql.Collec
 		Object:     "Job",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Group, nil
+		return ec.resolvers.Job().Group(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2465,14 +2474,14 @@ func (ec *executionContext) _Job_tasks(ctx context.Context, field graphql.Collec
 		Object:     "Job",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Tasks, nil
+		return ec.resolvers.Job().Tasks(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2500,14 +2509,14 @@ func (ec *executionContext) _Job_artifacts(ctx context.Context, field graphql.Co
 		Object:     "Job",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Artifacts, nil
+		return ec.resolvers.Job().Artifacts(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2519,9 +2528,9 @@ func (ec *executionContext) _Job_artifacts(ctx context.Context, field graphql.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]model.Secret)
+	res := resTmp.([]*model.Artifact)
 	fc.Result = res
-	return ec.marshalNSecret2ᚕgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐSecret(ctx, field.Selections, res)
+	return ec.marshalNArtifact2ᚕᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐArtifact(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Job_log(ctx context.Context, field graphql.CollectedField, obj *model.Job) (ret graphql.Marshaler) {
@@ -2535,15 +2544,15 @@ func (ec *executionContext) _Job_log(ctx context.Context, field graphql.Collecte
 		Object:     "Job",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return obj.Log, nil
+			return ec.resolvers.Job().Log(rctx, obj)
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			scope, err := ec.unmarshalNAccessScope2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐAccessScope(ctx, "LOGS")
@@ -2595,14 +2604,14 @@ func (ec *executionContext) _Job_secrets(ctx context.Context, field graphql.Coll
 		Object:     "Job",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Secrets, nil
+		return ec.resolvers.Job().Secrets(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6996,63 +7005,117 @@ func (ec *executionContext) _Job(ctx context.Context, sel ast.SelectionSet, obj 
 		case "id":
 			out.Values[i] = ec._Job_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "created":
 			out.Values[i] = ec._Job_created(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "updated":
 			out.Values[i] = ec._Job_updated(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "status":
 			out.Values[i] = ec._Job_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "manifest":
 			out.Values[i] = ec._Job_manifest(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "note":
 			out.Values[i] = ec._Job_note(ctx, field, obj)
 		case "tags":
 			out.Values[i] = ec._Job_tags(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "image":
 			out.Values[i] = ec._Job_image(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "runner":
 			out.Values[i] = ec._Job_runner(ctx, field, obj)
 		case "owner":
-			out.Values[i] = ec._Job_owner(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Job_owner(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "group":
-			out.Values[i] = ec._Job_group(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Job_group(ctx, field, obj)
+				return res
+			})
 		case "tasks":
-			out.Values[i] = ec._Job_tasks(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Job_tasks(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "artifacts":
-			out.Values[i] = ec._Job_artifacts(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Job_artifacts(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "log":
-			out.Values[i] = ec._Job_log(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Job_log(ctx, field, obj)
+				return res
+			})
 		case "secrets":
-			out.Values[i] = ec._Job_secrets(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Job_secrets(ctx, field, obj)
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7946,6 +8009,43 @@ func (ec *executionContext) marshalNAccessScope2gitᚗsrᚗhtᚋאsircmpwnᚋbui
 	return v
 }
 
+func (ec *executionContext) marshalNArtifact2ᚕᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐArtifact(ctx context.Context, sel ast.SelectionSet, v []*model.Artifact) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOArtifact2ᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐArtifact(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
 func (ec *executionContext) unmarshalNBinary2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -8201,7 +8301,7 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) unmarshalNString2ᚕᚖstring(ctx context.Context, v interface{}) ([]*string, error) {
+func (ec *executionContext) unmarshalNString2ᚕstring(ctx context.Context, v interface{}) ([]string, error) {
 	var vSlice []interface{}
 	if v != nil {
 		if tmp1, ok := v.([]interface{}); ok {
@@ -8211,10 +8311,10 @@ func (ec *executionContext) unmarshalNString2ᚕᚖstring(ctx context.Context, v
 		}
 	}
 	var err error
-	res := make([]*string, len(vSlice))
+	res := make([]string, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalOString2ᚖstring(ctx, vSlice[i])
+		res[i], err = ec.unmarshalOString2string(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -8222,10 +8322,10 @@ func (ec *executionContext) unmarshalNString2ᚕᚖstring(ctx context.Context, v
 	return res, nil
 }
 
-func (ec *executionContext) marshalNString2ᚕᚖstring(ctx context.Context, sel ast.SelectionSet, v []*string) graphql.Marshaler {
+func (ec *executionContext) marshalNString2ᚕstring(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	for i := range v {
-		ret[i] = ec.marshalOString2ᚖstring(ctx, sel, v[i])
+		ret[i] = ec.marshalOString2string(ctx, sel, v[i])
 	}
 
 	return ret
