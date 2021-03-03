@@ -17,7 +17,7 @@ import (
 )
 
 func (r *jobResolver) Owner(ctx context.Context, obj *model.Job) (model.Entity, error) {
-	panic(fmt.Errorf("not implemented"))
+	return loaders.ForContext(ctx).UsersByID.Load(obj.OwnerID)
 }
 
 func (r *jobResolver) Group(ctx context.Context, obj *model.Job) (*model.JobGroup, error) {
