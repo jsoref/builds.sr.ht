@@ -59,8 +59,6 @@ func (r *jobResolver) Log(ctx context.Context, obj *model.Job) (*model.Log, erro
 	defer resp.Body.Close()
 	switch resp.StatusCode {
 	case http.StatusOK:
-		// TODO: We can trim the response body to 128 KiB ourselves
-		panic("Did not expect 200 response from server")
 	case http.StatusPartialContent:
 		// OK
 		break
