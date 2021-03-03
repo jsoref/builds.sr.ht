@@ -94,10 +94,18 @@ type Job {
   artifacts: [Artifact]!
 
   # The job's top-level log file, not associated with any tasks
-  log: String @access(scope: LOGS, kind: RO)
+  log: Log @access(scope: LOGS, kind: RO)
 
   # List of secrets available to this job, or null if they were disabled
   secrets: [Secret]
+}
+
+type Log {
+  # The most recently written 128 KiB of the build log.
+  last128KiB: String!
+  # The URL at which the full build log can be downloaded with a GET request
+  # (text/plain).
+  fullURL: String!
 }
 
 type Artifact {
@@ -144,7 +152,7 @@ type Task {
   updated: Time!
   name: String!
   status: TaskStatus!
-  log: String @access(scope: LOGS, kind: RO)
+  log: Log @access(scope: LOGS, kind: RO)
   job: Job!
 }
 

@@ -98,6 +98,11 @@ type ComplexityRoot struct {
 		Triggers func(childComplexity int) int
 	}
 
+	Log struct {
+		FullURL    func(childComplexity int) int
+		Last128KiB func(childComplexity int) int
+	}
+
 	Mutation struct {
 		Cancel         func(childComplexity int, jobID int) int
 		CancelGroup    func(childComplexity int, groupID int) int
@@ -193,7 +198,7 @@ type JobResolver interface {
 	Group(ctx context.Context, obj *model.Job) (*model.JobGroup, error)
 	Tasks(ctx context.Context, obj *model.Job) ([]*model.Task, error)
 	Artifacts(ctx context.Context, obj *model.Job) ([]*model.Artifact, error)
-	Log(ctx context.Context, obj *model.Job) (*string, error)
+	Log(ctx context.Context, obj *model.Job) (*model.Log, error)
 	Secrets(ctx context.Context, obj *model.Job) ([]model.Secret, error)
 }
 type MutationResolver interface {
@@ -459,6 +464,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.JobGroup.Triggers(childComplexity), true
+
+	case "Log.fullURL":
+		if e.complexity.Log.FullURL == nil {
+			break
+		}
+
+		return e.complexity.Log.FullURL(childComplexity), true
+
+	case "Log.last128KiB":
+		if e.complexity.Log.Last128KiB == nil {
+			break
+		}
+
+		return e.complexity.Log.Last128KiB(childComplexity), true
 
 	case "Mutation.cancel":
 		if e.complexity.Mutation.Cancel == nil {
@@ -1113,10 +1132,18 @@ type Job {
   artifacts: [Artifact]!
 
   # The job's top-level log file, not associated with any tasks
-  log: String @access(scope: LOGS, kind: RO)
+  log: Log @access(scope: LOGS, kind: RO)
 
   # List of secrets available to this job, or null if they were disabled
   secrets: [Secret]
+}
+
+type Log {
+  # The most recently written 128 KiB of the build log.
+  last128KiB: String!
+  # The URL at which the full build log can be downloaded with a GET request
+  # (text/plain).
+  fullURL: String!
 }
 
 type Artifact {
@@ -1163,7 +1190,7 @@ type Task {
   updated: Time!
   name: String!
   status: TaskStatus!
-  log: String @access(scope: LOGS, kind: RO)
+  log: Log @access(scope: LOGS, kind: RO)
   job: Job!
 }
 
@@ -2576,10 +2603,10 @@ func (ec *executionContext) _Job_log(ctx context.Context, field graphql.Collecte
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(*string); ok {
+		if data, ok := tmp.(*model.Log); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *string`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *git.sr.ht/~sircmpwn/builds.sr.ht/api/graph/model.Log`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2588,9 +2615,9 @@ func (ec *executionContext) _Job_log(ctx context.Context, field graphql.Collecte
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(*model.Log)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOLog2ᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐLog(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Job_secrets(ctx context.Context, field graphql.CollectedField, obj *model.Job) (ret graphql.Marshaler) {
@@ -2925,6 +2952,76 @@ func (ec *executionContext) _JobGroup_triggers(ctx context.Context, field graphq
 	res := resTmp.([]model.Trigger)
 	fc.Result = res
 	return ec.marshalNTrigger2ᚕgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐTrigger(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Log_last128KiB(ctx context.Context, field graphql.CollectedField, obj *model.Log) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Log",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Last128KiB, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Log_fullURL(ctx context.Context, field graphql.CollectedField, obj *model.Log) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Log",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FullURL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_submit(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -5012,10 +5109,10 @@ func (ec *executionContext) _Task_log(ctx context.Context, field graphql.Collect
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(*string); ok {
+		if data, ok := tmp.(*model.Log); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *string`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *git.sr.ht/~sircmpwn/builds.sr.ht/api/graph/model.Log`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5024,9 +5121,9 @@ func (ec *executionContext) _Task_log(ctx context.Context, field graphql.Collect
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(*model.Log)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOLog2ᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐLog(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Task_job(ctx context.Context, field graphql.CollectedField, obj *model.Task) (ret graphql.Marshaler) {
@@ -7205,6 +7302,38 @@ func (ec *executionContext) _JobGroup(ctx context.Context, sel ast.SelectionSet,
 	return out
 }
 
+var logImplementors = []string{"Log"}
+
+func (ec *executionContext) _Log(ctx context.Context, sel ast.SelectionSet, obj *model.Log) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, logImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Log")
+		case "last128KiB":
+			out.Values[i] = ec._Log_last128KiB(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "fullURL":
+			out.Values[i] = ec._Log_fullURL(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -8789,6 +8918,13 @@ func (ec *executionContext) marshalOJobGroup2ᚖgitᚗsrᚗhtᚋאsircmpwnᚋbui
 		return graphql.Null
 	}
 	return ec._JobGroup(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOLog2ᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐLog(ctx context.Context, sel ast.SelectionSet, v *model.Log) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Log(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOSecret2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐSecret(ctx context.Context, sel ast.SelectionSet, v model.Secret) graphql.Marshaler {

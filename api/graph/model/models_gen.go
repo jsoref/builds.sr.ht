@@ -60,6 +60,11 @@ type JobGroup struct {
 	Triggers []Trigger `json:"triggers"`
 }
 
+type Log struct {
+	Last128KiB string `json:"last128KiB"`
+	FullURL    string `json:"fullURL"`
+}
+
 type PGPKey struct {
 	ID         int       `json:"id"`
 	Created    time.Time `json:"created"`
@@ -103,7 +108,7 @@ type Task struct {
 	Updated time.Time  `json:"updated"`
 	Name    string     `json:"name"`
 	Status  TaskStatus `json:"status"`
-	Log     *string    `json:"log"`
+	Log     *Log       `json:"log"`
 	Job     *Job       `json:"job"`
 }
 
