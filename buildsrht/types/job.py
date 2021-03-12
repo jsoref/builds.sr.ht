@@ -19,7 +19,7 @@ class Job(Base):
     created = sa.Column(sa.DateTime, nullable=False)
     updated = sa.Column(sa.DateTime, nullable=False)
     manifest = sa.Column(sa.Unicode(16384), nullable=False)
-    owner_id = sa.Column(sa.Integer, sa.ForeignKey('user.id'), nullable=False)
+    owner_id = sa.Column(sa.Integer, sa.ForeignKey('user.id'), index=True, nullable=False)
     owner = sa.orm.relationship('User', backref=sa.orm.backref('jobs'))
     job_group_id = sa.Column(sa.Integer, sa.ForeignKey('job_group.id'))
     job_group = sa.orm.relationship('JobGroup', backref=sa.orm.backref('jobs'))
