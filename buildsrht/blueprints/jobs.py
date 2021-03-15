@@ -2,6 +2,7 @@ from ansi2html import Ansi2HTMLConverter
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, request, abort, redirect
 from flask import Response, url_for
+from srht.cache import get_cache, set_cache
 from srht.config import cfg
 from srht.database import db
 from srht.flask import paginate_query, session
@@ -17,6 +18,7 @@ import sqlalchemy as sa
 import hashlib
 import requests
 import yaml
+import json
 
 jobs = Blueprint("jobs", __name__)
 
@@ -349,41 +351,60 @@ def job_by_id(username, job_id):
         abort(404)
     logs = list()
     build_user = cfg("git.sr.ht::dispatch", "/usr/bin/buildsrht-keys", "builds:builds").split(":")[0]
-    def get_log(log_url, name):
-        try:
-            r = requests.head(log_url)
-            cl = int(r.headers["Content-Length"])
-            if cl > log_max:
-                r = requests.get(log_url, headers={
-                    "Range": f"bytes={cl-log_max}-{cl-1}",
-                }, timeout=3)
-            else:
-                r = requests.get(log_url, timeout=3)
-            if r.status_code >= 200 and r.status_code <= 299:
-                logs.append({
+    final_status = [
+        TaskStatus.success,
+        TaskStatus.failed,
+        TaskStatus.skipped,
+        JobStatus.success,
+        JobStatus.timeout,
+        JobStatus.failed,
+        JobStatus.cancelled,
+    ]
+    def get_log(log_url, name, status):
+        cachekey = f"builds.sr.ht:logs:{log_url}"
+        log = get_cache(cachekey)
+        if log:
+            log = json.loads(log)
+            log["log"] = Markup(log["log"])
+        if not log:
+            try:
+                r = requests.head(log_url)
+                cl = int(r.headers["Content-Length"])
+                if cl > log_max:
+                    r = requests.get(log_url, headers={
+                        "Range": f"bytes={cl-log_max}-{cl-1}",
+                    }, timeout=3)
+                else:
+                    r = requests.get(log_url, timeout=3)
+                if r.status_code >= 200 and r.status_code <= 299:
+                    log = {
+                        "name": name,
+                        "log": logify(r.content.decode('utf-8'),
+                            "task-" + name if name else "setup", log_url),
+                        "more": True,
+                    }
+                else:
+                    raise Exception()
+            except:
+                log = {
                     "name": name,
-                    "log": logify(r.content.decode('utf-8'),
-                        "task-" + name if name else "setup", log_url)
-                })
-                return True
-            else:
-                raise Exception()
-        except:
-            logs.append({
-                "name": name,
-                "log": Markup('<td></td><td><pre><strong class="text-danger">'
-                    f'Error fetching logs for task "{escape(name)}"</strong>'
-                    '</pre></td>')
-            })
-            return False
+                    "log": Markup('<td></td><td><pre><strong class="text-danger">'
+                        f'Error fetching logs for task "{escape(name)}"</strong>'
+                        '</pre></td>'),
+                    "more": False,
+                }
+            if status in final_status:
+                set_cache(cachekey, timedelta(days=7), json.dumps(log))
+        logs.append(log)
+        return log["more"]
     log_url = "http://{}/logs/{}/log".format(job.runner, job.id)
-    if get_log(log_url, None):
+    if get_log(log_url, None, job.status):
         for task in sorted(job.tasks, key=lambda t: t.id):
             if task.status == TaskStatus.pending:
                 continue
             log_url = "http://{}/logs/{}/{}/log".format(
                     job.runner, job.id, task.name)
-            if not get_log(log_url, task.name):
+            if not get_log(log_url, task.name, task.status):
                 break
     min_artifact_date = datetime.utcnow() - timedelta(days=90)
     return render_template("job.html",
