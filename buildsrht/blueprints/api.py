@@ -9,6 +9,7 @@ from buildsrht.runner import queue_build
 from buildsrht.types import Artifact, Job, JobStatus, Task, JobGroup
 from buildsrht.types import Trigger, TriggerType, TriggerCondition
 from buildsrht.manifest import Manifest
+import sqlalchemy as sa
 import json
 import re
 import requests
@@ -20,7 +21,7 @@ csrf_bypass(api)
 @api.route("/api/jobs")
 @oauth("jobs:read")
 def jobs_GET():
-    jobs = Job.query.filter(Job.owner_id == current_token.user_id)
+    jobs = Job.query.filter(Job.owner_id == current_token.user_id).options(sa.orm.joinedload(Job.tasks))
     return paginated_response(Job.id, jobs)
 
 @api.route("/api/jobs", methods=["POST"])
@@ -84,7 +85,7 @@ def jobs_POST():
 @api.route("/api/jobs/<int:job_id>")
 @oauth("jobs:read")
 def jobs_by_id_GET(job_id):
-    job = Job.query.filter(Job.id == job_id).first()
+    job = Job.query.filter(Job.id == job_id).options(sa.orm.joinedload(Job.tasks)).first()
     if not job:
         abort(404)
     # TODO: ACLs

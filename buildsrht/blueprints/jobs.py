@@ -344,7 +344,7 @@ def logify(text, task, log_url):
 @jobs.route("/~<username>/job/<int:job_id>")
 def job_by_id(username, job_id):
     # TODO: maybe we want per-user job IDs
-    job = Job.query.get(job_id)
+    job = Job.query.options(sa.orm.joinedload(Job.tasks)).get(job_id)
     if not job:
         abort(404)
     logs = list()
