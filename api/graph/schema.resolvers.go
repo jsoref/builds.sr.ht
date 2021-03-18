@@ -48,11 +48,40 @@ func (r *jobResolver) Secrets(ctx context.Context, obj *model.Job) ([]model.Secr
 }
 
 func (r *jobGroupResolver) Owner(ctx context.Context, obj *model.JobGroup) (model.Entity, error) {
-	panic(fmt.Errorf("not implemented"))
+	return loaders.ForContext(ctx).UsersByID.Load(obj.OwnerID)
 }
 
 func (r *jobGroupResolver) Jobs(ctx context.Context, obj *model.JobGroup) ([]*model.Job, error) {
-	panic(fmt.Errorf("not implemented"))
+	var jobs []*model.Job
+	if err := database.WithTx(ctx, &sql.TxOptions{
+		Isolation: 0,
+		ReadOnly:  true,
+	}, func(tx *sql.Tx) error {
+		job := (&model.Job{}).As(`j`)
+		rows, err := database.
+			Select(ctx, job).
+			From(`job j`).
+			Where(`j.job_group_id = ?`, obj.ID).
+			RunWith(tx).
+			QueryContext(ctx)
+		if err != nil {
+			panic(err)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var job model.Job
+			if err := rows.Scan(database.Scan(ctx, &job)...); err != nil {
+				panic(err)
+			}
+			jobs = append(jobs, &job)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return jobs, nil
 }
 
 func (r *jobGroupResolver) Triggers(ctx context.Context, obj *model.JobGroup) ([]model.Trigger, error) {
