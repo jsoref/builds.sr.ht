@@ -51,15 +51,6 @@ type JobCursor struct {
 	Cursor  *model.Cursor `json:"cursor"`
 }
 
-type JobGroup struct {
-	ID       int       `json:"id"`
-	Created  time.Time `json:"created"`
-	Note     *string   `json:"note"`
-	Owner    Entity    `json:"owner"`
-	Jobs     []*Job    `json:"jobs"`
-	Triggers []Trigger `json:"triggers"`
-}
-
 type Log struct {
 	Last128KiB string `json:"last128KiB"`
 	FullURL    string `json:"fullURL"`

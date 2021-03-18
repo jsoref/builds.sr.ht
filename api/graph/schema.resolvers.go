@@ -21,7 +21,10 @@ func (r *jobResolver) Owner(ctx context.Context, obj *model.Job) (model.Entity, 
 }
 
 func (r *jobResolver) Group(ctx context.Context, obj *model.Job) (*model.JobGroup, error) {
-	panic(fmt.Errorf("not implemented"))
+	if obj.JobGroupID == nil {
+		return nil, nil
+	}
+	return loaders.ForContext(ctx).JobGroupsByID.Load(*obj.JobGroupID)
 }
 
 func (r *jobResolver) Tasks(ctx context.Context, obj *model.Job) ([]*model.Task, error) {
@@ -41,6 +44,18 @@ func (r *jobResolver) Log(ctx context.Context, obj *model.Job) (*model.Log, erro
 }
 
 func (r *jobResolver) Secrets(ctx context.Context, obj *model.Job) ([]model.Secret, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *jobGroupResolver) Owner(ctx context.Context, obj *model.JobGroup) (model.Entity, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *jobGroupResolver) Jobs(ctx context.Context, obj *model.JobGroup) ([]*model.Job, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *jobGroupResolver) Triggers(ctx context.Context, obj *model.JobGroup) ([]model.Trigger, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -154,6 +169,9 @@ func (r *userResolver) Jobs(ctx context.Context, obj *model.User, cursor *coremo
 // Job returns api.JobResolver implementation.
 func (r *Resolver) Job() api.JobResolver { return &jobResolver{r} }
 
+// JobGroup returns api.JobGroupResolver implementation.
+func (r *Resolver) JobGroup() api.JobGroupResolver { return &jobGroupResolver{r} }
+
 // Mutation returns api.MutationResolver implementation.
 func (r *Resolver) Mutation() api.MutationResolver { return &mutationResolver{r} }
 
@@ -164,6 +182,7 @@ func (r *Resolver) Query() api.QueryResolver { return &queryResolver{r} }
 func (r *Resolver) User() api.UserResolver { return &userResolver{r} }
 
 type jobResolver struct{ *Resolver }
+type jobGroupResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }

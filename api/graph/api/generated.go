@@ -39,6 +39,7 @@ type Config struct {
 
 type ResolverRoot interface {
 	Job() JobResolver
+	JobGroup() JobGroupResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
 	User() UserResolver
@@ -200,6 +201,11 @@ type JobResolver interface {
 	Artifacts(ctx context.Context, obj *model.Job) ([]*model.Artifact, error)
 	Log(ctx context.Context, obj *model.Job) (*model.Log, error)
 	Secrets(ctx context.Context, obj *model.Job) ([]model.Secret, error)
+}
+type JobGroupResolver interface {
+	Owner(ctx context.Context, obj *model.JobGroup) (model.Entity, error)
+	Jobs(ctx context.Context, obj *model.JobGroup) ([]*model.Job, error)
+	Triggers(ctx context.Context, obj *model.JobGroup) ([]model.Trigger, error)
 }
 type MutationResolver interface {
 	Submit(ctx context.Context, manifest string, tags []*string, note *string, secrets *bool, execute *bool) (*model.Job, error)
@@ -2832,15 +2838,15 @@ func (ec *executionContext) _JobGroup_owner(ctx context.Context, field graphql.C
 		Object:     "JobGroup",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return obj.Owner, nil
+			return ec.resolvers.JobGroup().Owner(rctx, obj)
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			scope, err := ec.unmarshalNAccessScope2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐAccessScope(ctx, "PROFILE")
@@ -2895,14 +2901,14 @@ func (ec *executionContext) _JobGroup_jobs(ctx context.Context, field graphql.Co
 		Object:     "JobGroup",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Jobs, nil
+		return ec.resolvers.JobGroup().Jobs(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2930,14 +2936,14 @@ func (ec *executionContext) _JobGroup_triggers(ctx context.Context, field graphq
 		Object:     "JobGroup",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Triggers, nil
+		return ec.resolvers.JobGroup().Triggers(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7267,30 +7273,57 @@ func (ec *executionContext) _JobGroup(ctx context.Context, sel ast.SelectionSet,
 		case "id":
 			out.Values[i] = ec._JobGroup_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "created":
 			out.Values[i] = ec._JobGroup_created(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "note":
 			out.Values[i] = ec._JobGroup_note(ctx, field, obj)
 		case "owner":
-			out.Values[i] = ec._JobGroup_owner(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._JobGroup_owner(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "jobs":
-			out.Values[i] = ec._JobGroup_jobs(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._JobGroup_jobs(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "triggers":
-			out.Values[i] = ec._JobGroup_triggers(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._JobGroup_triggers(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
