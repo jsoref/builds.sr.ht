@@ -33,8 +33,10 @@
       >{{manifest if manifest else ""}}</textarea>
       {{valid.summary("manifest")}}
       <script>
+        // @license magnet:?xt=urn:btih:0b31508aeb0634b347b8270c7bee4d411b5d4109&dn=agpl-3.0.txt AGPL-3.0-only
         /* Reduce effects of FOUC for JS users */
         document.getElementById('editor').style.display = 'none';
+        // @license-end
       </script>
     </div>
     <div class="form-group">
@@ -63,6 +65,7 @@
 <script src="/static/codemirror.js"></script>
 <script src="/static/yaml.js"></script>
 <script>
+// @license magnet:?xt=urn:btih:0b31508aeb0634b347b8270c7bee4d411b5d4109&dn=agpl-3.0.txt AGPL-3.0-only
 const el = document.getElementById('editor');
 let cm = CodeMirror(elt => {
   el.parentNode.replaceChild(elt, el);
@@ -109,5 +112,6 @@ document.querySelector('button[type="submit"]').addEventListener('click', ev => 
   form.appendChild(node);
   form.submit();
 });
+// @license-end
 </script>
 {% endblock %}
