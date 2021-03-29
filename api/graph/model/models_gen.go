@@ -93,16 +93,6 @@ type SecretFile struct {
 
 func (SecretFile) IsSecret() {}
 
-type Task struct {
-	ID      int        `json:"id"`
-	Created time.Time  `json:"created"`
-	Updated time.Time  `json:"updated"`
-	Name    string     `json:"name"`
-	Status  TaskStatus `json:"status"`
-	Log     *Log       `json:"log"`
-	Job     *Job       `json:"job"`
-}
-
 type TriggerInput struct {
 	Type      TriggerType          `json:"type"`
 	Condition TriggerCondition     `json:"condition"`

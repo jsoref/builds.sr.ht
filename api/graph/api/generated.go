@@ -42,6 +42,7 @@ type ResolverRoot interface {
 	JobGroup() JobGroupResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
+	Task() TaskResolver
 	User() UserResolver
 }
 
@@ -227,6 +228,10 @@ type QueryResolver interface {
 	Jobs(ctx context.Context, cursor *model1.Cursor) (*model.JobCursor, error)
 	Job(ctx context.Context, id int) (*model.Job, error)
 	Secrets(ctx context.Context, cursor *model1.Cursor) (*model.SecretCursor, error)
+}
+type TaskResolver interface {
+	Log(ctx context.Context, obj *model.Task) (*model.Log, error)
+	Job(ctx context.Context, obj *model.Task) (*model.Job, error)
 }
 type UserResolver interface {
 	Jobs(ctx context.Context, obj *model.User, cursor *model1.Cursor) (*model.JobCursor, error)
@@ -1042,7 +1047,9 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "graph/schema.graphqls", Input: `scalar Time   # %Y-%m-%dT%H:%M:%SZ
+	{Name: "graph/schema.graphqls", Input: `# This schema definition is available in the public domain, or under the terms
+# of CC-0, at your choice.
+scalar Time   # %Y-%m-%dT%H:%M:%SZ
 scalar Binary # base64'd string
 scalar Cursor
 scalar File
@@ -5048,14 +5055,14 @@ func (ec *executionContext) _Task_status(ctx context.Context, field graphql.Coll
 		Object:     "Task",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
+		IsMethod:   true,
 		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Status, nil
+		return obj.Status(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5083,15 +5090,15 @@ func (ec *executionContext) _Task_log(ctx context.Context, field graphql.Collect
 		Object:     "Task",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return obj.Log, nil
+			return ec.resolvers.Task().Log(rctx, obj)
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			scope, err := ec.unmarshalNAccessScope2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐAccessScope(ctx, "LOGS")
@@ -5143,14 +5150,14 @@ func (ec *executionContext) _Task_job(ctx context.Context, field graphql.Collect
 		Object:     "Task",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Job, nil
+		return ec.resolvers.Task().Job(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7723,35 +7730,53 @@ func (ec *executionContext) _Task(ctx context.Context, sel ast.SelectionSet, obj
 		case "id":
 			out.Values[i] = ec._Task_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "created":
 			out.Values[i] = ec._Task_created(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "updated":
 			out.Values[i] = ec._Task_updated(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "name":
 			out.Values[i] = ec._Task_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "status":
 			out.Values[i] = ec._Task_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "log":
-			out.Values[i] = ec._Task_log(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Task_log(ctx, field, obj)
+				return res
+			})
 		case "job":
-			out.Values[i] = ec._Task_job(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Task_job(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

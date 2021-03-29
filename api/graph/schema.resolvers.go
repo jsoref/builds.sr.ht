@@ -28,7 +28,37 @@ func (r *jobResolver) Group(ctx context.Context, obj *model.Job) (*model.JobGrou
 }
 
 func (r *jobResolver) Tasks(ctx context.Context, obj *model.Job) ([]*model.Task, error) {
-	panic(fmt.Errorf("not implemented"))
+	var tasks []*model.Task
+
+	if err := database.WithTx(ctx, &sql.TxOptions{
+		Isolation: 0,
+		ReadOnly:  true,
+	}, func(tx *sql.Tx) error {
+		task := (&model.Task{}).As(`t`)
+		rows, err := database.
+			Select(ctx, task).
+			From(`task t`).
+			Where(`t.job_id = ?`, obj.ID).
+			RunWith(tx).
+			QueryContext(ctx)
+		if err != nil {
+			panic(err)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var task model.Task
+			if err := rows.Scan(database.Scan(ctx, &task)...); err != nil {
+				panic(err)
+			}
+			tasks = append(tasks, &task)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return tasks, nil
 }
 
 func (r *jobResolver) Artifacts(ctx context.Context, obj *model.Job) ([]*model.Artifact, error) {
@@ -191,6 +221,14 @@ func (r *queryResolver) Secrets(ctx context.Context, cursor *coremodel.Cursor) (
 	panic(fmt.Errorf("not implemented"))
 }
 
+func (r *taskResolver) Log(ctx context.Context, obj *model.Task) (*model.Log, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *taskResolver) Job(ctx context.Context, obj *model.Task) (*model.Job, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 func (r *userResolver) Jobs(ctx context.Context, obj *model.User, cursor *coremodel.Cursor) (*model.JobCursor, error) {
 	panic(fmt.Errorf("not implemented"))
 }
@@ -207,6 +245,9 @@ func (r *Resolver) Mutation() api.MutationResolver { return &mutationResolver{r}
 // Query returns api.QueryResolver implementation.
 func (r *Resolver) Query() api.QueryResolver { return &queryResolver{r} }
 
+// Task returns api.TaskResolver implementation.
+func (r *Resolver) Task() api.TaskResolver { return &taskResolver{r} }
+
 // User returns api.UserResolver implementation.
 func (r *Resolver) User() api.UserResolver { return &userResolver{r} }
 
@@ -214,4 +255,5 @@ type jobResolver struct{ *Resolver }
 type jobGroupResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type taskResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
