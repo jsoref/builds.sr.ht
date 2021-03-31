@@ -232,7 +232,7 @@ func (r *taskResolver) Log(ctx context.Context, obj *model.Task) (*model.Log, er
 }
 
 func (r *taskResolver) Job(ctx context.Context, obj *model.Task) (*model.Job, error) {
-	panic(fmt.Errorf("not implemented"))
+	return loaders.ForContext(ctx).JobsByID.Load(obj.JobID)
 }
 
 func (r *userResolver) Jobs(ctx context.Context, obj *model.User, cursor *coremodel.Cursor) (*model.JobCursor, error) {
