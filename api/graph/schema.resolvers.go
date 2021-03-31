@@ -236,7 +236,27 @@ func (r *taskResolver) Job(ctx context.Context, obj *model.Task) (*model.Job, er
 }
 
 func (r *userResolver) Jobs(ctx context.Context, obj *model.User, cursor *coremodel.Cursor) (*model.JobCursor, error) {
-	panic(fmt.Errorf("not implemented"))
+	if cursor == nil {
+		cursor = coremodel.NewCursor(nil)
+	}
+
+	var jobs []*model.Job
+	if err := database.WithTx(ctx, &sql.TxOptions{
+		Isolation: 0,
+		ReadOnly:  true,
+	}, func(tx *sql.Tx) error {
+		job := (&model.Job{}).As(`j`)
+		query := database.
+			Select(ctx, job).
+			From(`job j`).
+			Where(`j.owner_id = ?`, obj.ID)
+		jobs, cursor = job.QueryWithCursor(ctx, tx, query, cursor)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return &model.JobCursor{jobs, cursor}, nil
 }
 
 // Job returns api.JobResolver implementation.
