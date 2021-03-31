@@ -35,6 +35,8 @@ func FetchLogs(url string) (*model.Log, error) {
 	case http.StatusPartialContent:
 		// OK
 		break
+	case http.StatusNotFound:
+		return nil, nil
 	default:
 		return nil, fmt.Errorf("Unexpected response from build runner: %s", resp.Status)
 	}

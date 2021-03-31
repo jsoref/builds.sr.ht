@@ -38,6 +38,8 @@ func (r *jobResolver) Tasks(ctx context.Context, obj *model.Job) ([]*model.Task,
 		rows, err := database.
 			Select(ctx, task).
 			From(`task t`).
+			Join(`job j ON j.id = t.job_id`).
+			Columns(`j.runner`).
 			Where(`t.job_id = ?`, obj.ID).
 			RunWith(tx).
 			QueryContext(ctx)
@@ -48,7 +50,7 @@ func (r *jobResolver) Tasks(ctx context.Context, obj *model.Job) ([]*model.Task,
 
 		for rows.Next() {
 			var task model.Task
-			if err := rows.Scan(database.Scan(ctx, &task)...); err != nil {
+			if err := rows.Scan(append(database.Scan(ctx, &task), &task.Runner)...); err != nil {
 				panic(err)
 			}
 			tasks = append(tasks, &task)
@@ -222,7 +224,11 @@ func (r *queryResolver) Secrets(ctx context.Context, cursor *coremodel.Cursor) (
 }
 
 func (r *taskResolver) Log(ctx context.Context, obj *model.Task) (*model.Log, error) {
-	panic(fmt.Errorf("not implemented"))
+	if obj.Runner == nil {
+		return nil, nil
+	}
+	url := fmt.Sprintf("http://%s/logs/%d/%s/log", *obj.Runner, obj.JobID, obj.Name)
+	return FetchLogs(url)
 }
 
 func (r *taskResolver) Job(ctx context.Context, obj *model.Task) (*model.Job, error) {

@@ -22,6 +22,7 @@ type Task struct {
 
 	JobID     int
 	RawStatus string
+	Runner    *string
 
 	alias  string
 	fields *database.ModelFields
@@ -80,6 +81,8 @@ func (t *Task) QueryWithCursor(ctx context.Context, runner sq.BaseRunner,
 		q = q.Where(database.WithAlias(t.alias, "id")+"<= ?", next)
 	}
 	q = q.
+		Join(`job ON job.id = ` + database.WithAlias(t.alias, "job_id")).
+		Columns("job.runner").
 		OrderBy(database.WithAlias(t.alias, "id") + " DESC").
 		Limit(uint64(cur.Count + 1))
 
@@ -91,7 +94,7 @@ func (t *Task) QueryWithCursor(ctx context.Context, runner sq.BaseRunner,
 	var tasks []*Task
 	for rows.Next() {
 		var task Task
-		if err := rows.Scan(database.Scan(ctx, &task)...); err != nil {
+		if err := rows.Scan(append(database.Scan(ctx, &task), &task.Runner)...); err != nil {
 			panic(err)
 		}
 		tasks = append(tasks, &task)
