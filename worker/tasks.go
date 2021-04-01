@@ -175,6 +175,7 @@ complete-build() {
 	if ctx.Manifest.Environment == nil {
 		ctx.Manifest.Environment = make(map[string]interface{})
 	}
+	ctx.Manifest.Environment["CI_NAME"] = "sourcehut"
 	ctx.Manifest.Environment["JOB_ID"] = ctx.Job.Id
 	ctx.Manifest.Environment["JOB_URL"] = fmt.Sprintf(
 		"%s/~%s/job/%d", origin, ctx.Job.Username, ctx.Job.Id)
