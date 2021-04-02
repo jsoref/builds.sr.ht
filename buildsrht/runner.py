@@ -18,7 +18,8 @@ def queue_build(job, manifest):
     db.session.commit()
     # crypto mining attempt
     # pretend to accept it and let the admins know
-    if "xuirig" in json.dumps(manifest.to_dict()):
+    sample = json.dumps(manifest.to_dict())
+    if "xuirig" in sample or "miner" in sample:
         send_email(f"User {job.owner.canonical_name} attempted to submit cryptocurrency mining job #{job.id}",
                 cfg("sr.ht", "owner-email"),
                 "Cryptocurrency mining attempt on builds.sr.ht")
