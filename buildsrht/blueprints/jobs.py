@@ -94,11 +94,11 @@ def jobs_page(jobs, sidebar="sidebar.html", **kwargs):
     search_error = None
 
     try:
-        jobs = (get_jobs(jobs, search)
-            .options(sa.orm.joinedload(Job.tasks)))
+        jobs = (get_jobs(jobs, search))
     except ValueError as ex:
         search_error = str(ex)
 
+    jobs = jobs.options(sa.orm.joinedload(Job.tasks))
     jobs, pagination = paginate_query(jobs)
     return render_template("jobs.html",
         jobs=jobs, status_map=status_map, icon_map=icon_map, tags=tags,
