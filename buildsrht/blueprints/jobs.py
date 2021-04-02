@@ -116,6 +116,7 @@ def jobs_feed(jobs, title, endpoint, **urlvalues):
     if terms is not None:
         urlvalues["search"] = terms
     link = origin + url_for(endpoint, **urlvalues)
+    jobs=jobs.options(sa.orm.joinedload(Job.owner))
     return generate_feed(jobs, title, link, description)
 
 badge_success = """
