@@ -46,7 +46,9 @@ mount /dev/nbd0p1 /mnt/boot
 swapon /dev/nbd0p2
 
 # TODO: Remove bash
-apk add -U -X http://dl-2.alpinelinux.org/alpine/$release/main/ \
+apk add -U \
+	-X http://dl-2.alpinelinux.org/alpine/$release/main/ \
+	-X http://dl-2.alpinelinux.org/alpine/$release/community/ \
 	--allow-untrusted \
 	--arch="$arch" \
 	--root=/mnt \
