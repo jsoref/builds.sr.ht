@@ -2,8 +2,7 @@
 export arch="${1:-amd64}"
 export openbsd_version="6.8"
 # QEMU requires xbase
-export openbsd_sets="base68.tgz comp68.tgz xbase68.tgz xshare68.tgz"
+export openbsd_sets="base comp xbase xshare"
 export openbsd_kernel="bsd.mp"
 export openbsd_installurl="https://cdn.openbsd.org/pub/OpenBSD"
-export openbsd_public_key="openbsd-68-base.pub"
 exec ../genimg "$@"

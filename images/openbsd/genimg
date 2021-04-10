@@ -3,13 +3,15 @@
 : "$openbsd_sets"
 : "$openbsd_kernel"
 : "$openbsd_installurl"
-: "$openbsd_public_key"
+
+short_version="$(echo "$openbsd_version" | tr -d .)"
 
 image_size="16g"
 run_syspatch="${run_syspatch:-NO}"
 image_packages="bash git"
 snapshot="${snapshot:-NO}"
 pkg_add_params=""
+openbsd_public_key="openbsd-${short_version}-base.pub"
 
 openbsd_bootstrap="${openbsd_bootstrap:-NO}"
 # Force bootstrap mode when cross-building, unless we're building snapshots
@@ -40,13 +42,19 @@ cd_workdir() {
 }
 
 cd_workdir
-for f in $openbsd_sets $openbsd_kernel SHA256.sig SHA256
+
+set_files=""
+for s in $openbsd_sets; do
+	set_files="$set_files ${s}${short_version}.tgz"
+done
+
+for f in $set_files $openbsd_kernel SHA256.sig SHA256
 do
 	test -f "$f" || ftp "${openbsd_installurl}/${mirror_dir}/${arch}/${f}"
 done
 
 signify -Cp /etc/signify/"$openbsd_public_key" \
-	-x SHA256.sig $openbsd_sets $openbsd_kernel
+	-x SHA256.sig $set_files $openbsd_kernel
 
 # Create image that will host the filesystem
 rm -f root.img
@@ -59,7 +67,7 @@ EOF
 disklabel -w -A -T /tmp/partitions vnd0
 
 # prepare root filesystem under /mnt
-for f in $openbsd_sets
+for f in $set_files
 do
 	tar -zxphf "$f" -C /mnt
 done
