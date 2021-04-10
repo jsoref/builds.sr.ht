@@ -1,8 +1,12 @@
 #!/bin/sh -eux
 : "$openbsd_version"
-: "$openbsd_sets"
-: "$openbsd_kernel"
-: "$openbsd_installurl"
+
+arch="$1"
+
+# QEMU requires xbase
+openbsd_sets="${openbsd_sets:-"base comp xbase xshare"}"
+openbsd_kernel="${openbsd_kernel:-"bsd.mp"}"
+openbsd_installurl="${openbsd_installurl:-"https://cdn.openbsd.org/pub/OpenBSD"}"
 
 short_version="$(echo "$openbsd_version" | tr -d .)"
 
