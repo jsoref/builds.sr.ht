@@ -64,7 +64,34 @@ func (r *jobResolver) Tasks(ctx context.Context, obj *model.Job) ([]*model.Task,
 }
 
 func (r *jobResolver) Artifacts(ctx context.Context, obj *model.Job) ([]*model.Artifact, error) {
-	panic(fmt.Errorf("not implemented"))
+	var artifacts []*model.Artifact
+	if err := database.WithTx(ctx, &sql.TxOptions{
+		Isolation: 0,
+		ReadOnly:  true,
+	}, func(tx *sql.Tx) error {
+		artifact := (&model.Artifact{}).As(`a`)
+		rows, err := database.
+			Select(ctx, artifact).
+			From(`artifact a`).
+			Where(`a.job_id = ?`, obj.ID).
+			RunWith(tx).
+			QueryContext(ctx)
+		if err != nil {
+			panic(err)
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var artifact model.Artifact
+			if err := rows.Scan(database.Scan(ctx, &artifact)...); err != nil {
+				panic(err)
+			}
+			artifacts = append(artifacts, &artifact)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return artifacts, nil
 }
 
 func (r *jobResolver) Log(ctx context.Context, obj *model.Job) (*model.Log, error) {

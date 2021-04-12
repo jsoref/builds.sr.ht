@@ -23,14 +23,6 @@ type Trigger interface {
 	IsTrigger()
 }
 
-type Artifact struct {
-	ID      int       `json:"id"`
-	Created time.Time `json:"created"`
-	Path    string    `json:"path"`
-	Size    int       `json:"size"`
-	URL     *string   `json:"url"`
-}
-
 type EmailTrigger struct {
 	Condition TriggerCondition `json:"condition"`
 	To        string           `json:"to"`
