@@ -1,4 +1,3 @@
 #!/bin/sh
-arch="${1:-amd64}"
 export release="11.4-RELEASE"
 exec ../genimg "$@"
