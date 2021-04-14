@@ -15,8 +15,8 @@
 30 19 * * 5 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" alpine/latest
 0 19 * * 0 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" fedora/latest
 0 19 * * 1 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" alpine/old
-0 19 * * 2 chronic /usr/local/bin/submit_image_build -n "Monthly scheduled build image refresh" -a amd64 freebsd/11.x
-0 19 * * 3 chronic /usr/local/bin/submit_image_build -n "Monthly scheduled build image refresh" -a amd64 freebsd/12.x
+0 19 * * 2 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" -a amd64 freebsd/11.x
+0 19 * * 3 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" -a amd64 freebsd/12.x
 0 19 * * 4 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" -a arm64 debian/buster
 0 19 * * 5 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" -a arm64 debian/bullseye
 0 19 * * 6 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" -a arm64 debian/sid
