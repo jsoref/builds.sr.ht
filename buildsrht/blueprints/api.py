@@ -5,7 +5,7 @@ from srht.database import db
 from srht.flask import csrf_bypass
 from srht.validation import Validation
 from srht.oauth import oauth, current_token
-from buildsrht.runner import queue_build
+from buildsrht.runner import queue_build, requires_payment
 from buildsrht.types import Artifact, Job, JobStatus, Task, JobGroup
 from buildsrht.types import Trigger, TriggerType, TriggerCondition
 from buildsrht.manifest import Manifest
@@ -28,6 +28,12 @@ def jobs_GET():
 @oauth("jobs:write")
 def jobs_POST():
     valid = Validation(request)
+    if requires_payment(current_token.user):
+        valid.error("Payment is required to submit build jobs. " +
+            "Set up billing at https://meta.sr.ht/billing/initial",
+            status=402)
+        return valid.response
+
     _manifest = valid.require("manifest", cls=str)
     max_len = Job.manifest.prop.columns[0].type.length
     valid.expect(not _manifest or len(_manifest) < max_len,

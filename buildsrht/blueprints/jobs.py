@@ -11,7 +11,7 @@ from srht.validation import Validation
 from buildsrht.types import Job, JobStatus, Task, TaskStatus, User
 from buildsrht.manifest import Manifest
 from buildsrht.rss import generate_feed
-from buildsrht.runner import queue_build
+from buildsrht.runner import queue_build, requires_payment
 from buildsrht.search import apply_search
 from jinja2 import Markup, escape
 import sqlalchemy as sa
@@ -172,7 +172,13 @@ def submit_GET():
     manifest = session.get("manifest")
     if manifest:
         del session["manifest"]
-    return render_template("submit.html", manifest=manifest)
+    status = 200
+    payment_required = requires_payment(current_user)
+    if payment_required:
+        status = 402
+    return render_template("submit.html",
+            manifest=manifest,
+            payment_required=payment_required), status
 
 @jobs.route("/resubmit/<int:job_id>")
 @loginrequired

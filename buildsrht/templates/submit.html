@@ -11,6 +11,27 @@
 </style>
 {% endblock %}
 {% block content %} 
+{% if payment_required %}
+<section class="row">
+  <div class="col-md-8 offset-md-2">
+    <h3>Payment required</h3>
+    <p>
+    You must have a paid sourcehut account to submit jobs to builds.sr.ht.
+    Financial aid is available for users who need it.
+    <div style="margin-bottom: 1rem">
+      <a
+        href="{{get_origin('meta.sr.ht', external=True)}}/billing/initial"
+        class="btn btn-primary"
+      >Proceed to billing setup {{icon('caret-right')}}</a>
+    </div>
+    <h4>Other payment-related resources</h4>
+    <ul>
+      <li><a href="https://man.sr.ht/billing-faq.md">Billing FAQ</a></li>
+      <li><a href="https://man.sr.ht/ops/builds.sr.ht-migration.md">builds.sr.ht background information</a></li>
+    </ul>
+  </div>
+</section>
+{% else %}
 <section class="row">
   <div class="col-md-4">
     <p>
@@ -60,6 +81,7 @@
     </div>
   </form>
 </section>
+{% endif %}
 {% endblock %}
 {% block scripts %}
 <script src="/static/codemirror.js"></script>

@@ -1,8 +1,12 @@
 import json
 from celery import Celery
+from datetime import datetime
 from srht.config import cfg
 from srht.database import db
 from srht.email import send_email
+from srht.oauth import UserType
+
+allow_free = cfg("builds.sr.ht", "allow-free", default="no") == "yes"
 
 runner = Celery('builds', broker=cfg("builds.sr.ht", "redis"), config_source={
     "CELERY_TASK_SERIALIZER": "json",
@@ -25,6 +29,18 @@ def queue_build(job, manifest):
                 "Cryptocurrency mining attempt on builds.sr.ht")
     else:
         run_build.delay(job.id, manifest.to_dict())
+
+def requires_payment(user):
+    if allow_free:
+        return False
+    # Temporary:
+    if user.created < datetime(year=2021, month=5, day=1):
+        return False
+    return user.user_type not in [
+        UserType.admin,
+        UserType.active_paying,
+        UserType.active_free,
+    ]
 
 @runner.task
 def run_build(job_id, manifest):
