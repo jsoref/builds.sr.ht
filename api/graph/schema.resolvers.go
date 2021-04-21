@@ -13,9 +13,9 @@ import (
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/loaders"
 	"git.sr.ht/~sircmpwn/core-go/auth"
 	"git.sr.ht/~sircmpwn/core-go/database"
-	"github.com/lib/pq"
 	coremodel "git.sr.ht/~sircmpwn/core-go/model"
 	sq "github.com/Masterminds/squirrel"
+	"github.com/lib/pq"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -241,6 +241,8 @@ func (r *mutationResolver) CreateArtifact(ctx context.Context, jobID int, path s
 }
 
 func (r *pGPKeyResolver) PrivateKey(ctx context.Context, obj *model.PGPKey) (string, error) {
+	// TODO: This is simple to implement, but I'm not going to rig it up until
+	// we need it
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -304,14 +306,38 @@ func (r *queryResolver) Job(ctx context.Context, id int) (*model.Job, error) {
 }
 
 func (r *queryResolver) Secrets(ctx context.Context, cursor *coremodel.Cursor) (*model.SecretCursor, error) {
-	panic(fmt.Errorf("not implemented"))
+	if cursor == nil {
+		cursor = coremodel.NewCursor(nil)
+	}
+
+	var secrets []model.Secret
+	if err := database.WithTx(ctx, &sql.TxOptions{
+		Isolation: 0,
+		ReadOnly:  true,
+	}, func(tx *sql.Tx) error {
+		secret := (&model.RawSecret{}).As(`sec`)
+		query := database.
+			Select(ctx, secret).
+			From(`secret sec`).
+			Where(`sec.user_id = ?`, auth.ForContext(ctx).UserID)
+		secrets, cursor = secret.QueryWithCursor(ctx, tx, query, cursor)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return &model.SecretCursor{secrets, cursor}, nil
 }
 
 func (r *sSHKeyResolver) PrivateKey(ctx context.Context, obj *model.SSHKey) (string, error) {
+	// TODO: This is simple to implement, but I'm not going to rig it up until
+	// we need it
 	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *secretFileResolver) Data(ctx context.Context, obj *model.SecretFile) (string, error) {
+	// TODO: This is simple to implement, but I'm not going to rig it up until
+	// we need it
 	panic(fmt.Errorf("not implemented"))
 }
 
