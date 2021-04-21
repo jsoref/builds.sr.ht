@@ -13,7 +13,10 @@ import (
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/loaders"
 	"git.sr.ht/~sircmpwn/core-go/auth"
 	"git.sr.ht/~sircmpwn/core-go/database"
+	"github.com/lib/pq"
 	coremodel "git.sr.ht/~sircmpwn/core-go/model"
+	sq "github.com/Masterminds/squirrel"
+	yaml "gopkg.in/yaml.v2"
 )
 
 func (r *jobResolver) Owner(ctx context.Context, obj *model.Job) (model.Entity, error) {
@@ -103,7 +106,57 @@ func (r *jobResolver) Log(ctx context.Context, obj *model.Job) (*model.Log, erro
 }
 
 func (r *jobResolver) Secrets(ctx context.Context, obj *model.Job) ([]model.Secret, error) {
-	panic(fmt.Errorf("not implemented"))
+	var secrets []model.Secret
+
+	if err := database.WithTx(ctx, &sql.TxOptions{
+		Isolation: 0,
+		ReadOnly:  true,
+	}, func(tx *sql.Tx) error {
+		row := tx.QueryRowContext(ctx,
+			`SELECT manifest FROM job WHERE id = $1`, obj.ID)
+
+		var rawManifest string
+		if err := row.Scan(&rawManifest); err != nil {
+			return err
+		}
+
+		type Manifest struct {
+			Secrets []string `yaml:"secrets"`
+		}
+
+		var manifest Manifest
+		if err := yaml.Unmarshal([]byte(rawManifest), &manifest); err != nil {
+			return err
+		}
+
+		secret := (&model.RawSecret{}).As(`sec`)
+		rows, err := database.
+			Select(ctx, secret).
+			From(`secret sec`).
+			Where(sq.Expr(`sec.uuid = ANY(?)`, pq.Array(manifest.Secrets))).
+			Where(`sec.user_id = ? AND sec.user_id = ?`,
+				obj.OwnerID, auth.ForContext(ctx).UserID).
+			RunWith(tx).
+			QueryContext(ctx)
+		if err != nil {
+			panic(err)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var sec model.RawSecret
+			if err := rows.Scan(database.Scan(ctx, &sec)...); err != nil {
+				panic(err)
+			}
+			secrets = append(secrets, sec.ToSecret())
+		}
+
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return secrets, nil
 }
 
 func (r *jobGroupResolver) Owner(ctx context.Context, obj *model.JobGroup) (model.Entity, error) {
@@ -187,6 +240,10 @@ func (r *mutationResolver) CreateArtifact(ctx context.Context, jobID int, path s
 	panic(fmt.Errorf("not implemented"))
 }
 
+func (r *pGPKeyResolver) PrivateKey(ctx context.Context, obj *model.PGPKey) (string, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 func (r *queryResolver) Version(ctx context.Context) (*model.Version, error) {
 	return &model.Version{
 		Major:           0,
@@ -250,6 +307,14 @@ func (r *queryResolver) Secrets(ctx context.Context, cursor *coremodel.Cursor) (
 	panic(fmt.Errorf("not implemented"))
 }
 
+func (r *sSHKeyResolver) PrivateKey(ctx context.Context, obj *model.SSHKey) (string, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *secretFileResolver) Data(ctx context.Context, obj *model.SecretFile) (string, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 func (r *taskResolver) Log(ctx context.Context, obj *model.Task) (*model.Log, error) {
 	if obj.Runner == nil {
 		return nil, nil
@@ -295,8 +360,17 @@ func (r *Resolver) JobGroup() api.JobGroupResolver { return &jobGroupResolver{r}
 // Mutation returns api.MutationResolver implementation.
 func (r *Resolver) Mutation() api.MutationResolver { return &mutationResolver{r} }
 
+// PGPKey returns api.PGPKeyResolver implementation.
+func (r *Resolver) PGPKey() api.PGPKeyResolver { return &pGPKeyResolver{r} }
+
 // Query returns api.QueryResolver implementation.
 func (r *Resolver) Query() api.QueryResolver { return &queryResolver{r} }
+
+// SSHKey returns api.SSHKeyResolver implementation.
+func (r *Resolver) SSHKey() api.SSHKeyResolver { return &sSHKeyResolver{r} }
+
+// SecretFile returns api.SecretFileResolver implementation.
+func (r *Resolver) SecretFile() api.SecretFileResolver { return &secretFileResolver{r} }
 
 // Task returns api.TaskResolver implementation.
 func (r *Resolver) Task() api.TaskResolver { return &taskResolver{r} }
@@ -307,6 +381,9 @@ func (r *Resolver) User() api.UserResolver { return &userResolver{r} }
 type jobResolver struct{ *Resolver }
 type jobGroupResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
+type pGPKeyResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type sSHKeyResolver struct{ *Resolver }
+type secretFileResolver struct{ *Resolver }
 type taskResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }

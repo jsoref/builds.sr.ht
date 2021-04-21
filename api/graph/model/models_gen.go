@@ -15,10 +15,6 @@ type Entity interface {
 	IsEntity()
 }
 
-type Secret interface {
-	IsSecret()
-}
-
 type Trigger interface {
 	IsTrigger()
 }
@@ -48,42 +44,10 @@ type Log struct {
 	FullURL    string `json:"fullURL"`
 }
 
-type PGPKey struct {
-	ID         int       `json:"id"`
-	Created    time.Time `json:"created"`
-	UUID       string    `json:"uuid"`
-	Name       *string   `json:"name"`
-	PrivateKey string    `json:"privateKey"`
-}
-
-func (PGPKey) IsSecret() {}
-
-type SSHKey struct {
-	ID         int       `json:"id"`
-	Created    time.Time `json:"created"`
-	UUID       string    `json:"uuid"`
-	Name       *string   `json:"name"`
-	PrivateKey string    `json:"privateKey"`
-}
-
-func (SSHKey) IsSecret() {}
-
 type SecretCursor struct {
 	Results []Secret      `json:"results"`
 	Cursor  *model.Cursor `json:"cursor"`
 }
-
-type SecretFile struct {
-	ID      int       `json:"id"`
-	Created time.Time `json:"created"`
-	UUID    string    `json:"uuid"`
-	Name    *string   `json:"name"`
-	Path    string    `json:"path"`
-	Mode    int       `json:"mode"`
-	Data    string    `json:"data"`
-}
-
-func (SecretFile) IsSecret() {}
 
 type TriggerInput struct {
 	Type      TriggerType          `json:"type"`

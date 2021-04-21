@@ -8,4 +8,5 @@ require (
 	github.com/Masterminds/squirrel v1.4.0 // indirect
 	github.com/lib/pq v1.8.0 // indirect
 	github.com/vektah/gqlparser/v2 v2.1.0
+	gopkg.in/yaml.v2 v2.3.0 // indirect
 )

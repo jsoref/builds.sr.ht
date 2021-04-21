@@ -41,7 +41,10 @@ type ResolverRoot interface {
 	Job() JobResolver
 	JobGroup() JobGroupResolver
 	Mutation() MutationResolver
+	PGPKey() PGPKeyResolver
 	Query() QueryResolver
+	SSHKey() SSHKeyResolver
+	SecretFile() SecretFileResolver
 	Task() TaskResolver
 	User() UserResolver
 }
@@ -220,6 +223,9 @@ type MutationResolver interface {
 	UpdateTask(ctx context.Context, taskID int, status model.TaskStatus) (*model.Job, error)
 	CreateArtifact(ctx context.Context, jobID int, path string, contents string) (*model.Artifact, error)
 }
+type PGPKeyResolver interface {
+	PrivateKey(ctx context.Context, obj *model.PGPKey) (string, error)
+}
 type QueryResolver interface {
 	Version(ctx context.Context) (*model.Version, error)
 	Me(ctx context.Context) (*model.User, error)
@@ -228,6 +234,12 @@ type QueryResolver interface {
 	Jobs(ctx context.Context, cursor *model1.Cursor) (*model.JobCursor, error)
 	Job(ctx context.Context, id int) (*model.Job, error)
 	Secrets(ctx context.Context, cursor *model1.Cursor) (*model.SecretCursor, error)
+}
+type SSHKeyResolver interface {
+	PrivateKey(ctx context.Context, obj *model.SSHKey) (string, error)
+}
+type SecretFileResolver interface {
+	Data(ctx context.Context, obj *model.SecretFile) (string, error)
 }
 type TaskResolver interface {
 	Log(ctx context.Context, obj *model.Task) (*model.Log, error)
@@ -1148,7 +1160,7 @@ type Job {
   log: Log @access(scope: LOGS, kind: RO)
 
   # List of secrets available to this job, or null if they were disabled
-  secrets: [Secret]
+  secrets: [Secret] @access(scope: SECRETS, kind: RO)
 }
 
 type Log {
@@ -2650,8 +2662,36 @@ func (ec *executionContext) _Job_secrets(ctx context.Context, field graphql.Coll
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Job().Secrets(rctx, obj)
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Job().Secrets(rctx, obj)
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			scope, err := ec.unmarshalNAccessScope2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐAccessScope(ctx, "SECRETS")
+			if err != nil {
+				return nil, err
+			}
+			kind, err := ec.unmarshalNAccessKind2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐAccessKind(ctx, "RO")
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Access == nil {
+				return nil, errors.New("directive access is not implemented")
+			}
+			return ec.directives.Access(ctx, obj, directive0, scope, kind)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.([]model.Secret); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []git.sr.ht/~sircmpwn/builds.sr.ht/api/graph/model.Secret`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3829,15 +3869,15 @@ func (ec *executionContext) _PGPKey_privateKey(ctx context.Context, field graphq
 		Object:     "PGPKey",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return obj.PrivateKey, nil
+			return ec.resolvers.PGPKey().PrivateKey(rctx, obj)
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.Worker == nil {
@@ -4531,15 +4571,15 @@ func (ec *executionContext) _SSHKey_privateKey(ctx context.Context, field graphq
 		Object:     "SSHKey",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return obj.PrivateKey, nil
+			return ec.resolvers.SSHKey().PrivateKey(rctx, obj)
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.Worker == nil {
@@ -4860,15 +4900,15 @@ func (ec *executionContext) _SecretFile_data(ctx context.Context, field graphql.
 		Object:     "SecretFile",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return obj.Data, nil
+			return ec.resolvers.SecretFile().Data(rctx, obj)
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.Worker == nil {
@@ -7440,25 +7480,34 @@ func (ec *executionContext) _PGPKey(ctx context.Context, sel ast.SelectionSet, o
 		case "id":
 			out.Values[i] = ec._PGPKey_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "created":
 			out.Values[i] = ec._PGPKey_created(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "uuid":
 			out.Values[i] = ec._PGPKey_uuid(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "name":
 			out.Values[i] = ec._PGPKey_name(ctx, field, obj)
 		case "privateKey":
-			out.Values[i] = ec._PGPKey_privateKey(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._PGPKey_privateKey(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7603,25 +7652,34 @@ func (ec *executionContext) _SSHKey(ctx context.Context, sel ast.SelectionSet, o
 		case "id":
 			out.Values[i] = ec._SSHKey_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "created":
 			out.Values[i] = ec._SSHKey_created(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "uuid":
 			out.Values[i] = ec._SSHKey_uuid(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "name":
 			out.Values[i] = ec._SSHKey_name(ctx, field, obj)
 		case "privateKey":
-			out.Values[i] = ec._SSHKey_privateKey(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SSHKey_privateKey(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7676,35 +7734,44 @@ func (ec *executionContext) _SecretFile(ctx context.Context, sel ast.SelectionSe
 		case "id":
 			out.Values[i] = ec._SecretFile_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "created":
 			out.Values[i] = ec._SecretFile_created(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "uuid":
 			out.Values[i] = ec._SecretFile_uuid(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "name":
 			out.Values[i] = ec._SecretFile_name(ctx, field, obj)
 		case "path":
 			out.Values[i] = ec._SecretFile_path(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "mode":
 			out.Values[i] = ec._SecretFile_mode(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "data":
-			out.Values[i] = ec._SecretFile_data(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SecretFile_data(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

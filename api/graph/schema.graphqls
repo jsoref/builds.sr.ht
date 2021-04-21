@@ -99,7 +99,7 @@ type Job {
   log: Log @access(scope: LOGS, kind: RO)
 
   # List of secrets available to this job, or null if they were disabled
-  secrets: [Secret]
+  secrets: [Secret] @access(scope: SECRETS, kind: RO)
 }
 
 type Log {
