@@ -197,7 +197,36 @@ func (r *jobGroupResolver) Jobs(ctx context.Context, obj *model.JobGroup) ([]*mo
 }
 
 func (r *jobGroupResolver) Triggers(ctx context.Context, obj *model.JobGroup) ([]model.Trigger, error) {
-	panic(fmt.Errorf("not implemented"))
+	var triggers []model.Trigger
+	if err := database.WithTx(ctx, &sql.TxOptions{
+		Isolation: 0,
+		ReadOnly:  true,
+	}, func(tx *sql.Tx) error {
+		trigger := (&model.RawTrigger{}).As(`t`)
+		rows, err := database.
+			Select(ctx, trigger).
+			From(`trigger t`).
+			Where(`t.job_group_id = ?`, obj.ID).
+			RunWith(tx).
+			QueryContext(ctx)
+		if err != nil {
+			panic(err)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var trigger model.RawTrigger
+			if err := rows.Scan(database.Scan(ctx, &trigger)...); err != nil {
+				panic(err)
+			}
+			triggers = append(triggers, trigger.ToTrigger())
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return triggers, nil
 }
 
 func (r *mutationResolver) Submit(ctx context.Context, manifest string, tags []*string, note *string, secrets *bool, execute *bool) (*model.Job, error) {

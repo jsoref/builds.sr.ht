@@ -15,19 +15,6 @@ type Entity interface {
 	IsEntity()
 }
 
-type Trigger interface {
-	IsTrigger()
-}
-
-type EmailTrigger struct {
-	Condition TriggerCondition `json:"condition"`
-	To        string           `json:"to"`
-	Cc        *string          `json:"cc"`
-	InReplyTo *string          `json:"inReplyTo"`
-}
-
-func (EmailTrigger) IsTrigger() {}
-
 type EmailTriggerInput struct {
 	To        string  `json:"to"`
 	Cc        *string `json:"cc"`
@@ -62,13 +49,6 @@ type Version struct {
 	Patch           int        `json:"patch"`
 	DeprecationDate *time.Time `json:"deprecationDate"`
 }
-
-type WebhookTrigger struct {
-	Condition TriggerCondition `json:"condition"`
-	URL       string           `json:"url"`
-}
-
-func (WebhookTrigger) IsTrigger() {}
 
 type WebhookTriggerInput struct {
 	URL string `json:"url"`
