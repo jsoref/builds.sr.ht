@@ -401,7 +401,7 @@ def job_by_id(username, job_id):
                     "more": False,
                 }
             if status in final_status:
-                set_cache(cachekey, timedelta(days=7), json.dumps(log))
+                set_cache(cachekey, timedelta(days=2), json.dumps(log))
         logs.append(log)
         return log["more"]
     log_url = "http://{}/logs/{}/log".format(job.runner, job.id)
