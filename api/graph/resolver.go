@@ -5,6 +5,7 @@ package graph
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -41,7 +42,7 @@ func FetchLogs(url string) (*model.Log, error) {
 		return nil, fmt.Errorf("Unexpected response from build runner: %s", resp.Status)
 	}
 	limit := io.LimitReader(resp.Body, 131072)
-	log, err := io.ReadAll(limit)
+	log, err := ioutil.ReadAll(limit)
 	if err != nil {
 		return nil, err
 	}
