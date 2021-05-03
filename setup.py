@@ -44,6 +44,8 @@ setup(
           'templates/*.html',
           'static/*',
           'static/icons/*',
+          'schema.graphqls',
+          'default_query.graphql',
       ]
   },
   scripts = [
