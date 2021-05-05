@@ -12,6 +12,7 @@ import (
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/graph/model"
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/loaders"
 	"git.sr.ht/~sircmpwn/core-go/auth"
+	"git.sr.ht/~sircmpwn/core-go/config"
 	"git.sr.ht/~sircmpwn/core-go/database"
 	coremodel "git.sr.ht/~sircmpwn/core-go/model"
 	sq "github.com/Masterminds/squirrel"
@@ -230,7 +231,84 @@ func (r *jobGroupResolver) Triggers(ctx context.Context, obj *model.JobGroup) ([
 }
 
 func (r *mutationResolver) Submit(ctx context.Context, manifest string, tags []*string, note *string, secrets *bool, execute *bool) (*model.Job, error) {
-	panic(fmt.Errorf("not implemented"))
+	man, err := LoadManifest(manifest)
+	if err != nil {
+		return nil, err
+	}
+	conf := config.ForContext(ctx)
+	user := auth.ForContext(ctx)
+
+	allowFree, _ := conf.Get("builds.sr.ht", "allow-free")
+	if allowFree != "yes" {
+		if user.UserType != "admin" &&
+				user.UserType != "active_free" &&
+				user.UserType != "active_non_paying" {
+			return nil, fmt.Errorf("A paid account is required to submit builds")
+		}
+	}
+
+	var job model.Job
+	if err := database.WithTx(ctx, nil, func(tx *sql.Tx) error {
+		sec := true
+		if secrets != nil {
+			sec = *secrets
+		}
+		status := "queued"
+		if execute != nil && !*execute {
+			status = "pending"
+		}
+		// TODO: Tags
+
+		row := tx.QueryRowContext(ctx, `INSERT INTO job (
+			created, updated,
+			manifest, owner_id, secrets, note, tags, image, status
+		) VALUES (
+			NOW() at time zone 'utc',
+			NOW() at time zone 'utc',
+			$1, $2, $3, $4, $5, $6, $7
+		) RETURNING
+			id, created, updated, manifest, note, image, runner, owner_id,
+			tags, status
+		`, manifest, user.UserID, sec, note, "", man.Image, status)
+
+		if err := row.Scan(&job.ID, &job.Created, &job.Updated, &job.Manifest,
+				&job.Note, &job.Image, &job.Runner, &job.OwnerID, &job.RawTags,
+				&job.RawStatus); err != nil {
+			return err
+		}
+
+		for _, task := range man.Tasks {
+			var name string
+			for key, _ := range task {
+				name = key
+				break
+			}
+
+			_, err := tx.ExecContext(ctx, `INSERT INTO task (
+				created, updated, name, status, job_id
+			) VALUES (
+				NOW() at time zone 'utc',
+				NOW() at time zone 'utc',
+				$1, 'pending', $2
+			)`, name, job.ID)
+
+			if err != nil {
+				return err
+			}
+		}
+
+		if execute == nil || *execute {
+			if err := SubmitJob(ctx, job.ID, man); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return &job, nil
 }
 
 func (r *mutationResolver) Start(ctx context.Context, jobID int) (*model.Job, error) {

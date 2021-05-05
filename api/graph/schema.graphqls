@@ -277,7 +277,7 @@ type Mutation {
   #
   # 'execute' may be set to false to defer queueing this job. Builds are
   # executed immediately if unspecified.
-  submit(manifest: String!, tags: [String] note: String, secrets: Boolean,
+  submit(manifest: String!, tags: [String!] note: String, secrets: Boolean,
     execute: Boolean): Job! @access(scope: JOBS, kind: RW)
 
   # Queues a pending job.
