@@ -262,7 +262,7 @@ func (r *mutationResolver) Submit(ctx context.Context, manifest string, tags []s
 		var tagbuf bytes.Buffer
 		for i, tag := range tags {
 			tagbuf.WriteString(tag)
-			if i + 1 < len(tags) {
+			if i+1 < len(tags) {
 				tagbuf.WriteString("/")
 			}
 		}
@@ -321,9 +321,8 @@ func (r *mutationResolver) Submit(ctx context.Context, manifest string, tags []s
 }
 
 func (r *mutationResolver) Start(ctx context.Context, jobID int) (*model.Job, error) {
-	user := auth.ForContext(ctx)
-
 	var job model.Job
+
 	if err := database.WithTx(ctx, nil, func(tx *sql.Tx) error {
 		row := tx.QueryRowContext(ctx, `
 			UPDATE job
@@ -335,8 +334,7 @@ func (r *mutationResolver) Start(ctx context.Context, jobID int) (*model.Job, er
 			RETURNING
 				id, created, updated, manifest, note, image, runner, owner_id,
 				tags, status;
-		`, jobID, user.UserID)
-
+		`, jobID, auth.ForContext(ctx).UserID)
 		if err := row.Scan(&job.ID, &job.Created, &job.Updated, &job.Manifest,
 			&job.Note, &job.Image, &job.Runner, &job.OwnerID, &job.RawTags,
 			&job.RawStatus); err != nil {
@@ -365,6 +363,7 @@ func (r *mutationResolver) Start(ctx context.Context, jobID int) (*model.Job, er
 
 func (r *mutationResolver) Cancel(ctx context.Context, jobID int) (*model.Job, error) {
 	job := (&model.Job{}).As(`j`)
+
 	if err := database.WithTx(ctx, nil, func(tx *sql.Tx) error {
 		row := database.
 			Select(ctx, job).
@@ -403,8 +402,108 @@ func (r *mutationResolver) Cancel(ctx context.Context, jobID int) (*model.Job, e
 	return job, nil
 }
 
-func (r *mutationResolver) CreateGroup(ctx context.Context, jobIds []*int, triggers []*model.TriggerInput, execute *bool) (*model.JobGroup, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) CreateGroup(ctx context.Context, jobIds []int, triggers []*model.TriggerInput, execute *bool, note *string) (*model.JobGroup, error) {
+	var (
+		group     model.JobGroup
+		manifests []struct {
+			ID       int
+			Manifest *Manifest
+		}
+	)
+
+	if err := database.WithTx(ctx, nil, func(tx *sql.Tx) error {
+		row := tx.QueryRowContext(ctx, `
+			INSERT INTO job_group (
+				created, updated, owner_id, note
+			) VALUES (
+				NOW() at time zone 'utc',
+				NOW() at time zone 'utc',
+				$1, $2
+			) RETURNING
+				id, created, note, owner_id
+			`, auth.ForContext(ctx).UserID, note)
+		if err := row.Scan(&group.ID, &group.Created,
+			&group.Note, &group.OwnerID); err != nil {
+			return err
+		}
+
+		result, err := tx.ExecContext(ctx, `
+			UPDATE job
+			SET job_group_id = $1
+			WHERE
+				job_group_id IS NULL AND
+				status = 'pending' AND
+				id = ANY($2) AND owner_id = $3;
+			`, group.ID, pq.Array(jobIds),auth.ForContext(ctx).UserID)
+		if err != nil {
+			panic(err)
+		}
+
+		affected, err := result.RowsAffected()
+		if err != nil {
+			panic(err)
+		}
+
+		if affected != int64(len(jobIds)) {
+			return fmt.Errorf("Invalid list of job IDs. All jobs must be owned by you, not assigned to another job group, and in the pending state.")
+		}
+
+		if execute != nil && !*execute {
+			return nil
+		}
+
+		rows, err := tx.QueryContext(ctx, `
+			UPDATE job SET status = 'queued'
+			WHERE id = ANY($1)
+			RETURNING id, manifest;
+		`, pq.Array(jobIds))
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var (
+				id       int
+				manifest string
+			)
+			if err := rows.Scan(&id, &manifest); err != nil {
+				return err
+			}
+
+			man, err := LoadManifest(manifest)
+			if err != nil {
+				// Invalid manifests shouldn't make it to the database
+				panic(err)
+			}
+
+			manifests = append(manifests, struct {
+				ID       int
+				Manifest *Manifest
+			}{
+				ID:       id,
+				Manifest: man,
+			})
+		}
+
+		if err := rows.Err(); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	if execute == nil || *execute {
+		for _, job := range manifests {
+			if err := SubmitJob(ctx, job.ID, job.Manifest); err != nil {
+				return nil, fmt.Errorf("Failed to submit some jobs: %e", err)
+			}
+		}
+	}
+
+	return &group, nil
 }
 
 func (r *mutationResolver) StartGroup(ctx context.Context, groupID int) (*model.JobGroup, error) {

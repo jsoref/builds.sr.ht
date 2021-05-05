@@ -113,7 +113,7 @@ type ComplexityRoot struct {
 		CancelGroup    func(childComplexity int, groupID int) int
 		Claim          func(childComplexity int, jobID int) int
 		CreateArtifact func(childComplexity int, jobID int, path string, contents string) int
-		CreateGroup    func(childComplexity int, jobIds []*int, triggers []*model.TriggerInput, execute *bool) int
+		CreateGroup    func(childComplexity int, jobIds []int, triggers []*model.TriggerInput, execute *bool, note *string) int
 		Start          func(childComplexity int, jobID int) int
 		StartGroup     func(childComplexity int, groupID int) int
 		Submit         func(childComplexity int, manifest string, tags []string, note *string, secrets *bool, execute *bool) int
@@ -215,7 +215,7 @@ type MutationResolver interface {
 	Submit(ctx context.Context, manifest string, tags []string, note *string, secrets *bool, execute *bool) (*model.Job, error)
 	Start(ctx context.Context, jobID int) (*model.Job, error)
 	Cancel(ctx context.Context, jobID int) (*model.Job, error)
-	CreateGroup(ctx context.Context, jobIds []*int, triggers []*model.TriggerInput, execute *bool) (*model.JobGroup, error)
+	CreateGroup(ctx context.Context, jobIds []int, triggers []*model.TriggerInput, execute *bool, note *string) (*model.JobGroup, error)
 	StartGroup(ctx context.Context, groupID int) (*model.JobGroup, error)
 	CancelGroup(ctx context.Context, groupID int) (*model.JobGroup, error)
 	Claim(ctx context.Context, jobID int) (*model.Job, error)
@@ -560,7 +560,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateGroup(childComplexity, args["jobIds"].([]*int), args["triggers"].([]*model.TriggerInput), args["execute"].(*bool)), true
+		return e.complexity.Mutation.CreateGroup(childComplexity, args["jobIds"].([]int), args["triggers"].([]*model.TriggerInput), args["execute"].(*bool), args["note"].(*string)), true
 
 	case "Mutation.start":
 		if e.complexity.Mutation.Start == nil {
@@ -1351,8 +1351,8 @@ type Mutation {
   #
   # 'execute' may be set to false to defer queueing this job. The job group is
   # executed immediately if unspecified.
-  createGroup(jobIds: [Int]!  triggers: [TriggerInput],
-    execute: Boolean): JobGroup! @access(scope: JOBS, kind: RW)
+  createGroup(jobIds: [Int!]!  triggers: [TriggerInput!],
+    execute: Boolean, note: String): JobGroup! @access(scope: JOBS, kind: RW)
 
   # Starts a pending job group.
   startGroup(groupId: Int!): JobGroup @access(scope: JOBS, kind: RW)
@@ -1503,10 +1503,10 @@ func (ec *executionContext) field_Mutation_createArtifact_args(ctx context.Conte
 func (ec *executionContext) field_Mutation_createGroup_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 []*int
+	var arg0 []int
 	if tmp, ok := rawArgs["jobIds"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("jobIds"))
-		arg0, err = ec.unmarshalNInt2ᚕᚖint(ctx, tmp)
+		arg0, err = ec.unmarshalNInt2ᚕintᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1515,7 +1515,7 @@ func (ec *executionContext) field_Mutation_createGroup_args(ctx context.Context,
 	var arg1 []*model.TriggerInput
 	if tmp, ok := rawArgs["triggers"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("triggers"))
-		arg1, err = ec.unmarshalOTriggerInput2ᚕᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐTriggerInput(ctx, tmp)
+		arg1, err = ec.unmarshalOTriggerInput2ᚕᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐTriggerInputᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1530,6 +1530,15 @@ func (ec *executionContext) field_Mutation_createGroup_args(ctx context.Context,
 		}
 	}
 	args["execute"] = arg2
+	var arg3 *string
+	if tmp, ok := rawArgs["note"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("note"))
+		arg3, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["note"] = arg3
 	return args, nil
 }
 
@@ -3307,7 +3316,7 @@ func (ec *executionContext) _Mutation_createGroup(ctx context.Context, field gra
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CreateGroup(rctx, args["jobIds"].([]*int), args["triggers"].([]*model.TriggerInput), args["execute"].(*bool))
+			return ec.resolvers.Mutation().CreateGroup(rctx, args["jobIds"].([]int), args["triggers"].([]*model.TriggerInput), args["execute"].(*bool), args["note"].(*string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			scope, err := ec.unmarshalNAccessScope2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐAccessScope(ctx, "JOBS")
@@ -8370,7 +8379,7 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) unmarshalNInt2ᚕᚖint(ctx context.Context, v interface{}) ([]*int, error) {
+func (ec *executionContext) unmarshalNInt2ᚕintᚄ(ctx context.Context, v interface{}) ([]int, error) {
 	var vSlice []interface{}
 	if v != nil {
 		if tmp1, ok := v.([]interface{}); ok {
@@ -8380,10 +8389,10 @@ func (ec *executionContext) unmarshalNInt2ᚕᚖint(ctx context.Context, v inter
 		}
 	}
 	var err error
-	res := make([]*int, len(vSlice))
+	res := make([]int, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalOInt2ᚖint(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNInt2int(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -8391,10 +8400,10 @@ func (ec *executionContext) unmarshalNInt2ᚕᚖint(ctx context.Context, v inter
 	return res, nil
 }
 
-func (ec *executionContext) marshalNInt2ᚕᚖint(ctx context.Context, sel ast.SelectionSet, v []*int) graphql.Marshaler {
+func (ec *executionContext) marshalNInt2ᚕintᚄ(ctx context.Context, sel ast.SelectionSet, v []int) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	for i := range v {
-		ret[i] = ec.marshalOInt2ᚖint(ctx, sel, v[i])
+		ret[i] = ec.marshalNInt2int(ctx, sel, v[i])
 	}
 
 	return ret
@@ -8741,6 +8750,11 @@ func (ec *executionContext) marshalNTriggerCondition2gitᚗsrᚗhtᚋאsircmpwn�
 	return v
 }
 
+func (ec *executionContext) unmarshalNTriggerInput2ᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐTriggerInput(ctx context.Context, v interface{}) (*model.TriggerInput, error) {
+	res, err := ec.unmarshalInputTriggerInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNTriggerType2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐTriggerType(ctx context.Context, v interface{}) (model.TriggerType, error) {
 	var res model.TriggerType
 	err := res.UnmarshalGQL(v)
@@ -9063,21 +9077,6 @@ func (ec *executionContext) unmarshalOEmailTriggerInput2ᚖgitᚗsrᚗhtᚋאsir
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := graphql.UnmarshalInt(v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return graphql.MarshalInt(*v)
-}
-
 func (ec *executionContext) marshalOJob2ᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐJob(ctx context.Context, sel ast.SelectionSet, v *model.Job) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -9235,7 +9234,7 @@ func (ec *executionContext) marshalOTrigger2gitᚗsrᚗhtᚋאsircmpwnᚋbuilds�
 	return ec._Trigger(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOTriggerInput2ᚕᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐTriggerInput(ctx context.Context, v interface{}) ([]*model.TriggerInput, error) {
+func (ec *executionContext) unmarshalOTriggerInput2ᚕᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐTriggerInputᚄ(ctx context.Context, v interface{}) ([]*model.TriggerInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -9251,20 +9250,12 @@ func (ec *executionContext) unmarshalOTriggerInput2ᚕᚖgitᚗsrᚗhtᚋאsircm
 	res := make([]*model.TriggerInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalOTriggerInput2ᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐTriggerInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNTriggerInput2ᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐTriggerInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
 	}
 	return res, nil
-}
-
-func (ec *executionContext) unmarshalOTriggerInput2ᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐTriggerInput(ctx context.Context, v interface{}) (*model.TriggerInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputTriggerInput(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOUser2ᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {

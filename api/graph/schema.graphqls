@@ -290,8 +290,8 @@ type Mutation {
   #
   # 'execute' may be set to false to defer queueing this job. The job group is
   # executed immediately if unspecified.
-  createGroup(jobIds: [Int]!  triggers: [TriggerInput],
-    execute: Boolean): JobGroup! @access(scope: JOBS, kind: RW)
+  createGroup(jobIds: [Int!]!  triggers: [TriggerInput!],
+    execute: Boolean, note: String): JobGroup! @access(scope: JOBS, kind: RW)
 
   # Starts a pending job group.
   startGroup(groupId: Int!): JobGroup @access(scope: JOBS, kind: RW)
