@@ -4,6 +4,7 @@ package graph
 // will be copied through when generating and any unknown code will be moved to the end.
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"fmt"
@@ -230,7 +231,7 @@ func (r *jobGroupResolver) Triggers(ctx context.Context, obj *model.JobGroup) ([
 	return triggers, nil
 }
 
-func (r *mutationResolver) Submit(ctx context.Context, manifest string, tags []*string, note *string, secrets *bool, execute *bool) (*model.Job, error) {
+func (r *mutationResolver) Submit(ctx context.Context, manifest string, tags []string, note *string, secrets *bool, execute *bool) (*model.Job, error) {
 	man, err := LoadManifest(manifest)
 	if err != nil {
 		return nil, err
@@ -241,8 +242,8 @@ func (r *mutationResolver) Submit(ctx context.Context, manifest string, tags []*
 	allowFree, _ := conf.Get("builds.sr.ht", "allow-free")
 	if allowFree != "yes" {
 		if user.UserType != "admin" &&
-				user.UserType != "active_free" &&
-				user.UserType != "active_non_paying" {
+			user.UserType != "active_free" &&
+			user.UserType != "active_non_paying" {
 			return nil, fmt.Errorf("A paid account is required to submit builds")
 		}
 	}
@@ -257,8 +258,15 @@ func (r *mutationResolver) Submit(ctx context.Context, manifest string, tags []*
 		if execute != nil && !*execute {
 			status = "pending"
 		}
-		// TODO: Tags
+		var tagbuf bytes.Buffer
+		for i, tag := range tags {
+			tagbuf.WriteString(tag)
+			if i + 1 < len(tags) {
+				tagbuf.WriteString("/")
+			}
+		}
 
+		// TODO: Refactor tags into a pg array
 		row := tx.QueryRowContext(ctx, `INSERT INTO job (
 			created, updated,
 			manifest, owner_id, secrets, note, tags, image, status
@@ -269,11 +277,11 @@ func (r *mutationResolver) Submit(ctx context.Context, manifest string, tags []*
 		) RETURNING
 			id, created, updated, manifest, note, image, runner, owner_id,
 			tags, status
-		`, manifest, user.UserID, sec, note, "", man.Image, status)
+		`, manifest, user.UserID, sec, note, tagbuf.String(), man.Image, status)
 
 		if err := row.Scan(&job.ID, &job.Created, &job.Updated, &job.Manifest,
-				&job.Note, &job.Image, &job.Runner, &job.OwnerID, &job.RawTags,
-				&job.RawStatus); err != nil {
+			&job.Note, &job.Image, &job.Runner, &job.OwnerID, &job.RawTags,
+			&job.RawStatus); err != nil {
 			return err
 		}
 

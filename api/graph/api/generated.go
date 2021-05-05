@@ -116,7 +116,7 @@ type ComplexityRoot struct {
 		CreateGroup    func(childComplexity int, jobIds []*int, triggers []*model.TriggerInput, execute *bool) int
 		Start          func(childComplexity int, jobID int) int
 		StartGroup     func(childComplexity int, groupID int) int
-		Submit         func(childComplexity int, manifest string, tags []*string, note *string, secrets *bool, execute *bool) int
+		Submit         func(childComplexity int, manifest string, tags []string, note *string, secrets *bool, execute *bool) int
 		UpdateJob      func(childComplexity int, jobID int, status model.JobStatus) int
 		UpdateTask     func(childComplexity int, taskID int, status model.TaskStatus) int
 	}
@@ -212,7 +212,7 @@ type JobGroupResolver interface {
 	Triggers(ctx context.Context, obj *model.JobGroup) ([]model.Trigger, error)
 }
 type MutationResolver interface {
-	Submit(ctx context.Context, manifest string, tags []*string, note *string, secrets *bool, execute *bool) (*model.Job, error)
+	Submit(ctx context.Context, manifest string, tags []string, note *string, secrets *bool, execute *bool) (*model.Job, error)
 	Start(ctx context.Context, jobID int) (*model.Job, error)
 	Cancel(ctx context.Context, jobID int) (*model.Job, error)
 	CreateGroup(ctx context.Context, jobIds []*int, triggers []*model.TriggerInput, execute *bool) (*model.JobGroup, error)
@@ -596,7 +596,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.Submit(childComplexity, args["manifest"].(string), args["tags"].([]*string), args["note"].(*string), args["secrets"].(*bool), args["execute"].(*bool)), true
+		return e.complexity.Mutation.Submit(childComplexity, args["manifest"].(string), args["tags"].([]string), args["note"].(*string), args["secrets"].(*bool), args["execute"].(*bool)), true
 
 	case "Mutation.updateJob":
 		if e.complexity.Mutation.UpdateJob == nil {
@@ -1338,7 +1338,7 @@ type Mutation {
   #
   # 'execute' may be set to false to defer queueing this job. Builds are
   # executed immediately if unspecified.
-  submit(manifest: String!, tags: [String] note: String, secrets: Boolean,
+  submit(manifest: String!, tags: [String!] note: String, secrets: Boolean,
     execute: Boolean): Job! @access(scope: JOBS, kind: RW)
 
   # Queues a pending job.
@@ -1575,10 +1575,10 @@ func (ec *executionContext) field_Mutation_submit_args(ctx context.Context, rawA
 		}
 	}
 	args["manifest"] = arg0
-	var arg1 []*string
+	var arg1 []string
 	if tmp, ok := rawArgs["tags"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tags"))
-		arg1, err = ec.unmarshalOString2ᚕᚖstring(ctx, tmp)
+		arg1, err = ec.unmarshalOString2ᚕstringᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3103,7 +3103,7 @@ func (ec *executionContext) _Mutation_submit(ctx context.Context, field graphql.
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().Submit(rctx, args["manifest"].(string), args["tags"].([]*string), args["note"].(*string), args["secrets"].(*bool), args["execute"].(*bool))
+			return ec.resolvers.Mutation().Submit(rctx, args["manifest"].(string), args["tags"].([]string), args["note"].(*string), args["secrets"].(*bool), args["execute"].(*bool))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			scope, err := ec.unmarshalNAccessScope2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐAccessScope(ctx, "JOBS")
@@ -9155,7 +9155,7 @@ func (ec *executionContext) marshalOString2string(ctx context.Context, sel ast.S
 	return graphql.MarshalString(v)
 }
 
-func (ec *executionContext) unmarshalOString2ᚕᚖstring(ctx context.Context, v interface{}) ([]*string, error) {
+func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -9168,10 +9168,10 @@ func (ec *executionContext) unmarshalOString2ᚕᚖstring(ctx context.Context, v
 		}
 	}
 	var err error
-	res := make([]*string, len(vSlice))
+	res := make([]string, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalOString2ᚖstring(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -9179,13 +9179,13 @@ func (ec *executionContext) unmarshalOString2ᚕᚖstring(ctx context.Context, v
 	return res, nil
 }
 
-func (ec *executionContext) marshalOString2ᚕᚖstring(ctx context.Context, sel ast.SelectionSet, v []*string) graphql.Marshaler {
+func (ec *executionContext) marshalOString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	ret := make(graphql.Array, len(v))
 	for i := range v {
-		ret[i] = ec.marshalOString2ᚖstring(ctx, sel, v[i])
+		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
 	}
 
 	return ret
