@@ -8,6 +8,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net/http"
 
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/graph/api"
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/graph/model"
@@ -363,7 +364,43 @@ func (r *mutationResolver) Start(ctx context.Context, jobID int) (*model.Job, er
 }
 
 func (r *mutationResolver) Cancel(ctx context.Context, jobID int) (*model.Job, error) {
-	panic(fmt.Errorf("not implemented"))
+	job := (&model.Job{}).As(`j`)
+	if err := database.WithTx(ctx, nil, func(tx *sql.Tx) error {
+		row := database.
+			Select(ctx, job).
+			From(`job j`).
+			Columns(`j.runner`).
+			Where(`j.id = ?`, jobID).
+			Where(`j.owner_id = ?`, auth.ForContext(ctx).UserID).
+			Where(`j.status = 'running'`).
+			RunWith(tx).
+			QueryRowContext(ctx)
+
+		var runner string
+		if err := row.Scan(append(
+			database.Scan(ctx, job), &runner)...); err != nil {
+			if err == sql.ErrNoRows {
+				return fmt.Errorf("Found no running jobs for your acocunt with this ID")
+			}
+			return err
+		}
+
+		resp, err := http.Post(fmt.Sprintf("http://%s/job/%d/cancel",
+			runner, job.ID), "application/json", bytes.NewReader([]byte{}))
+		if err != nil {
+			return err
+		}
+		if resp.StatusCode != 200 {
+			return fmt.Errorf("Failed to cancel job")
+		}
+
+		job.RawStatus = "cancelled"
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return job, nil
 }
 
 func (r *mutationResolver) CreateGroup(ctx context.Context, jobIds []*int, triggers []*model.TriggerInput, execute *bool) (*model.JobGroup, error) {
