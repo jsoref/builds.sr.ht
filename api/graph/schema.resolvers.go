@@ -434,7 +434,7 @@ func (r *mutationResolver) CreateGroup(ctx context.Context, jobIds []int, trigge
 				job_group_id IS NULL AND
 				status = 'pending' AND
 				id = ANY($2) AND owner_id = $3;
-			`, group.ID, pq.Array(jobIds),auth.ForContext(ctx).UserID)
+			`, group.ID, pq.Array(jobIds), auth.ForContext(ctx).UserID)
 		if err != nil {
 			panic(err)
 		}
@@ -507,10 +507,6 @@ func (r *mutationResolver) CreateGroup(ctx context.Context, jobIds []int, trigge
 }
 
 func (r *mutationResolver) StartGroup(ctx context.Context, groupID int) (*model.JobGroup, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *mutationResolver) CancelGroup(ctx context.Context, groupID int) (*model.JobGroup, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 

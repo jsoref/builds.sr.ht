@@ -296,9 +296,6 @@ type Mutation {
   # Starts a pending job group.
   startGroup(groupId: Int!): JobGroup @access(scope: JOBS, kind: RW)
 
-  # Cancels a submitted job group.
-  cancelGroup(groupId: Int!): JobGroup @access(scope: JOBS, kind: RW)
-
   ###
   ### The following resolvers are for internal worker use
 

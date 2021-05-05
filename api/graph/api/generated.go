@@ -110,7 +110,6 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		Cancel         func(childComplexity int, jobID int) int
-		CancelGroup    func(childComplexity int, groupID int) int
 		Claim          func(childComplexity int, jobID int) int
 		CreateArtifact func(childComplexity int, jobID int, path string, contents string) int
 		CreateGroup    func(childComplexity int, jobIds []int, triggers []*model.TriggerInput, execute *bool, note *string) int
@@ -217,7 +216,6 @@ type MutationResolver interface {
 	Cancel(ctx context.Context, jobID int) (*model.Job, error)
 	CreateGroup(ctx context.Context, jobIds []int, triggers []*model.TriggerInput, execute *bool, note *string) (*model.JobGroup, error)
 	StartGroup(ctx context.Context, groupID int) (*model.JobGroup, error)
-	CancelGroup(ctx context.Context, groupID int) (*model.JobGroup, error)
 	Claim(ctx context.Context, jobID int) (*model.Job, error)
 	UpdateJob(ctx context.Context, jobID int, status model.JobStatus) (*model.Job, error)
 	UpdateTask(ctx context.Context, taskID int, status model.TaskStatus) (*model.Job, error)
@@ -513,18 +511,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.Cancel(childComplexity, args["jobId"].(int)), true
-
-	case "Mutation.cancelGroup":
-		if e.complexity.Mutation.CancelGroup == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_cancelGroup_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CancelGroup(childComplexity, args["groupId"].(int)), true
 
 	case "Mutation.claim":
 		if e.complexity.Mutation.Claim == nil {
@@ -1357,9 +1343,6 @@ type Mutation {
   # Starts a pending job group.
   startGroup(groupId: Int!): JobGroup @access(scope: JOBS, kind: RW)
 
-  # Cancels a submitted job group.
-  cancelGroup(groupId: Int!): JobGroup @access(scope: JOBS, kind: RW)
-
   ###
   ### The following resolvers are for internal worker use
 
@@ -1419,21 +1402,6 @@ func (ec *executionContext) dir_scopehelp_args(ctx context.Context, rawArgs map[
 		}
 	}
 	args["details"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_cancelGroup_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 int
-	if tmp, ok := rawArgs["groupId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("groupId"))
-		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["groupId"] = arg0
 	return args, nil
 }
 
@@ -3387,73 +3355,6 @@ func (ec *executionContext) _Mutation_startGroup(ctx context.Context, field grap
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().StartGroup(rctx, args["groupId"].(int))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			scope, err := ec.unmarshalNAccessScope2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐAccessScope(ctx, "JOBS")
-			if err != nil {
-				return nil, err
-			}
-			kind, err := ec.unmarshalNAccessKind2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐAccessKind(ctx, "RW")
-			if err != nil {
-				return nil, err
-			}
-			if ec.directives.Access == nil {
-				return nil, errors.New("directive access is not implemented")
-			}
-			return ec.directives.Access(ctx, nil, directive0, scope, kind)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(*model.JobGroup); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *git.sr.ht/~sircmpwn/builds.sr.ht/api/graph/model.JobGroup`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.JobGroup)
-	fc.Result = res
-	return ec.marshalOJobGroup2ᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐJobGroup(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_cancelGroup(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_cancelGroup_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CancelGroup(rctx, args["groupId"].(int))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			scope, err := ec.unmarshalNAccessScope2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐAccessScope(ctx, "JOBS")
@@ -7454,8 +7355,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "startGroup":
 			out.Values[i] = ec._Mutation_startGroup(ctx, field)
-		case "cancelGroup":
-			out.Values[i] = ec._Mutation_cancelGroup(ctx, field)
 		case "claim":
 			out.Values[i] = ec._Mutation_claim(ctx, field)
 		case "updateJob":
