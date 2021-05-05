@@ -320,7 +320,46 @@ func (r *mutationResolver) Submit(ctx context.Context, manifest string, tags []s
 }
 
 func (r *mutationResolver) Start(ctx context.Context, jobID int) (*model.Job, error) {
-	panic(fmt.Errorf("not implemented"))
+	user := auth.ForContext(ctx)
+
+	var job model.Job
+	if err := database.WithTx(ctx, nil, func(tx *sql.Tx) error {
+		row := tx.QueryRowContext(ctx, `
+			UPDATE job
+			SET status = 'queued'
+			WHERE
+				id = $1 AND
+				status = 'pending' AND
+				owner_id = $2
+			RETURNING
+				id, created, updated, manifest, note, image, runner, owner_id,
+				tags, status;
+		`, jobID, user.UserID)
+
+		if err := row.Scan(&job.ID, &job.Created, &job.Updated, &job.Manifest,
+			&job.Note, &job.Image, &job.Runner, &job.OwnerID, &job.RawTags,
+			&job.RawStatus); err != nil {
+			if err == sql.ErrNoRows {
+				return fmt.Errorf("Found no pending jobs with this ID on your account")
+			}
+			return err
+		}
+
+		man, err := LoadManifest(job.Manifest)
+		if err != nil {
+			// Invalid manifests should not have made it to the database
+			panic(err)
+		}
+		if err := SubmitJob(ctx, job.ID, man); err != nil {
+			panic(err)
+		}
+
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return &job, nil
 }
 
 func (r *mutationResolver) Cancel(ctx context.Context, jobID int) (*model.Job, error) {
