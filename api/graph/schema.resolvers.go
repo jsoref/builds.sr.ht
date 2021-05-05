@@ -297,15 +297,15 @@ func (r *mutationResolver) Submit(ctx context.Context, manifest string, tags []*
 			}
 		}
 
-		if execute == nil || *execute {
-			if err := SubmitJob(ctx, job.ID, man); err != nil {
-				return err
-			}
-		}
-
 		return nil
 	}); err != nil {
 		return nil, err
+	}
+
+	if execute == nil || *execute {
+		if err := SubmitJob(ctx, job.ID, man); err != nil {
+			panic(err)
+		}
 	}
 
 	return &job, nil
