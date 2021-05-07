@@ -448,6 +448,8 @@ func (r *mutationResolver) CreateGroup(ctx context.Context, jobIds []int, trigge
 			return fmt.Errorf("Invalid list of job IDs. All jobs must be owned by you, not assigned to another job group, and in the pending state.")
 		}
 
+		// TODO: Triggers
+
 		if execute != nil && !*execute {
 			return nil
 		}
@@ -507,7 +509,80 @@ func (r *mutationResolver) CreateGroup(ctx context.Context, jobIds []int, trigge
 }
 
 func (r *mutationResolver) StartGroup(ctx context.Context, groupID int) (*model.JobGroup, error) {
-	panic(fmt.Errorf("not implemented"))
+	var (
+		group     model.JobGroup
+		manifests []struct {
+			ID       int
+			Manifest *Manifest
+		}
+	)
+
+	if err := database.WithTx(ctx, nil, func(tx *sql.Tx) error {
+		row := tx.QueryRowContext(ctx, `
+			UPDATE job_group SET updated = NOW() at time zone 'utc'
+			WHERE id = $1 AND owner_id = $2
+			RETURNING id, created, note, owner_id
+			`, groupID, auth.ForContext(ctx).UserID)
+		if err := row.Scan(&group.ID, &group.Created,
+			&group.Note, &group.OwnerID); err != nil {
+			if err == sql.ErrNoRows {
+				return fmt.Errorf("Found no job group by this ID for your account")
+			}
+			return err
+		}
+
+		rows, err := tx.QueryContext(ctx, `
+			UPDATE job SET status = 'queued'
+			WHERE job_group_id = $1
+			RETURNING id, manifest;
+		`, groupID)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var (
+				id       int
+				manifest string
+			)
+			if err := rows.Scan(&id, &manifest); err != nil {
+				return err
+			}
+
+			man, err := LoadManifest(manifest)
+			if err != nil {
+				// Invalid manifests shouldn't make it to the database
+				panic(err)
+			}
+
+			manifests = append(manifests, struct {
+				ID       int
+				Manifest *Manifest
+			}{
+				ID:       id,
+				Manifest: man,
+			})
+		}
+
+		if err := rows.Err(); err != nil {
+			return err
+		}
+
+		return nil
+
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	for _, job := range manifests {
+		if err := SubmitJob(ctx, job.ID, job.Manifest); err != nil {
+			return nil, fmt.Errorf("Failed to submit some jobs: %e", err)
+		}
+	}
+
+	return &group, nil
 }
 
 func (r *mutationResolver) Claim(ctx context.Context, jobID int) (*model.Job, error) {
