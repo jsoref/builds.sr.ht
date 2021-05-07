@@ -7,8 +7,10 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/graph/api"
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/graph/model"
@@ -442,7 +444,77 @@ func (r *mutationResolver) CreateGroup(ctx context.Context, jobIds []int, trigge
 			return fmt.Errorf("Invalid list of job IDs. All jobs must be owned by you, not assigned to another job group, and in the pending state.")
 		}
 
-		// TODO: Triggers
+		for _, trigger := range triggers {
+			if trigger == nil {
+				panic("GQL schema invariant broken: nil trigger")
+			}
+
+			type EmailDetails struct {
+				Action    string  `json:"action"`
+				Condition string  `json:"condition"`
+				To        string  `json:"to"`
+				Cc        *string `json:"cc"`
+				InReplyTo *string `json:"in_reply_to"`
+			}
+			type WebhookDetails struct {
+				Action    string `json:"action"`
+				Condition string `json:"condition"`
+				URL       string `json:"url"`
+			}
+
+			var (
+				details     string
+				triggerType string
+			)
+
+			// TODO: Drop job_id column from triggers (unused)
+			switch trigger.Type {
+			case model.TriggerTypeEmail:
+				triggerType = "email"
+				email := EmailDetails {
+					Action: "email",
+					Condition: strings.ToLower(trigger.Condition.String()),
+					To: trigger.Email.To,
+					Cc: trigger.Email.Cc,
+					InReplyTo: trigger.Email.InReplyTo,
+				}
+				buf, err := json.Marshal(&email)
+				if err != nil {
+					panic(err)
+				}
+				details = string(buf)
+			case model.TriggerTypeWebhook:
+				triggerType = "webhook"
+				webhook := WebhookDetails {
+					Action: "webhook",
+					Condition: strings.ToLower(trigger.Condition.String()),
+					URL: trigger.Webhook.URL,
+				}
+				buf, err := json.Marshal(&webhook)
+				if err != nil {
+					panic(err)
+				}
+				details = string(buf)
+			default:
+				panic("GQL schema invariant broken: invalid trigger type")
+			}
+
+			_, err = tx.ExecContext(ctx, `
+				INSERT INTO trigger (
+					created, updated, details, condition, trigger_type,
+					job_group_id
+				) VALUES (
+					NOW() at time zone 'utc',
+					NOW() at time zone 'utc',
+					$1, $2, $3, $4
+				)`,
+				details, strings.ToLower(trigger.Condition.String()),
+				triggerType, group.ID)
+
+			if err != nil {
+				return err
+			}
+		}
 
 		if execute != nil && !*execute {
 			return nil
