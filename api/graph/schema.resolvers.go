@@ -403,13 +403,7 @@ func (r *mutationResolver) Cancel(ctx context.Context, jobID int) (*model.Job, e
 }
 
 func (r *mutationResolver) CreateGroup(ctx context.Context, jobIds []int, triggers []*model.TriggerInput, execute *bool, note *string) (*model.JobGroup, error) {
-	var (
-		group     model.JobGroup
-		manifests []struct {
-			ID       int
-			Manifest *Manifest
-		}
-	)
+	var group model.JobGroup
 
 	if err := database.WithTx(ctx, nil, func(tx *sql.Tx) error {
 		row := tx.QueryRowContext(ctx, `
@@ -454,68 +448,16 @@ func (r *mutationResolver) CreateGroup(ctx context.Context, jobIds []int, trigge
 			return nil
 		}
 
-		rows, err := tx.QueryContext(ctx, `
-			UPDATE job SET status = 'queued'
-			WHERE id = ANY($1)
-			RETURNING id, manifest;
-		`, pq.Array(jobIds))
-		if err != nil {
-			return err
-		}
-		defer rows.Close()
-
-		for rows.Next() {
-			var (
-				id       int
-				manifest string
-			)
-			if err := rows.Scan(&id, &manifest); err != nil {
-				return err
-			}
-
-			man, err := LoadManifest(manifest)
-			if err != nil {
-				// Invalid manifests shouldn't make it to the database
-				panic(err)
-			}
-
-			manifests = append(manifests, struct {
-				ID       int
-				Manifest *Manifest
-			}{
-				ID:       id,
-				Manifest: man,
-			})
-		}
-
-		if err := rows.Err(); err != nil {
-			return err
-		}
-
-		return nil
+		return StartJobGroupUnsafe(ctx, tx, group.ID)
 	}); err != nil {
 		return nil, err
-	}
-
-	if execute == nil || *execute {
-		for _, job := range manifests {
-			if err := SubmitJob(ctx, job.ID, job.Manifest); err != nil {
-				return nil, fmt.Errorf("Failed to submit some jobs: %e", err)
-			}
-		}
 	}
 
 	return &group, nil
 }
 
 func (r *mutationResolver) StartGroup(ctx context.Context, groupID int) (*model.JobGroup, error) {
-	var (
-		group     model.JobGroup
-		manifests []struct {
-			ID       int
-			Manifest *Manifest
-		}
-	)
+	var group model.JobGroup
 
 	if err := database.WithTx(ctx, nil, func(tx *sql.Tx) error {
 		row := tx.QueryRowContext(ctx, `
@@ -531,55 +473,9 @@ func (r *mutationResolver) StartGroup(ctx context.Context, groupID int) (*model.
 			return err
 		}
 
-		rows, err := tx.QueryContext(ctx, `
-			UPDATE job SET status = 'queued'
-			WHERE job_group_id = $1
-			RETURNING id, manifest;
-		`, groupID)
-		if err != nil {
-			return err
-		}
-		defer rows.Close()
-
-		for rows.Next() {
-			var (
-				id       int
-				manifest string
-			)
-			if err := rows.Scan(&id, &manifest); err != nil {
-				return err
-			}
-
-			man, err := LoadManifest(manifest)
-			if err != nil {
-				// Invalid manifests shouldn't make it to the database
-				panic(err)
-			}
-
-			manifests = append(manifests, struct {
-				ID       int
-				Manifest *Manifest
-			}{
-				ID:       id,
-				Manifest: man,
-			})
-		}
-
-		if err := rows.Err(); err != nil {
-			return err
-		}
-
-		return nil
-
-		return nil
+		return StartJobGroupUnsafe(ctx, tx, groupID)
 	}); err != nil {
 		return nil, err
-	}
-
-	for _, job := range manifests {
-		if err := SubmitJob(ctx, job.ID, job.Manifest); err != nil {
-			return nil, fmt.Errorf("Failed to submit some jobs: %e", err)
-		}
 	}
 
 	return &group, nil
