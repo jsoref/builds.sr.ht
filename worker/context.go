@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
+	"github.com/google/shlex"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -252,8 +253,14 @@ func (ctx *JobContext) Standby(buildUser string) {
 func (ctx *JobContext) Control(
 	context context.Context, args ...string) *exec.Cmd {
 
-	control := conf("builds.sr.ht::worker", "controlcmd")
-	return exec.CommandContext(context, control, args...)
+	controlString := conf("builds.sr.ht::worker", "controlcmd")
+	controlSplitted, err := shlex.Split(controlString)
+	if err != nil {
+		panic(errors.Wrap(err, "controlcmd"))
+	}
+	args = append(controlSplitted[1:], args...)
+
+	return exec.CommandContext(context, controlSplitted[0], args...)
 }
 
 func (ctx *JobContext) SSH(args ...string) *exec.Cmd {
