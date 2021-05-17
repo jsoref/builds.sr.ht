@@ -257,17 +257,11 @@ func (r *mutationResolver) Submit(ctx context.Context, manifest string, tags []s
 		if secrets != nil {
 			sec = *secrets
 		}
-		status := "queued"
-		if execute != nil && !*execute {
+		status := "pending"
+		if execute == nil || *execute {
 			status = "pending"
 		}
-		var tagbuf bytes.Buffer
-		for i, tag := range tags {
-			tagbuf.WriteString(tag)
-			if i+1 < len(tags) {
-				tagbuf.WriteString("/")
-			}
-		}
+		tags := strings.Join(tags, "/")
 
 		// TODO: Refactor tags into a pg array
 		row := tx.QueryRowContext(ctx, `INSERT INTO job (
@@ -280,7 +274,7 @@ func (r *mutationResolver) Submit(ctx context.Context, manifest string, tags []s
 		) RETURNING
 			id, created, updated, manifest, note, image, runner, owner_id,
 			tags, status
-		`, manifest, user.UserID, sec, note, tagbuf.String(), man.Image, status)
+		`, manifest, user.UserID, sec, note, tags, man.Image, status)
 
 		if err := row.Scan(&job.ID, &job.Created, &job.Updated, &job.Manifest,
 			&job.Note, &job.Image, &job.Runner, &job.OwnerID, &job.RawTags,
