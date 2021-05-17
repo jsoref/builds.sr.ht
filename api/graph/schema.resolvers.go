@@ -246,7 +246,7 @@ func (r *mutationResolver) Submit(ctx context.Context, manifest string, tags []s
 	if allowFree != "yes" {
 		if user.UserType != "admin" &&
 			user.UserType != "active_free" &&
-			user.UserType != "active_non_paying" {
+			user.UserType != "active_paying" {
 			return nil, fmt.Errorf("A paid account is required to submit builds")
 		}
 	}
