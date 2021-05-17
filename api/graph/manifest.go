@@ -15,27 +15,27 @@ type Trigger struct {
 	Condition string `yaml:"condition",json:"condition"`
 
 	// Email fields
-	To        *string `yaml:"to",json:"to",omitempty`
-	Cc        *string `yaml:"cc",json:"cc",omitempty`
-	InReplyTo *string `yaml:"in_reply_to",json:"in_reply_to",omitempty`
+	To        *string `yaml:"to",json:"to,omitempty"`
+	Cc        *string `yaml:"cc",json:"cc,omitempty"`
+	InReplyTo *string `yaml:"in_reply_to",json:"in_reply_to,omitempty"`
 
 	// Webhook fields
 	Url *string `yaml:"url",json:"url"`
 }
 
 type Manifest struct {
-	Arch         *string                `yaml:"arch",json:"arch",omitempty`
-	Artifacts    []string               `yaml:"artifacts",json:"artifacts",omitempty`
-	Environment  map[string]interface{} `yaml:"environment",json:"environment",omitempty`
+	Arch         *string                `yaml:"arch",json:"arch,omitempty"`
+	Artifacts    []string               `yaml:"artifacts",json:"artifacts,omitempty"`
+	Environment  map[string]interface{} `yaml:"environment",json:"environment,omitempty"`
 	Image        string                 `yaml:"image",json:"image"`
-	Packages     []string               `yaml:"packages",json:"packages",omitempty`
-	Repositories map[string]string      `yaml:"repositories",json:"repositories",omitempty`
-	Secrets      []string               `yaml:"secrets",json:"secrets",omitempty`
-	Shell        bool                   `yaml:"shell",json:"shell",omitempty`
-	Sources      []string               `yaml:"sources",json:"sources",omitempty`
+	Packages     []string               `yaml:"packages",json:"packages,omitempty"`
+	Repositories map[string]string      `yaml:"repositories",json:"repositories,omitempty"`
+	Secrets      []string               `yaml:"secrets",json:"secrets,omitempty"`
+	Shell        bool                   `yaml:"shell",json:"shell,omitempty"`
+	Sources      []string               `yaml:"sources",json:"sources,omitempty"`
 	Tasks        []map[string]string    `yaml:"tasks",json:"tasks"`
-	Triggers     []Trigger              `yaml:"triggers",json:"triggers",omitempty`
-	OAuth        string                 `yaml:"oauth",json:"oauth",omitempty`
+	Triggers     []Trigger              `yaml:"triggers",json:"triggers,omitempty"`
+	OAuth        string                 `yaml:"oauth",json:"oauth,omitempty"`
 }
 
 func LoadManifest(in string) (*Manifest, error) {
@@ -92,7 +92,7 @@ func LoadManifest(in string) (*Manifest, error) {
 	for _, trigger := range manifest.Triggers {
 		switch trigger.Action {
 		case "email":
-			if trigger.To == nil || trigger.Cc == nil {
+			if trigger.To == nil && trigger.Cc == nil {
 				return nil, fmt.Errorf("email trigger requires 'to' or 'cc'")
 			}
 		case "webhook":
