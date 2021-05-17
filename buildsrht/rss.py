@@ -18,7 +18,7 @@ def generate_feed(jobs, title, link, description):
         element = ET.SubElement(channel, "item")
         title, description = f"#{job.id} ({job.status.name})", job.note
         author = job.owner.username
-        url = f"{ORIGIN}/{author}/{job.id}"
+        url = f"{ORIGIN}/~{author}/{job.id}"
         time = job.updated.strftime(RFC_822_FORMAT)
         ET.SubElement(element, "title").text = title
         if description:
