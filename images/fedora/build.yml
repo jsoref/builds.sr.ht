@@ -18,6 +18,7 @@ triggers:
   - action: email
     condition: failure
     to: Drew DeVault <sir@cmpwn.com>
+    cc: Timothée Floure <timothee.floure@posteo.net>
 tasks:
   - genimg: |
       cd builds.sr.ht
