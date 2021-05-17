@@ -16,6 +16,7 @@ triggers:
   - action: email
     condition: failure
     to: Drew DeVault <sir@cmpwn.com>
+    cc: Simon Ser <contact@emersion.fr>
 tasks:
   - genimg: |
       cd builds.sr.ht/images/freebsd/$release
