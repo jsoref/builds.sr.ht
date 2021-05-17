@@ -127,7 +127,7 @@ type Artifact {
 # back into the same endpoint to retrieve another page. If the cursor is null,
 # there are no remaining results to return.
 type JobCursor {
-  results: [Job]!
+  results: [Job!]!
   cursor: Cursor
 }
 
@@ -196,7 +196,7 @@ interface Secret {
 # back into the same endpoint to retrieve another page. If the cursor is null,
 # there are no remaining results to return.
 type SecretCursor {
-  results: [Secret]!
+  results: [Secret!]!
   cursor: Cursor
 }
 

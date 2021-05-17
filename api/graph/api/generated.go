@@ -1188,7 +1188,7 @@ type Artifact {
 # back into the same endpoint to retrieve another page. If the cursor is null,
 # there are no remaining results to return.
 type JobCursor {
-  results: [Job]!
+  results: [Job!]!
   cursor: Cursor
 }
 
@@ -1257,7 +1257,7 @@ interface Secret {
 # back into the same endpoint to retrieve another page. If the cursor is null,
 # there are no remaining results to return.
 type SecretCursor {
-  results: [Secret]!
+  results: [Secret!]!
   cursor: Cursor
 }
 
@@ -2737,7 +2737,7 @@ func (ec *executionContext) _JobCursor_results(ctx context.Context, field graphq
 	}
 	res := resTmp.([]*model.Job)
 	fc.Result = res
-	return ec.marshalNJob2ᚕᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐJob(ctx, field.Selections, res)
+	return ec.marshalNJob2ᚕᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐJobᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _JobCursor_cursor(ctx context.Context, field graphql.CollectedField, obj *model.JobCursor) (ret graphql.Marshaler) {
@@ -4647,7 +4647,7 @@ func (ec *executionContext) _SecretCursor_results(ctx context.Context, field gra
 	}
 	res := resTmp.([]model.Secret)
 	fc.Result = res
-	return ec.marshalNSecret2ᚕgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐSecret(ctx, field.Selections, res)
+	return ec.marshalNSecret2ᚕgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐSecretᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _SecretCursor_cursor(ctx context.Context, field graphql.CollectedField, obj *model.SecretCursor) (ret graphql.Marshaler) {
@@ -8441,6 +8441,43 @@ func (ec *executionContext) marshalNJob2ᚕᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuild
 	return ret
 }
 
+func (ec *executionContext) marshalNJob2ᚕᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐJobᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Job) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNJob2ᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐJob(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
 func (ec *executionContext) marshalNJob2ᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐJob(ctx context.Context, sel ast.SelectionSet, v *model.Job) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -8489,7 +8526,17 @@ func (ec *executionContext) marshalNJobStatus2gitᚗsrᚗhtᚋאsircmpwnᚋbuild
 	return v
 }
 
-func (ec *executionContext) marshalNSecret2ᚕgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐSecret(ctx context.Context, sel ast.SelectionSet, v []model.Secret) graphql.Marshaler {
+func (ec *executionContext) marshalNSecret2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐSecret(ctx context.Context, sel ast.SelectionSet, v model.Secret) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Secret(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSecret2ᚕgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐSecretᚄ(ctx context.Context, sel ast.SelectionSet, v []model.Secret) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -8513,7 +8560,7 @@ func (ec *executionContext) marshalNSecret2ᚕgitᚗsrᚗhtᚋאsircmpwnᚋbuild
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOSecret2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐSecret(ctx, sel, v[i])
+			ret[i] = ec.marshalNSecret2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐSecret(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
