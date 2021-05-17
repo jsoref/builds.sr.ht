@@ -16,3 +16,4 @@ logs
 vmlinuz
 vmlinux
 *.img
+api
