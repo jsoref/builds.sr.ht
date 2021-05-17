@@ -375,7 +375,7 @@ func (r *mutationResolver) Cancel(ctx context.Context, jobID int) (*model.Job, e
 		if err := row.Scan(append(
 			database.Scan(ctx, job), &runner)...); err != nil {
 			if err == sql.ErrNoRows {
-				return fmt.Errorf("Found no running jobs for your acocunt with this ID")
+				return fmt.Errorf("Found no running jobs for your account with this ID")
 			}
 			return err
 		}
