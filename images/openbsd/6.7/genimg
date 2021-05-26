@@ -1,3 +1,0 @@
-#!/bin/sh
-export openbsd_version="6.7"
-exec ../genimg "$@"
