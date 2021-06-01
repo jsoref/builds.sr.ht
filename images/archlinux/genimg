@@ -119,10 +119,10 @@ EOF
 
 echo "makeopts=(--skippgpcheck)" >> $root/etc/makepkg.conf
 
-run_normal curl -O https://aur.archlinux.org/cgit/aur.git/snapshot/yay-bin.tar.gz
-run_normal tar xf yay-bin.tar.gz
-run_normal 'cd yay-bin && makepkg -si --noconfirm --skippgpcheck'
-run_normal rm -r yay-bin yay-bin.tar.gz
+run_normal curl -O https://aur.archlinux.org/cgit/aur.git/snapshot/yay.tar.gz
+run_normal tar xf yay.tar.gz
+run_normal 'cd yay && env GOCACHE=/tmp/cache makepkg -si --noconfirm --skippgpcheck'
+run_normal rm -rf /tmp/cache yay yay.tar.gz
 
 cat > "$root"/home/build/.gitconfig << EOF
 [user]
