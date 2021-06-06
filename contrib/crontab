@@ -7,7 +7,9 @@
 30 22 * * * chronic /usr/local/bin/submit_image_build -n "Daily scheduled build image refresh" fedora/rawhide
 
 # Weekly refreshes
-30 19 * * 0 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" nixos/19.03
+30 19 * * 0 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" nixos/21.05
+# Nixos 20.09 will receive security updates for a short while:
+0 20 * * 0 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" nixos/20.09
 30 19 * * 1 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" -a amd64 debian/stable
 30 19 * * 2 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" -a amd64 debian/testing
 #30 19 * * 3 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" -a amd64 ubuntu/latest
