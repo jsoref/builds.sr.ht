@@ -33,9 +33,6 @@ def queue_build(job, manifest):
 def requires_payment(user):
     if allow_free:
         return False
-    # Temporary:
-    if user.created < datetime(year=2021, month=5, day=1):
-        return False
     return user.user_type not in [
         UserType.admin,
         UserType.active_paying,
