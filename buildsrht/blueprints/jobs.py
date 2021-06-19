@@ -5,6 +5,7 @@ from flask import Response, url_for
 from srht.cache import get_cache, set_cache
 from srht.config import cfg
 from srht.database import db
+from srht.redis import redis
 from srht.flask import paginate_query, session
 from srht.oauth import current_user, loginrequired, UserType
 from srht.validation import Validation
@@ -146,10 +147,7 @@ def svg_page(jobs):
         badge = badge_success.replace("__NAME__", name)
     else:
         badge = badge_failure.replace("__NAME__", name)
-    return Response(badge, mimetype="image/svg+xml", headers={
-        "Cache-Control": "no-cache",
-        "ETag": hashlib.sha1(badge.encode()).hexdigest(),
-    })
+    return badge
 
 @jobs.route("/")
 def index():
@@ -260,11 +258,19 @@ def user_rss(username):
 
 @jobs.route("/~<username>.svg")
 def user_svg(username):
-    user = User.query.filter(User.username == username).first()
-    if not user:
-        abort(404)
-    jobs = Job.query.filter(Job.owner_id == user.id)
-    return svg_page(jobs)
+    key = f"builds.sr.ht.svg.user.{username}"
+    badge = redis.get(key)
+    if not badge:
+        user = User.query.filter(User.username == username).first()
+        if not user:
+            abort(404)
+        jobs = Job.query.filter(Job.owner_id == user.id)
+        badge = svg_page(jobs).encode()
+        redis.setex(key, timedelta(seconds=30), badge)
+    return Response(badge, mimetype="image/svg+xml", headers={
+        "Cache-Control": "no-cache",
+        "ETag": hashlib.sha1(badge).hexdigest(),
+    })
 
 @jobs.route("/~<username>/<path:path>")
 def tag(username, path):
@@ -302,12 +308,20 @@ def tag_rss(username, path):
 
 @jobs.route("/~<username>/<path:path>.svg")
 def tag_svg(username, path):
-    user = User.query.filter(User.username == username).first()
-    if not user:
-        abort(404)
-    jobs = Job.query.filter(Job.owner_id == user.id)\
-        .filter(Job.tags.ilike(path + "%"))
-    return svg_page(jobs)
+    key = f"builds.sr.ht.svg.tag.{username}"
+    badge = redis.get(key)
+    if not badge:
+        user = User.query.filter(User.username == username).first()
+        if not user:
+            abort(404)
+        jobs = Job.query.filter(Job.owner_id == user.id)\
+            .filter(Job.tags.ilike(path + "%"))
+        badge = svg_page(jobs).encode()
+        redis.setex(key, timedelta(seconds=30), badge)
+    return Response(badge, mimetype="image/svg+xml", headers={
+        "Cache-Control": "no-cache",
+        "ETag": hashlib.sha1(badge).hexdigest(),
+    })
 
 log_max = 131072
 
