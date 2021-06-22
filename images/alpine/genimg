@@ -47,8 +47,8 @@ swapon /dev/nbd0p2
 
 # TODO: Remove bash
 apk add -U \
-	-X http://dl-2.alpinelinux.org/alpine/$release/main/ \
-	-X http://dl-2.alpinelinux.org/alpine/$release/community/ \
+	-X http://dl-cdn.alpinelinux.org/alpine/$release/main/ \
+	-X http://dl-cdn.alpinelinux.org/alpine/$release/community/ \
 	--allow-untrusted \
 	--arch="$arch" \
 	--root=/mnt \
