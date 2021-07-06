@@ -81,7 +81,11 @@
       {% for artifact in job.artifacts %}
         <tr>
           <td>
-            <span title="{{artifact.path}}">
+            <span title="{{artifact.path}}" style="
+                max-width: 200px;
+                overflow-x: hidden;
+                text-overflow: ellipsis;
+              ">
               {{artifact.name}}
             </span>
           </td>
