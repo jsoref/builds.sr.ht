@@ -80,12 +80,12 @@
       <table class="table table-sm">
       {% for artifact in job.artifacts %}
         <tr>
-          <td>
-            <span title="{{artifact.path}}" style="
-                max-width: 200px;
-                overflow-x: hidden;
-                text-overflow: ellipsis;
-              ">
+          <td style="
+              max-width: 200px;
+              overflow-x: hidden;
+              text-overflow: ellipsis;
+          ">
+            <span title="{{artifact.path}}">
               {{artifact.name}}
             </span>
           </td>
