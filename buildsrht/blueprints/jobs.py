@@ -197,6 +197,9 @@ def submit_POST():
     valid.expect(not _manifest or len(_manifest) < max_len,
             "Manifest must be less than {} bytes".format(max_len),
             field="manifest")
+    payment_required = requires_payment(current_user)
+    valid.expect(not payment_required,
+            "A paid account is required to submit new jobs")
     if not valid.ok:
         return render_template("submit.html", **valid.kwargs)
     try:
@@ -428,10 +431,15 @@ def job_by_id(username, job_id):
             if not get_log(log_url, task.name, task.status):
                 break
     min_artifact_date = datetime.utcnow() - timedelta(days=90)
+    if current_user:
+        payment_required = requires_payment(current_user)
+    else:
+        payment_required = True
     return render_template("job.html",
             job=job, logs=logs,
             build_user=build_user,
             status_map=status_map,
             icon_map=icon_map,
             sort_tasks=lambda tasks: sorted(tasks, key=lambda t: t.id),
-            min_artifact_date=min_artifact_date)
+            min_artifact_date=min_artifact_date,
+            payment_required=payment_required)

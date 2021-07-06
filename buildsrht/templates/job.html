@@ -42,7 +42,7 @@
       </dl>
       {% if current_user and job.status.value in [
         "success", "failed", "timeout", "cancelled"
-      ] %}
+      ] and not payment_required %}
       <form style="margin-bottom: 0.5rem" method="POST" action="/submit">
         {{csrf_token()}}
         <input
