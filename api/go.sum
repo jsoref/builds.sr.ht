@@ -2,6 +2,8 @@ cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMT
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 git.sr.ht/~sircmpwn/core-go v0.0.0-20210227202525-61ab3f08164e h1:S/rv7GZOnQPC94PSR+dXIvhdwqBVReiJGIngytokv6A=
 git.sr.ht/~sircmpwn/core-go v0.0.0-20210227202525-61ab3f08164e/go.mod h1:xKaQeRLMV136HaItd00yy6W2HeKeJJR2jp9p0Fsu0qM=
+git.sr.ht/~sircmpwn/core-go v0.0.0-20210721073626-39cd24bd091d h1:Brqt/hVm3ZSNObsq1ln7SLXSDG3ih+UEeudmBqJAch4=
+git.sr.ht/~sircmpwn/core-go v0.0.0-20210721073626-39cd24bd091d/go.mod h1:xKaQeRLMV136HaItd00yy6W2HeKeJJR2jp9p0Fsu0qM=
 git.sr.ht/~sircmpwn/dowork v0.0.0-20201013160733-35ca012e4dc8 h1:ltrdYYclC4wQEg3QdcG2hgYAFCk+6/l2vU1OXygKXVA=
 git.sr.ht/~sircmpwn/dowork v0.0.0-20201013160733-35ca012e4dc8/go.mod h1:8neHEO3503w/rNtttnR0JFpQgM/GFhaafVwvkPsFIDw=
 git.sr.ht/~sircmpwn/getopt v0.0.0-20191230200459-23622cc906b3 h1:4wDp4BKF7NQqoh73VXpZsB/t1OEhDpz/zEpmdQfbjDk=
