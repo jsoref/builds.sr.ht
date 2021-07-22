@@ -56,7 +56,8 @@ def secrets_POST():
         _secret = _secret.encode()
 
     if not valid.ok:
-        return render_template("secrets.html", **valid.kwargs)
+        secrets = Secret.query.filter(Secret.user_id == current_user.id).all()
+        return render_template("secrets.html", secrets=secrets, **valid.kwargs)
 
     secret = Secret(current_user, secret_type)
 
@@ -64,18 +65,21 @@ def secrets_POST():
         file_path = valid.require("file-path", friendly_name="Path")
         file_mode = valid.require("file-mode", friendly_name="Mode")
         if not valid.ok:
-            return render_template("secrets.html", **valid.kwargs)
+            secrets = Secret.query.filter(Secret.user_id == current_user.id).all()
+            return render_template("secrets.html", secrets=secrets, **valid.kwargs)
         try:
             file_mode = int(file_mode, 8)
         except:
             valid.error("Must be specified in octal",
                     field="file-mode")
         if not valid.ok:
-            return render_template("secrets.html", **valid.kwargs)
+            secrets = Secret.query.filter(Secret.user_id == current_user.id).all()
+            return render_template("secrets.html", secrets=secrets, **valid.kwargs)
         secret.path = file_path
         secret.mode = file_mode
     if not valid.ok:
-        return render_template("secrets.html", **valid.kwargs)
+        secrets = Secret.query.filter(Secret.user_id == current_user.id).all()
+        return render_template("secrets.html", secrets=secrets, **valid.kwargs)
 
     secret.name = name
     secret.secret = _secret
