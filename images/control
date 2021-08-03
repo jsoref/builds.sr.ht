@@ -96,6 +96,19 @@ _qemu_chroot_boot() {
 		"$@" &
 }
 
+_qemu_kvm_boot() {
+	qemu-kvm \
+		-pidfile /tmp/qemu-$port.id \
+		-m ${MEMORY:-4096} \
+		-smp cpus=2 \
+		-net nic,model=virtio -net user,hostfwd=tcp:127.0.0.1:$port-:$guestport \
+		-display none \
+		-device virtio-rng-pci \
+		-device virtio-balloon \
+		-drive file="$wd/$arch/root.img.qcow2",media=disk,snapshot=on,${driveopts:-if=virtio} \
+		"$@" &
+}
+
 _boot() {
 	if [ "$means" = "docker" ]
 	then
@@ -106,6 +119,9 @@ _boot() {
 	elif [ "$means" = "qemu-chroot" ]
 	then
 		_qemu_chroot_boot "$@"
+	elif [ "$means" = "qemu-kvm" ]
+	then
+		_qemu_kvm_boot "$@"
 	fi
 }
 
@@ -140,6 +156,9 @@ cmd_boot() {
 	elif [ "$means" = "qemu-chroot" ]
 	then
 		wd="/base"
+	elif [ "$means" = "qemu-kvm" ]
+	then
+		wd="$self/$base"
 	else
 		printf "Unknown boot mode '%s'\n" "$means" >&2
 		exit 1
