@@ -89,6 +89,12 @@ a[href^="mailto:"] {
   font-family: monospace;
 }
 
+.to-top {
+  position: -webkit-sticky; /* for safari */
+  position: sticky;
+  top: 0;
+}
+
 @media(prefers-color-scheme: dark) {
   .cm-s-default.CodeMirror { background: #272822; color: #f8f8f2; }
   .cm-s-default div.CodeMirror-selected { background: #49483E; }
