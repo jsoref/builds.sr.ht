@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"git.sr.ht/~sircmpwn/core-go/config"
-	"git.sr.ht/~sircmpwn/core-go/email"
 	"git.sr.ht/~sircmpwn/core-go/server"
 	"github.com/99designs/gqlgen/graphql"
 
@@ -35,12 +34,9 @@ func main() {
 		scopes[i] = s.String()
 	}
 
-	mail := email.NewQueue()
 	server.NewServer("builds.sr.ht", appConfig).
 		WithDefaultMiddleware().
 		WithMiddleware(loaders.Middleware).
-		WithMiddleware(email.Middleware(mail)).
 		WithSchema(schema, scopes).
-		WithQueues(mail).
 		Run()
 }
