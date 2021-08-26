@@ -43,14 +43,24 @@ if release:
 if from_image:
     manifest.image = from_image
 
-url = f"{url}/api/jobs"
+url = f"{url}/query"
+query = """
+mutation SubmitBuild($manifest: String!, $note: String!, $tags: [String!]!) {
+    submit(manifest: $manifest, note: $note, tags: $tags) {
+        id
+    }
+}
+"""
 
 r = requests.post(url, json={
-    "manifest": manifest.to_yaml(),
-    "note": note,
-    "tags": [image] + ([release] if release else [])
+    "query": query,
+    "variables": {
+        "manifest": manifest.to_yaml(),
+        "note": note,
+        "tags": [image] + ([release] if release else [])
+    },
 }, headers={
-    "Authorization": f"token {token}"
+    "Authorization": f"Bearer {token}"
 })
 
 print(r.json())
