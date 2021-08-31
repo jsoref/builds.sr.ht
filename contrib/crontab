@@ -23,6 +23,6 @@
 
 # Monthly
 0 18 1 * 0 chronic /usr/local/bin/submit_image_build -n "Monthly scheduled build image refresh" ubuntu/oldlts
-0 18 2 * 0 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" alpine/older
-0 18 3 * 0 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" alpine/oldest
-0 18 4 * 0 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" fedora/33
+0 18 2 * 0 chronic /usr/local/bin/submit_image_build -n "Monthly scheduled build image refresh" alpine/older
+0 18 3 * 0 chronic /usr/local/bin/submit_image_build -n "Monthly scheduled build image refresh" alpine/oldest
+0 18 4 * 0 chronic /usr/local/bin/submit_image_build -n "Monthly scheduled build image refresh" fedora/33
