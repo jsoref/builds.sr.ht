@@ -59,7 +59,7 @@ mount ${NBD_DEVICE}p3 /mnt
 mkdir /mnt/boot
 mount ${NBD_DEVICE}p1 /mnt/boot
 
-dnf -y \
+dnf -y -q \
 	--releasever="$release" \
 	--installroot=/mnt \
 	--disablerepo='*' \
@@ -87,9 +87,9 @@ echo 'nameserver 8.8.4.4' >>/mnt/etc/resolv.conf
 run_root systemd-machine-id-setup
 
 # Delay installing systemd-udev becuase it accesses /dev/urandom.
-run_root dnf -y install git mercurial openssh-server sudo systemd-udev
-run_root dnf -y groupinstall '"Development Tools"'
-run_root dnf -y install kernel grub2
+run_root dnf -y -q install git mercurial openssh-server sudo systemd-udev chrony
+run_root dnf -y -q groupinstall '"Development Tools"'
+run_root dnf -y -q install kernel grub2
 
 # Add support for virtio block devices at boot time.
 cat > /mnt/etc/dracut.conf.d/virtio-blk.conf <<EOF
@@ -102,8 +102,7 @@ run_root grub2-install --target=i386-pc $NBD_DEVICE
 run_root grub2-mkconfig -o /boot/grub2/grub.cfg
 
 run_root ln -sf /usr/share/zoneinfo/UTC /etc/localtime
-run_root timedatectl set-ntp true
-run_root systemctl enable NetworkManager
+run_root systemctl enable NetworkManager chronyd
 
 run_root groupadd sudo
 run_root useradd -mG sudo build

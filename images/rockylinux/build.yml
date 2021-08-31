@@ -18,7 +18,7 @@ triggers:
   - action: email
     condition: failure
     to: Drew DeVault <sir@cmpwn.com>
-    cc: Haowen Liu <liuhw@mail.com>
+    cc: Haowen Liu <liu.haowen.andy@gmail.com>
 tasks:
   - genimg: |
       cd builds.sr.ht
