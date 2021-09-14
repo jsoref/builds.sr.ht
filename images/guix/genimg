@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+
+set -euxo pipefail
+
+arch="${1:-x86_64}"
+ssh_opts="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+
+cleanup() {
+    if [ -e /tmp/guix-publish.id ]
+    then
+        cid=$(cat /tmp/guix-publish.id)
+        kill $cid || true
+        rm -f /tmp/guix-publish.id
+    fi
+    if [ -e /tmp/qemu.id ]
+    then
+        cid=$(cat /tmp/qemu.id)
+        guest_ssh build@localhost sudo halt || true
+        sleep 5
+        kill $cid || true
+        rm -f /tmp/qemu.id
+    fi
+    sudo qemu-nbd --disconnect /dev/nbd0 || true
+}
+
+wait_boot() {
+    attempts=0
+    while ! guest_ssh build@localhost true 2>&1 >/dev/null
+    do
+        sleep 5
+        attempts=$((attempts + 1))
+        if [ "$attempts" -eq 20 ]; then
+            exit 1
+        fi
+    done
+}
+
+guest_ssh() {
+    ssh $ssh_opts -p 8022 "$@"
+}
+
+guest_scp() {
+    scp $ssh_opts -P 8022 "$@"
+}
+
+# Update host guix
+guix pull
+
+# Build image
+image=$(guix system image \
+	     --image-type=qcow2 \
+	     --save-provenance \
+	     system.scm)
+
+# Copy the image and make it writable
+mkdir -p "$arch"
+cp $image "$arch/root.img.qcow2"
+chmod u+w "$arch/root.img.qcow2"
+
+# Resize the image, expand root partition and file-system.  Guix
+# builds a raw image first and then converts it to qcow2 image. This
+# prevents us from specifying --image-size.  We need to manually
+# resize minimal qcow2 image until the issue is fixed upstream.
+qemu-img resize "$arch/root.img.qcow2" 16G
+sudo modprobe nbd max_part=16
+sudo qemu-nbd --connect /dev/nbd0 "$arch/root.img.qcow2"
+trap cleanup EXIT
+sudo sfdisk --quiet --no-reread --partno 2 /dev/nbd0 <<EOF
+, +
+EOF
+sudo resize2fs /dev/nbd0p2
+sudo qemu-nbd --disconnect /dev/nbd0
+
+# Boot guix vm
+qemu-system-$arch \
+    -pidfile /tmp/qemu.id \
+    -m 1024 \
+    -smp cpus=2 \
+    -net nic,model=virtio -net user,hostfwd=tcp:127.0.0.1:8022-:22 \
+    -display none \
+    -device virtio-rng-pci \
+    -device virtio-balloon \
+    -drive file="$arch/root.img.qcow2",media=disk,if=virtio \
+    -cpu host -enable-kvm &
+wait_boot
+
+# Configure git
+guest_ssh build@localhost tee .gitconfig <<EOF
+[user]
+    name = builds.sr.ht
+    email = builds@sr.ht
+EOF
+
+# Configure guix channels.  Use a commit for which substitutes for
+# guix are available
+guest_ssh build@localhost mkdir -p .config/guix
+guest_ssh build@localhost tee .config/guix/channels.scm <<EOF
+(use-modules (guix ci))
+
+(list (channel-with-substitutes-available
+       %default-guix-channel
+       "https://ci.guix.gnu.org"))
+EOF
+
+# Provide guest the cache of host guix to reuse guix channel checkout
+# and authentication
+guest_ssh build@localhost mkdir -p .cache
+guest_scp -qpr ~/.cache/guix build@localhost:.cache
+
+# Start guix substitute server
+sudo guix publish -u $(whoami) 1>/dev/null &
+echo $! > /tmp/guix-publish.id
+
+# Update guest guix
+substitute_urls="\
+http://localhost:8080 \
+https://ci.guix.gnu.org \
+https://bordeaux.guix.gnu.org"
+guest_ssh \
+    -R 8080:localhost:8080 \
+    build@localhost \
+    guix pull --substitute-urls="'$substitute_urls'"
