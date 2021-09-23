@@ -403,7 +403,7 @@ def job_by_id(username, job_id):
                 if r.status_code >= 200 and r.status_code <= 299:
                     log = {
                         "name": name,
-                        "log": logify(r.content.decode('utf-8'),
+                        "log": logify(r.content.decode('utf-8', errors='replace'),
                             "task-" + name if name else "setup", log_url),
                         "more": True,
                     }
