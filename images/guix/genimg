@@ -44,10 +44,11 @@ guest_scp() {
 }
 
 # Update host guix
-guix pull
+guix pull -v0
 
 # Build image
 image=$(guix system image \
+	     --verbosity=0 \
 	     --image-type=qcow2 \
 	     --save-provenance \
 	     system.scm)
@@ -119,4 +120,4 @@ https://bordeaux.guix.gnu.org"
 guest_ssh \
     -R 8080:localhost:8080 \
     build@localhost \
-    guix pull --substitute-urls="'$substitute_urls'"
+    guix pull -v0 --substitute-urls="'$substitute_urls'"

@@ -14,7 +14,7 @@ boot() {
 install() {
     port=$1
     shift 1
-    guest_ssh -p $port build@localhost guix install "$@"
+    guest_ssh -p $port build@localhost guix install -v0 "$@"
 }
 
 sanity_check() {
