@@ -170,6 +170,8 @@ def submit_GET():
     manifest = session.get("manifest")
     if manifest:
         del session["manifest"]
+    else:
+        manifest = request.args.get("manifest")
     status = 200
     payment_required = requires_payment(current_user)
     if payment_required:
