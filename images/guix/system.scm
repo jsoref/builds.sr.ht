@@ -40,6 +40,7 @@ root ALL=(ALL) ALL
                                     "8.8.4.4"))
                   (service openssh-service-type
                            (openssh-configuration
+			    (openssh openssh-sans-x)
                             (permit-root-login #t)
                             (allow-empty-passwords? #t)))
                   %base-services))
@@ -48,5 +49,5 @@ root ALL=(ALL) ALL
                   gnupg
                   mercurial
                   nss-certs
-                  openssh
+                  openssh-sans-x
                   %base-packages)))
