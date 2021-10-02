@@ -12,7 +12,6 @@
 30 19 * * 0 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" nixos/21.05
  0 19 * * 1 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" alpine/old
 30 19 * * 1 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" -a amd64 debian/stable
- 0 19 * * 2 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" -a amd64 freebsd/11.x
 30 19 * * 2 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" -a amd64 debian/testing
  0 19 * * 3 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" -a amd64 freebsd/12.x
 30 19 * * 3 chronic /usr/local/bin/submit_image_build -n "Weekly scheduled build image refresh" -a amd64 rockylinux
