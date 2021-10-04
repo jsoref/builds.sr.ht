@@ -114,7 +114,8 @@ run_root apt-get update
 run_root apt-get -y install locales
 run_root apt-get -y install $kpkg
 run_root apt-get -y install build-essential git mercurial ssh sudo \
-	gnupg dirmngr ca-certificates apt-transport-https curl dbus
+	gnupg dirmngr ca-certificates apt-transport-https curl dbus \
+	systemd-timesyncd
 
 run_root ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 run_root systemctl enable systemd-timesyncd.service
