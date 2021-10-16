@@ -2,7 +2,6 @@
 image: openbsd/latest
 packages:
   - qemu
-  - rsync
 sources:
   - https://git.sr.ht/~sircmpwn/builds.sr.ht
 environment:
