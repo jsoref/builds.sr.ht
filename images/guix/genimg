@@ -6,12 +6,6 @@ arch="${1:-x86_64}"
 ssh_opts="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 
 cleanup() {
-    if [ -e /tmp/guix-publish.id ]
-    then
-        cid=$(cat /tmp/guix-publish.id)
-        kill $cid || true
-        rm -f /tmp/guix-publish.id
-    fi
     if [ -e /tmp/qemu.id ]
     then
         cid=$(cat /tmp/qemu.id)
@@ -108,16 +102,5 @@ EOF
 guest_ssh build@localhost mkdir -p .cache
 guest_scp -qpr ~/.cache/guix build@localhost:.cache
 
-# Start guix substitute server
-sudo guix publish -u $(whoami) 1>/dev/null &
-echo $! > /tmp/guix-publish.id
-
 # Update guest guix
-substitute_urls="\
-http://localhost:8080 \
-https://ci.guix.gnu.org \
-https://bordeaux.guix.gnu.org"
-guest_ssh \
-    -R 8080:localhost:8080 \
-    build@localhost \
-    guix pull -v0 --substitute-urls="'$substitute_urls'"
+guest_ssh build@localhost guix pull -v0
