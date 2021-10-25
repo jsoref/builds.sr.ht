@@ -117,10 +117,7 @@ initrd initramfs-linux.img
 append root=/dev/vda2 rw quiet
 EOF
 
-cat >> "$root"/etc/makepkg.conf <<- EOF
-makeopts=(--skippgpcheck)
-PKGEXT='.pkg.tar'
-EOF
+echo "makeopts=(--skippgpcheck)" >> $root/etc/makepkg.conf
 
 run_normal curl -O https://aur.archlinux.org/cgit/aur.git/snapshot/yay.tar.gz
 run_normal tar xf yay.tar.gz
