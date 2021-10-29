@@ -43,10 +43,17 @@ add_repository() {
 	key=$(echo $src | cut -d' ' -f4)
 	if [ "$key" != "" ]
 	then
+		# Import the GPG key into a user trustdb
 		guest_ssh -p $port build@localhost sudo \
-			apt-key adv \
+			gpg \
 			--keyserver hkp://keyserver.ubuntu.com:80 \
 			--recv-keys $key
+
+		# Export the GPG key to Apt's key directory
+		guest_ssh -p $port build@localhost sudo \
+			gpg \
+			--output /etc/apt/trusted.gpg.d/$key.gpg \
+			--export $key
 	fi
 	printf 'deb %s %s %s' "$repo" "$distro" "$cmpnt" \
 		| guest_ssh -p $port build@localhost sudo tee -a /etc/apt/sources.list
