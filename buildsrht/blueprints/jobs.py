@@ -20,6 +20,7 @@ import hashlib
 import requests
 import yaml
 import json
+import textwrap
 
 jobs = Blueprint("jobs", __name__)
 
@@ -164,21 +165,36 @@ def index():
             Job.query.filter(Job.owner_id == current_user.id),
             "index.html", rss_feed=rss_feed)
 
+
 @jobs.route("/submit")
 @loginrequired
 def submit_GET():
-    manifest = session.get("manifest")
-    if manifest:
-        del session["manifest"]
-    else:
-        manifest = request.args.get("manifest")
+    manifest = session.pop("manifest")
+    note = session.pop("note")
     status = 200
     payment_required = requires_payment(current_user)
     if payment_required:
         status = 402
     return render_template("submit.html",
             manifest=manifest,
+            note=note,
             payment_required=payment_required), status
+
+def addsuffix(note: str, suffix: str) -> str:
+    """
+    Given a note and a suffix, return the note with the suffix concatenated/
+
+    The returned string is guaranteed to fit in the Job.note DB field.
+    """
+    maxlen = Job.note.prop.columns[0].type.length
+    assert len(suffix) + 1 <= maxlen, f"Suffix was too long ({len(suffix)})"
+    if note.endswith(suffix):
+        return note
+    result = f"{note} {suffix}"
+    if len(result) <= maxlen:
+        return result
+    note = textwrap.shorten(note, maxlen - len(suffix) - 1, placeholder="…")
+    return f"{note} {suffix}"
 
 @jobs.route("/resubmit/<int:job_id>")
 @loginrequired
@@ -187,6 +203,7 @@ def resubmit_GET(job_id):
     if not job:
         abort(404)
     session["manifest"] = job.manifest
+    session["note"] = addsuffix(job.note, "(resubmitted)")
     return redirect("/submit")
 
 @jobs.route("/submit", methods=["POST"])
