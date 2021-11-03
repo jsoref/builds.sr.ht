@@ -188,7 +188,7 @@ def addsuffix(note: str, suffix: str) -> str:
     """
     maxlen = Job.note.prop.columns[0].type.length
     assert len(suffix) + 1 <= maxlen, f"Suffix was too long ({len(suffix)})"
-    if note.endswith(suffix):
+    if note.endswith(suffix) or not note:
         return note
     result = f"{note} {suffix}"
     if len(result) <= maxlen:
