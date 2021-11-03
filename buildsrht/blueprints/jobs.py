@@ -169,8 +169,8 @@ def index():
 @jobs.route("/submit")
 @loginrequired
 def submit_GET():
-    manifest = session.pop("manifest")
-    note = session.pop("note")
+    manifest = session.pop("manifest", default=None)
+    note = session.pop("note", default=None)
     status = 200
     payment_required = requires_payment(current_user)
     if payment_required:
