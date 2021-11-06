@@ -205,7 +205,11 @@ def resubmit_GET(job_id):
     if not job:
         abort(404)
     session["manifest"] = job.manifest
-    session["note"] = addsuffix(job.note, "(resubmitted)")
+    if isinstance(job.note, str) and len(job.note.splitlines()) == 1:
+        note = addsuffix(job.note, "(resubmitted)")
+    else:
+        note = job.note
+    session["note"] = note
     return redirect("/submit")
 
 @jobs.route("/submit", methods=["POST"])
