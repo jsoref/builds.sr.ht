@@ -62,13 +62,13 @@
     </div>
     <div class="form-group">
       <label for="note">Add note</label>
-      <input
-        type="text"
+      <textarea
         class="form-control"
         id="note"
         name="note"
         placeholder="Submitted on the web"
-        value="{{note if note else ""}}" />
+        rows="{{note_rows}}"
+      >{{note if note else ""}}</textarea>
     </div>
     <div class="form-group">
       <a

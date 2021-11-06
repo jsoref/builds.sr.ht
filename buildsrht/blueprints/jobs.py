@@ -171,6 +171,7 @@ def index():
 def submit_GET():
     manifest = session.pop("manifest", default=None)
     note = session.pop("note", default=None)
+    note_rows = len(note.splitlines()) if isinstance(note, str) else 1
     status = 200
     payment_required = requires_payment(current_user)
     if payment_required:
@@ -178,6 +179,7 @@ def submit_GET():
     return render_template("submit.html",
             manifest=manifest,
             note=note,
+            note_rows=note_rows,
             payment_required=payment_required), status
 
 def addsuffix(note: str, suffix: str) -> str:
