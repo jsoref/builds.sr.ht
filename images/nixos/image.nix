@@ -1,13 +1,7 @@
 { pkgs ? import <nixpkgs> {} }:
 
 let
-  # Contents attributes are not on stable yet, so we temporarily vendor make-disk-image.
-  # Use this line instead when 21.05 is out:
-  #makeDiskImage = import "${pkgs.path}/nixos/lib/make-disk-image.nix";
-  makeDiskImage = import (pkgs.fetchurl {
-    url = "https://github.com/NixOS/nixpkgs/raw/6f21ae7a626cee022f5c20eacaaf934281e806c0/nixos/lib/make-disk-image.nix";
-    sha256 = "0ggx659i9grw3pzjmpklspp4h3b9dywcjdyh00gjxfvrylyf4qn9";
-  });
+  makeDiskImage = import "${pkgs.path}/nixos/lib/make-disk-image.nix";
   evalConfig = import "${pkgs.path}/nixos/lib/eval-config.nix";
   config = (evalConfig {
     modules = [ (import ./qemu-system-configuration.nix) ];
