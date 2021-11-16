@@ -41,5 +41,5 @@ tasks:
       ./pkgkit upload "$remote" "$remote_path" "$project"
   - deploy: |
       ssh $master doas apk upgrade -U
-      ssh -t $master doas service $project restart
-      ssh -t $master doas service $project-api restart
+      ssh $master doas service $project restart
+      ssh $master doas service $project-api restart
