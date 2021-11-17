@@ -25,7 +25,7 @@ then
 fi
 
 # Check that nix works
-nix ping-store
+nix --extra-experimental-features nix-command store ping || nix ping-store # legacy fallback
 
 # We switch to a nixos channel.
 # This is important because the nixos-* channels,
