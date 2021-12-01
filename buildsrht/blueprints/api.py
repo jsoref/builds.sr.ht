@@ -44,7 +44,7 @@ def jobs_POST():
     write = valid.optional("access:write", [current_token.user.username], list)
     secrets = valid.optional("secrets", cls=bool, default=True)
     tags = valid.optional("tags", [], list)
-    valid.expect(all(re.match(r"^[A-Za-z0-9_.-]+$", tag) for tag in tags),
+    valid.expect(not valid.ok or all(re.match(r"^[A-Za-z0-9_.-]+$", tag) for tag in tags),
         "Invalid tag name, tags must use lowercase alphanumeric characters, underscores, dashes, or dots",
         field="tags")
     triggers = valid.optional("triggers", list(), list)
