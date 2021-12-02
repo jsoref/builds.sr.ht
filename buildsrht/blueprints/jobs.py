@@ -173,7 +173,10 @@ def submit_GET():
         manifest = request.args.get("manifest")
     else:
         manifest = session.pop("manifest", default=None)
-    note = session.pop("note", default=None)
+    if request.args.get("note"):
+        note = request.args.get("note")
+    else:
+        note = session.pop("note", default=None)
     note_rows = len(note.splitlines()) if isinstance(note, str) else 1
     status = 200
     payment_required = requires_payment(current_user)
