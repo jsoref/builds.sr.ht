@@ -169,7 +169,10 @@ def index():
 @jobs.route("/submit")
 @loginrequired
 def submit_GET():
-    manifest = session.pop("manifest", default=None)
+    if request.args.get("manifest"):
+        manifest = request.args.get("manifest")
+    else:
+        manifest = session.pop("manifest", default=None)
     note = session.pop("note", default=None)
     note_rows = len(note.splitlines()) if isinstance(note, str) else 1
     status = 200
