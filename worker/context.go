@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-redis/redis"
+	goredis "github.com/go-redis/redis/v8"
 	"github.com/google/shlex"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
@@ -41,7 +41,7 @@ var (
 
 type WorkerContext struct {
 	Db    *sql.DB
-	Redis *redis.Client
+	Redis *goredis.Client
 	Conf  func(section, key string) string
 }
 

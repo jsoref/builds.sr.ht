@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"git.sr.ht/~sircmpwn/core-go/auth"
-	"github.com/go-redis/redis"
+	goredis "github.com/go-redis/redis/v8"
 	"github.com/kr/pty"
 	"github.com/minio/minio-go/v6"
 	"github.com/pkg/errors"
@@ -39,12 +39,12 @@ var (
 	}, []string{"image", "arch"})
 )
 
-func (ctx *JobContext) Boot(r *redis.Client) func() {
-	port, err := r.Incr("builds.sr.ht.ssh-port").Result()
+func (ctx *JobContext) Boot(r *goredis.Client) func() {
+	port, err := r.Incr(ctx.Context, "builds.sr.ht.ssh-port").Result()
 	if err == nil && port < 22000 {
-		err = r.Set("builds.sr.ht.ssh-port", 22100, 0).Err()
+		err = r.Set(ctx.Context, "builds.sr.ht.ssh-port", 22100, 0).Err()
 	} else if err == nil && port >= 23000 {
-		err = r.Set("builds.sr.ht.ssh-port", 22000, 0).Err()
+		err = r.Set(ctx.Context, "builds.sr.ht.ssh-port", 22000, 0).Err()
 	}
 	if err != nil {
 		panic(errors.Wrap(err, "assign port"))

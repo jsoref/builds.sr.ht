@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"flag"
 	"log"
@@ -9,7 +10,7 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/go-redis/redis"
+	goredis "github.com/go-redis/redis/v8"
 	"github.com/vaughan0/go-ini"
 	"git.sr.ht/~sircmpwn/core-go/crypto"
 
@@ -68,12 +69,12 @@ func main() {
 	if !ok {
 		redisHost = "redis://localhost:6379"
 	}
-	ropts, err := redis.ParseURL(redisHost)
+	ropts, err := goredis.ParseURL(redisHost)
 	if err != nil {
 		panic(err)
 	}
-	localRedis := redis.NewClient(ropts)
-	if _, err := localRedis.Ping().Result(); err != nil {
+	localRedis := goredis.NewClient(ropts)
+	if _, err := localRedis.Ping(context.Background()).Result(); err != nil {
 		panic(err)
 	}
 
