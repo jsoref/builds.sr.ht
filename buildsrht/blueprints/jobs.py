@@ -33,6 +33,7 @@ metrics = type("metrics", tuple(), {
     ]
 })
 
+requests_session = requests.Session()
 
 def tags(tags):
     if not tags:
@@ -268,7 +269,7 @@ def cancel(job_id):
         abort(404)
     if job.owner_id != current_user.id and current_user.user_type != UserType.admin:
         abort(401)
-    requests.post(f"http://{job.runner}/job/{job.id}/cancel")
+    requests_session.post(f"http://{job.runner}/job/{job.id}/cancel")
     return redirect("/~" + current_user.username + "/job/" + str(job.id))
 
 @jobs.route("/~<username>")
@@ -435,14 +436,14 @@ def job_by_id(username, job_id):
         if not log:
             metrics.buildsrht_logcache_miss.inc()
             try:
-                r = requests.head(log_url)
+                r = requests_session.head(log_url)
                 cl = int(r.headers["Content-Length"])
                 if cl > log_max:
-                    r = requests.get(log_url, headers={
+                    r = requests_session.get(log_url, headers={
                         "Range": f"bytes={cl-log_max}-{cl-1}",
                     }, timeout=3)
                 else:
-                    r = requests.get(log_url, timeout=3)
+                    r = requests_session.get(log_url, timeout=3)
                 if r.status_code >= 200 and r.status_code <= 299:
                     log = {
                         "name": name,
