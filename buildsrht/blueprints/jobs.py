@@ -14,6 +14,7 @@ from buildsrht.manifest import Manifest
 from buildsrht.rss import generate_feed
 from buildsrht.runner import queue_build, requires_payment
 from buildsrht.search import apply_search
+from prometheus_client import Counter
 from jinja2 import Markup, escape
 import sqlalchemy as sa
 import hashlib
@@ -23,6 +24,15 @@ import json
 import textwrap
 
 jobs = Blueprint("jobs", __name__)
+
+metrics = type("metrics", tuple(), {
+    c.describe()[0].name: c
+    for c in [
+        Counter("buildsrht_logcache_hit", "Number of log cache hits"),
+        Counter("buildsrht_logcache_miss", "Number of log cache misses"),
+    ]
+})
+
 
 def tags(tags):
     if not tags:
@@ -419,9 +429,11 @@ def job_by_id(username, job_id):
         cachekey = f"builds.sr.ht:logs:{log_url}"
         log = get_cache(cachekey)
         if log:
+            metrics.buildsrht_logcache_hit.inc()
             log = json.loads(log)
             log["log"] = Markup(log["log"])
         if not log:
+            metrics.buildsrht_logcache_miss.inc()
             try:
                 r = requests.head(log_url)
                 cl = int(r.headers["Content-Length"])
