@@ -36,6 +36,9 @@ class BuildApp(SrhtFlask):
         self.register_blueprint(secrets)
         self.register_blueprint(gql_blueprint)
 
+        from buildsrht.runner import builds_queue_metrics_collector
+        self.metrics_registry.register(builds_queue_metrics_collector)
+
         @self.context_processor
         def inject():
             return {

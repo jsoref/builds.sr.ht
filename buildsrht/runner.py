@@ -5,16 +5,22 @@ from srht.config import cfg
 from srht.database import db
 from srht.email import send_email
 from srht.oauth import UserType
+from srht.metrics import RedisQueueCollector
+from prometheus_client import Counter
 
 allow_free = cfg("builds.sr.ht", "allow-free", default="no") == "yes"
 
-runner = Celery('builds', broker=cfg("builds.sr.ht", "redis"), config_source={
+builds_broker = cfg("builds.sr.ht", "redis")
+runner = Celery('builds', broker=builds_broker, config_source={
     "CELERY_TASK_SERIALIZER": "json",
     "CELERY_ACCEPT_CONTENT": ["json"],
     "CELERY_RESULT_SERIALIZER": "json",
     "CELERY_ENABLE_UTC": True,
     "CELERY_TASK_PROTOCOL": 1
 })
+
+builds_queue_metrics_collector = RedisQueueCollector(builds_broker, "buildsrht_builds", "Number of builds currently in queue")
+builds_submitted = Counter("buildsrht_builds_submited", "Number of builds submitted")
 
 def queue_build(job, manifest):
     from buildsrht.types import JobStatus
@@ -28,6 +34,7 @@ def queue_build(job, manifest):
                 cfg("sr.ht", "owner-email"),
                 "Cryptocurrency mining attempt on builds.sr.ht")
     else:
+        builds_submitted.inc()
         run_build.delay(job.id, manifest.to_dict())
 
 def requires_payment(user):
