@@ -9,27 +9,22 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"time"
 
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/graph/model"
 )
 
 type Resolver struct{}
 
-func FetchLogs(url string) (*model.Log, error) {
-	// TODO: Add context
+func FetchLogs(ctx context.Context, url string) (*model.Log, error) {
 	// TODO: It might be possible/desirable to set up an API with the runners
 	// we can use to fetch logs in bulk, perhaps gzipped, and set up a loader
 	// for it.
-	client := &http.Client{
-		Timeout: 2 * time.Second,
-	}
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Add("Range", "bytes=-131072") // Last 128 KiB
-	resp, err := client.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +44,7 @@ func FetchLogs(url string) (*model.Log, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &model.Log {
+	return &model.Log{
 		Last128KiB: string(log),
 		FullURL:    url,
 	}, nil

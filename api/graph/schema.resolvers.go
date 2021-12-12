@@ -107,7 +107,7 @@ func (r *jobResolver) Log(ctx context.Context, obj *model.Job) (*model.Log, erro
 		return nil, nil
 	}
 	url := fmt.Sprintf("http://%s/logs/%d/log", *obj.Runner, obj.ID)
-	return FetchLogs(url)
+	return FetchLogs(ctx, url)
 }
 
 func (r *jobResolver) Secrets(ctx context.Context, obj *model.Job) ([]model.Secret, error) {
@@ -669,7 +669,7 @@ func (r *taskResolver) Log(ctx context.Context, obj *model.Task) (*model.Log, er
 		return nil, nil
 	}
 	url := fmt.Sprintf("http://%s/logs/%d/%s/log", *obj.Runner, obj.JobID, obj.Name)
-	return FetchLogs(url)
+	return FetchLogs(ctx, url)
 }
 
 func (r *taskResolver) Job(ctx context.Context, obj *model.Task) (*model.Job, error) {
