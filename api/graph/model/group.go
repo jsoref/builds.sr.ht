@@ -7,9 +7,9 @@ import (
 )
 
 type JobGroup struct {
-	ID       int       `json:"id"`
-	Created  time.Time `json:"created"`
-	Note     *string   `json:"note"`
+	ID      int       `json:"id"`
+	Created time.Time `json:"created"`
+	Note    *string   `json:"note"`
 
 	OwnerID int
 
@@ -36,12 +36,12 @@ func (j *JobGroup) Fields() *database.ModelFields {
 	}
 	j.fields = &database.ModelFields{
 		Fields: []*database.FieldMap{
-			{ "created", "created", &j.Created },
-			{ "note", "note", &j.Note },
+			{"created", "created", &j.Created},
+			{"note", "note", &j.Note},
 
 			// Always fetch:
-			{ "id", "", &j.ID },
-			{ "owner_id", "", &j.OwnerID },
+			{"id", "", &j.ID},
+			{"owner_id", "", &j.OwnerID},
 		},
 	}
 	return j.fields

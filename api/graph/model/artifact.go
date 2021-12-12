@@ -36,13 +36,13 @@ func (a *Artifact) Fields() *database.ModelFields {
 	}
 	a.fields = &database.ModelFields{
 		Fields: []*database.FieldMap{
-			{ "created", "created", &a.Created },
-			{ "path", "path", &a.Path },
-			{ "size", "size", &a.Size },
-			{ "url", "url", &a.URL },
+			{"created", "created", &a.Created},
+			{"path", "path", &a.Path},
+			{"size", "size", &a.Size},
+			{"url", "url", &a.URL},
 
 			// Always fetch:
-			{ "id", "", &a.ID },
+			{"id", "", &a.ID},
 		},
 	}
 	return a.fields

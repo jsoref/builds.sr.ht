@@ -12,11 +12,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/lib/pq"
 	sq "github.com/Masterminds/squirrel"
+	"github.com/lib/pq"
 
-	"git.sr.ht/~sircmpwn/core-go/database"
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/graph/model"
+	"git.sr.ht/~sircmpwn/core-go/database"
 )
 
 var loadersCtxKey = &contextKey{"loaders"}
@@ -37,8 +37,8 @@ func fetchUsersByID(ctx context.Context) func(ids []int) ([]*model.User, []error
 		users := make([]*model.User, len(ids))
 		if err := database.WithTx(ctx, &sql.TxOptions{
 			Isolation: 0,
-			ReadOnly: true,
-		}, func (tx *sql.Tx) error {
+			ReadOnly:  true,
+		}, func(tx *sql.Tx) error {
 			var (
 				err  error
 				rows *sql.Rows
@@ -82,8 +82,8 @@ func fetchUsersByName(ctx context.Context) func(names []string) ([]*model.User, 
 		users := make([]*model.User, len(names))
 		if err := database.WithTx(ctx, &sql.TxOptions{
 			Isolation: 0,
-			ReadOnly: true,
-		}, func (tx *sql.Tx) error {
+			ReadOnly:  true,
+		}, func(tx *sql.Tx) error {
 			var (
 				err  error
 				rows *sql.Rows
@@ -127,8 +127,8 @@ func fetchJobsByID(ctx context.Context) func(ids []int) ([]*model.Job, []error) 
 		jobs := make([]*model.Job, len(ids))
 		if err := database.WithTx(ctx, &sql.TxOptions{
 			Isolation: 0,
-			ReadOnly: true,
-		}, func (tx *sql.Tx) error {
+			ReadOnly:  true,
+		}, func(tx *sql.Tx) error {
 			var (
 				err  error
 				rows *sql.Rows
@@ -172,8 +172,8 @@ func fetchJobGroupsByID(ctx context.Context) func(ids []int) ([]*model.JobGroup,
 		groups := make([]*model.JobGroup, len(ids))
 		if err := database.WithTx(ctx, &sql.TxOptions{
 			Isolation: 0,
-			ReadOnly: true,
-		}, func (tx *sql.Tx) error {
+			ReadOnly:  true,
+		}, func(tx *sql.Tx) error {
 			var (
 				err  error
 				rows *sql.Rows

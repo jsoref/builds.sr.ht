@@ -3,19 +3,19 @@ package model
 import (
 	"context"
 	"database/sql"
-	"time"
 	"strconv"
+	"time"
 
 	sq "github.com/Masterminds/squirrel"
 
-	"git.sr.ht/~sircmpwn/core-go/model"
 	"git.sr.ht/~sircmpwn/core-go/database"
+	"git.sr.ht/~sircmpwn/core-go/model"
 )
 
 const (
 	SECRET_PGPKEY = "pgp_key"
 	SECRET_SSHKEY = "ssh_key"
-	SECRET_FILE = "plaintext_file"
+	SECRET_FILE   = "plaintext_file"
 )
 
 type Secret interface {
@@ -85,29 +85,29 @@ func (s *RawSecret) ToSecret() Secret {
 	switch s.SecretType {
 	case SECRET_PGPKEY:
 		return &PGPKey{
-			ID: s.ID,
-			Created: s.Created,
-			UUID: s.UUID,
-			Name: s.Name,
+			ID:         s.ID,
+			Created:    s.Created,
+			UUID:       s.UUID,
+			Name:       s.Name,
 			PrivateKey: s.Secret,
 		}
 	case SECRET_SSHKEY:
 		return &SSHKey{
-			ID: s.ID,
-			Created: s.Created,
-			UUID: s.UUID,
-			Name: s.Name,
+			ID:         s.ID,
+			Created:    s.Created,
+			UUID:       s.UUID,
+			Name:       s.Name,
 			PrivateKey: s.Secret,
 		}
 	case SECRET_FILE:
 		return &SecretFile{
-			ID: s.ID,
+			ID:      s.ID,
 			Created: s.Created,
-			UUID: s.UUID,
-			Name: s.Name,
-			Path: *s.Path,
-			Mode: *s.Mode,
-			Data: s.Secret,
+			UUID:    s.UUID,
+			Name:    s.Name,
+			Path:    *s.Path,
+			Mode:    *s.Mode,
+			Data:    s.Secret,
 		}
 	default:
 		panic("Database invariant broken: unknown secret type")
@@ -120,16 +120,16 @@ func (s *RawSecret) Fields() *database.ModelFields {
 	}
 	s.fields = &database.ModelFields{
 		Fields: []*database.FieldMap{
-			{ "created", "created", &s.Created },
-			{ "uuid", "uuid", &s.UUID },
-			{ "name", "name", &s.Name },
+			{"created", "created", &s.Created},
+			{"uuid", "uuid", &s.UUID},
+			{"name", "name", &s.Name},
 
 			// Always fetch:
-			{ "id", "", &s.ID },
-			{ "secret_type", "", &s.SecretType },
-			{ "secret", "", &s.Secret },
-			{ "path", "", &s.Path },
-			{ "mode", "", &s.Mode },
+			{"id", "", &s.ID},
+			{"secret_type", "", &s.SecretType},
+			{"secret", "", &s.Secret},
+			{"path", "", &s.Path},
+			{"mode", "", &s.Mode},
 		},
 	}
 	return s.fields

@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strings"
 	"strconv"
+	"strings"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -15,10 +15,10 @@ import (
 )
 
 type Task struct {
-	ID      int        `json:"id"`
-	Created time.Time  `json:"created"`
-	Updated time.Time  `json:"updated"`
-	Name    string     `json:"name"`
+	ID      int       `json:"id"`
+	Created time.Time `json:"created"`
+	Updated time.Time `json:"updated"`
+	Name    string    `json:"name"`
 
 	JobID     int
 	RawStatus string
@@ -56,14 +56,14 @@ func (t *Task) Fields() *database.ModelFields {
 	}
 	t.fields = &database.ModelFields{
 		Fields: []*database.FieldMap{
-			{ "created", "created", &t.Created },
-			{ "updated", "updated", &t.Updated },
-			{ "name", "name", &t.Name },
-			{ "status", "status", &t.RawStatus },
+			{"created", "created", &t.Created},
+			{"updated", "updated", &t.Updated},
+			{"name", "name", &t.Name},
+			{"status", "status", &t.RawStatus},
 
 			// Always fetch:
-			{ "id", "", &t.ID },
-			{ "job_id", "", &t.JobID },
+			{"id", "", &t.ID},
+			{"job_id", "", &t.JobID},
 		},
 	}
 	return t.fields

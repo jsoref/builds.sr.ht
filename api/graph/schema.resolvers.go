@@ -465,11 +465,11 @@ func (r *mutationResolver) CreateGroup(ctx context.Context, jobIds []int, trigge
 			switch trigger.Type {
 			case model.TriggerTypeEmail:
 				triggerType = "email"
-				email := EmailDetails {
-					Action: "email",
+				email := EmailDetails{
+					Action:    "email",
 					Condition: strings.ToLower(trigger.Condition.String()),
-					To: trigger.Email.To,
-					Cc: trigger.Email.Cc,
+					To:        trigger.Email.To,
+					Cc:        trigger.Email.Cc,
 					InReplyTo: trigger.Email.InReplyTo,
 				}
 				buf, err := json.Marshal(&email)
@@ -479,10 +479,10 @@ func (r *mutationResolver) CreateGroup(ctx context.Context, jobIds []int, trigge
 				details = string(buf)
 			case model.TriggerTypeWebhook:
 				triggerType = "webhook"
-				webhook := WebhookDetails {
-					Action: "webhook",
+				webhook := WebhookDetails{
+					Action:    "webhook",
 					Condition: strings.ToLower(trigger.Condition.String()),
-					URL: trigger.Webhook.URL,
+					URL:       trigger.Webhook.URL,
 				}
 				buf, err := json.Marshal(&webhook)
 				if err != nil {

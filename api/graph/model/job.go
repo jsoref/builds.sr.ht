@@ -15,13 +15,13 @@ import (
 )
 
 type Job struct {
-	ID        int       `json:"id"`
-	Created   time.Time `json:"created"`
-	Updated   time.Time `json:"updated"`
-	Manifest  string    `json:"manifest"`
-	Note      *string   `json:"note"`
-	Image     string    `json:"image"`
-	Runner    *string   `json:"runner"`
+	ID       int       `json:"id"`
+	Created  time.Time `json:"created"`
+	Updated  time.Time `json:"updated"`
+	Manifest string    `json:"manifest"`
+	Note     *string   `json:"note"`
+	Image    string    `json:"image"`
+	Runner   *string   `json:"runner"`
 
 	OwnerID    int
 	JobGroupID *int
@@ -68,19 +68,19 @@ func (j *Job) Fields() *database.ModelFields {
 	}
 	j.fields = &database.ModelFields{
 		Fields: []*database.FieldMap{
-			{ "created", "created", &j.Created },
-			{ "updated", "updated", &j.Updated },
-			{ "manifest", "manifest", &j.Manifest },
-			{ "note", "note", &j.Note },
-			{ "tags", "tags", &j.RawTags },
-			{ "status", "status", &j.RawStatus },
-			{ "image", "image", &j.Image },
+			{"created", "created", &j.Created},
+			{"updated", "updated", &j.Updated},
+			{"manifest", "manifest", &j.Manifest},
+			{"note", "note", &j.Note},
+			{"tags", "tags", &j.RawTags},
+			{"status", "status", &j.RawStatus},
+			{"image", "image", &j.Image},
 
 			// Always fetch:
-			{ "id", "", &j.ID },
-			{ "owner_id", "", &j.OwnerID },
-			{ "job_group_id", "", &j.JobGroupID },
-			{ "runner", "", &j.Runner },
+			{"id", "", &j.ID},
+			{"owner_id", "", &j.OwnerID},
+			{"job_group_id", "", &j.JobGroupID},
+			{"runner", "", &j.Runner},
 		},
 	}
 	return j.fields
