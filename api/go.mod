@@ -9,6 +9,7 @@ require (
 	github.com/gocelery/gocelery v0.0.0-20201111034804-825d89059344 // indirect
 	github.com/google/uuid v1.0.0 // indirect
 	github.com/lib/pq v1.8.0 // indirect
+	github.com/prometheus/client_golang v1.11.0 // indirect
 	github.com/vektah/gqlparser/v2 v2.1.0
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
