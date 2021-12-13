@@ -10,12 +10,30 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/99designs/gqlgen/graphql"
+
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/graph/model"
 )
 
 type Resolver struct{}
 
 func FetchLogs(ctx context.Context, url string) (*model.Log, error) {
+	log := &model.Log{FullURL: url}
+
+	// If the user hasn't requested the log body, stop here
+	if graphql.GetFieldContext(ctx) != nil {
+		found := false
+		for _, field := range graphql.CollectFieldsCtx(ctx, nil) {
+			if field.Name == "last128KiB" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return log, nil
+		}
+	}
+
 	// TODO: It might be possible/desirable to set up an API with the runners
 	// we can use to fetch logs in bulk, perhaps gzipped, and set up a loader
 	// for it.
@@ -40,14 +58,13 @@ func FetchLogs(ctx context.Context, url string) (*model.Log, error) {
 		return nil, fmt.Errorf("Unexpected response from build runner: %s", resp.Status)
 	}
 	limit := io.LimitReader(resp.Body, 131072)
-	log, err := ioutil.ReadAll(limit)
+	b, err := ioutil.ReadAll(limit)
 	if err != nil {
 		return nil, err
 	}
-	return &model.Log{
-		Last128KiB: string(log),
-		FullURL:    url,
-	}, nil
+	log.Last128KiB = string(b)
+
+	return log, nil
 }
 
 // Starts a job group. Does not authenticate the user.
