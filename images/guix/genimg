@@ -86,17 +86,6 @@ guest_ssh build@localhost tee .gitconfig <<EOF
     email = builds@sr.ht
 EOF
 
-# Configure guix channels.  Use a commit for which substitutes for
-# guix are available
-guest_ssh build@localhost mkdir -p .config/guix
-guest_ssh build@localhost tee .config/guix/channels.scm <<EOF
-(use-modules (guix ci))
-
-(list (channel-with-substitutes-available
-       %default-guix-channel
-       "https://ci.guix.gnu.org"))
-EOF
-
 # Provide guest the cache of host guix to reuse guix channel checkout
 # and authentication
 guest_ssh build@localhost mkdir -p .cache
