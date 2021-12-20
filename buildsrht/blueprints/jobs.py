@@ -154,11 +154,11 @@ def svg_page(jobs):
             JobStatus.timeout]))
         .first())
     if not job:
-        badge = badge_unknown.replace("__NAME__", name)
+        badge = badge_unknown.replace("__NAME__", escape(name))
     elif job.status == JobStatus.success:
-        badge = badge_success.replace("__NAME__", name)
+        badge = badge_success.replace("__NAME__", escape(name))
     else:
-        badge = badge_failure.replace("__NAME__", name)
+        badge = badge_failure.replace("__NAME__", escape(name))
     return badge
 
 @jobs.route("/")
