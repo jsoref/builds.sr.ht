@@ -161,6 +161,11 @@ type ComplexityRoot struct {
 		UUID    func(childComplexity int) int
 	}
 
+	Settings struct {
+		BuildTimeout func(childComplexity int) int
+		SSHUser      func(childComplexity int) int
+	}
+
 	Task struct {
 		Created func(childComplexity int) int
 		ID      func(childComplexity int) int
@@ -189,6 +194,7 @@ type ComplexityRoot struct {
 		Major           func(childComplexity int) int
 		Minor           func(childComplexity int) int
 		Patch           func(childComplexity int) int
+		Settings        func(childComplexity int) int
 	}
 
 	WebhookTrigger struct {
@@ -815,6 +821,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SecretFile.UUID(childComplexity), true
 
+	case "Settings.buildTimeout":
+		if e.complexity.Settings.BuildTimeout == nil {
+			break
+		}
+
+		return e.complexity.Settings.BuildTimeout(childComplexity), true
+
+	case "Settings.sshUser":
+		if e.complexity.Settings.SSHUser == nil {
+			break
+		}
+
+		return e.complexity.Settings.SSHUser(childComplexity), true
+
 	case "Task.created":
 		if e.complexity.Task.Created == nil {
 			break
@@ -967,6 +987,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Version.Patch(childComplexity), true
 
+	case "Version.settings":
+		if e.complexity.Version.Settings == nil {
+			break
+		}
+
+		return e.complexity.Version.Settings(childComplexity), true
+
 	case "WebhookTrigger.condition":
 		if e.complexity.WebhookTrigger.Condition == nil {
 			break
@@ -1052,7 +1079,7 @@ scalar Binary # base64'd string
 scalar Cursor
 scalar File
 
-# Used to provide a human-friendly description of an access scope
+"Used to provide a human-friendly description of an access scope"
 directive @scopehelp(details: String!) on ENUM_VALUE
 
 enum AccessScope {
@@ -1067,12 +1094,16 @@ enum AccessKind {
   RW @scopehelp(details: "read and write")
 }
 
-# Decorates fields for which access requires a particular OAuth 2.0 scope with
-# read or write access.
+"""
+Decorates fields for which access requires a particular OAuth 2.0 scope with
+read or write access.
+"""
 directive @access(scope: AccessScope!, kind: AccessKind!) on FIELD_DEFINITION
 
-# This used to decorate private resolvers which are only accessible to build
-# workers, and are used to faciliate the build process.
+"""
+This used to decorate private resolvers which are only accessible to build
+workers, and are used to faciliate the build process.
+"""
 directive @worker on FIELD_DEFINITION
 
 # https://semver.org
@@ -1081,18 +1112,31 @@ type Version {
   minor: Int!
   patch: Int!
 
-  # If this API version is scheduled for deprecation, this is the date on which
-  # it will stop working; or null if this API version is not scheduled for
-  # deprecation.
+  """
+  If this API version is scheduled for deprecation, this is the date on which
+  it will stop working; or null if this API version is not scheduled for
+  deprecation.
+  """
   deprecationDate: Time
+
+  # Config settings
+  settings: Settings!
+}
+
+# Instance specific settings
+type Settings {
+  sshUser: String!
+  buildTimeout: String!
 }
 
 interface Entity {
   id: Int!
   created: Time!
   updated: Time!
-  # The canonical name of this entity. For users, this is their username
-  # prefixed with '~'. Additional entity types will be supported in the future.
+  """
+  The canonical name of this entity. For users, this is their username
+  prefixed with '~'. Additional entity types will be supported in the future.
+  """
   canonicalName: String!
 }
 
@@ -1107,7 +1151,7 @@ type User implements Entity {
   location: String
   bio: String
 
-  # Jobs submitted by this user.
+  "Jobs submitted by this user."
   jobs(cursor: Cursor): JobCursor! @access(scope: JOBS, kind: RO)
 }
 
@@ -1130,11 +1174,13 @@ type Job {
   note: String
   tags: [String]!
 
-  # Name of the build image
+  "Name of the build image"
   image: String!
 
-  # Name of the build runner which picked up this job, or null if the job is
-  # pending or queued.
+  """
+  Name of the build runner which picked up this job, or null if the job is
+  pending or queued.
+  """
   runner: String
 
   owner: Entity! @access(scope: PROFILE, kind: RO)
@@ -1142,37 +1188,41 @@ type Job {
   tasks: [Task]!
   artifacts: [Artifact]!
 
-  # The job's top-level log file, not associated with any tasks
+  "The job's top-level log file, not associated with any tasks"
   log: Log @access(scope: LOGS, kind: RO)
 
-  # List of secrets available to this job, or null if they were disabled
+  "List of secrets available to this job, or null if they were disabled"
   secrets: [Secret] @access(scope: SECRETS, kind: RO)
 }
 
 type Log {
-  # The most recently written 128 KiB of the build log.
+  "The most recently written 128 KiB of the build log."
   last128KiB: String!
-  # The URL at which the full build log can be downloaded with a GET request
-  # (text/plain).
+  """
+  The URL at which the full build log can be downloaded with a GET request
+  (text/plain).
+  """
   fullURL: String!
 }
 
 type Artifact {
   id: Int!
   created: Time!
-  # Original path in the guest
+  "Original path in the guest"
   path: String!
-  # Size in bytes
+  "Size in bytes"
   size: Int!
-  # URL at which the artifact may be downloaded, or null if pruned
+  "URL at which the artifact may be downloaded, or null if pruned"
   url: String
 }
 
-# A cursor for enumerating a list of jobs
-#
-# If there are additional results available, the cursor object may be passed
-# back into the same endpoint to retrieve another page. If the cursor is null,
-# there are no remaining results to return.
+"""
+A cursor for enumerating a list of jobs
+
+If there are additional results available, the cursor object may be passed
+back into the same endpoint to retrieve another page. If the cursor is null,
+there are no remaining results to return.
+"""
 type JobCursor {
   results: [Job!]!
   cursor: Cursor
@@ -1211,9 +1261,11 @@ enum TriggerCondition {
   ALWAYS
 }
 
-# Triggers run upon the completion of all of the jobs in a job group. Note that
-# these triggers are distinct from the ones defined by an individual job's
-# build manifest, but are similar in functionality.
+"""
+Triggers run upon the completion of all of the jobs in a job group. Note that
+these triggers are distinct from the ones defined by an individual job's
+build manifest, but are similar in functionality.
+"""
 interface Trigger {
   condition: TriggerCondition!
 }
@@ -1237,11 +1289,13 @@ interface Secret {
   name: String
 }
 
-# A cursor for enumerating a list of secrets
-#
-# If there are additional results available, the cursor object may be passed
-# back into the same endpoint to retrieve another page. If the cursor is null,
-# there are no remaining results to return.
+"""
+A cursor for enumerating a list of secrets
+
+If there are additional results available, the cursor object may be passed
+back into the same endpoint to retrieve another page. If the cursor is null,
+there are no remaining results to return.
+"""
 type SecretCursor {
   results: [Secret!]!
   cursor: Cursor
@@ -1274,23 +1328,23 @@ type SecretFile implements Secret {
 }
 
 type Query {
-  # Returns API version information.
+  "Returns API version information."
   version: Version!
 
-  # Returns the authenticated user.
+  "Returns the authenticated user."
   me: User! @access(scope: PROFILE, kind: RO)
 
-  # Returns a specific user
+  "Returns a specific user."
   userByID(id: Int!): User @access(scope: PROFILE, kind: RO)
   userByName(username: String!): User @access(scope: PROFILE, kind: RO)
 
-  # Returns jobs submitted by the authenticated user.
+  "Returns jobs submitted by the authenticated user."
   jobs(cursor: Cursor): JobCursor! @access(scope: JOBS, kind: RO)
 
-  # Returns information about a specific job.
+  "Returns information about a specific job."
   job(id: Int!): Job @access(scope: JOBS, kind: RO)
 
-  # Returns secrets owned by the authenticated user.
+  "Returns secrets owned by the authenticated user."
   secrets(cursor: Cursor): SecretCursor! @access(scope: SECRETS, kind: RO)
 }
 
@@ -1317,45 +1371,49 @@ input TriggerInput {
 }
 
 type Mutation {
-  # Submits a new job to the queue.
-  #
-  # 'secrets' may be set to false to disable secrets for this build. Secrets
-  # are enabled if unspecified.
-  #
-  # 'execute' may be set to false to defer queueing this job. Builds are
-  # executed immediately if unspecified.
+  """
+  Submits a new job to the queue.
+
+  'secrets' may be set to false to disable secrets for this build. Secrets
+  are enabled if unspecified.
+
+  'execute' may be set to false to defer queueing this job. Builds are
+  executed immediately if unspecified.
+  """
   submit(manifest: String!, tags: [String!] note: String, secrets: Boolean,
     execute: Boolean): Job! @access(scope: JOBS, kind: RW)
 
-  # Queues a pending job.
+  "Queues a pending job."
   start(jobID: Int!): Job @access(scope: JOBS, kind: RW)
 
-  # Cancels a submitted job.
+  "Cancels a submitted job."
   cancel(jobId: Int!): Job @access(scope: JOBS, kind: RW)
 
-  # Creates a job group from several pending jobs.
-  #
-  # 'execute' may be set to false to defer queueing this job. The job group is
-  # executed immediately if unspecified.
+  """
+  Creates a job group from several pending jobs.
+
+  'execute' may be set to false to defer queueing this job. The job group is
+  executed immediately if unspecified.
+  """
   createGroup(jobIds: [Int!]!  triggers: [TriggerInput!],
     execute: Boolean, note: String): JobGroup! @access(scope: JOBS, kind: RW)
 
-  # Starts a pending job group.
+  "Starts a pending job group."
   startGroup(groupId: Int!): JobGroup @access(scope: JOBS, kind: RW)
 
   ###
   ### The following resolvers are for internal worker use
 
-  # Claims a job
+  "Claims a job."
   claim(jobId: Int!): Job @worker
 
-  # Updates job status
+  "Updates job status."
   updateJob(jobId: Int!, status: JobStatus!): Job @worker
 
-  # Updates task status
+  "Updates task status."
   updateTask(taskId: Int!, status: TaskStatus!): Job @worker
 
-  # Uploads a build artifact
+  "Uploads a build artifact."
   createArtifact(jobId: Int!, path: String!, contents: File!): Artifact @worker
 }
 `, BuiltIn: false},
@@ -4854,6 +4912,76 @@ func (ec *executionContext) _SecretFile_data(ctx context.Context, field graphql.
 	return ec.marshalNBinary2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Settings_sshUser(ctx context.Context, field graphql.CollectedField, obj *model.Settings) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Settings",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SSHUser, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Settings_buildTimeout(ctx context.Context, field graphql.CollectedField, obj *model.Settings) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Settings",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BuildTimeout, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Task_id(ctx context.Context, field graphql.CollectedField, obj *model.Task) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -5635,6 +5763,41 @@ func (ec *executionContext) _Version_deprecationDate(ctx context.Context, field 
 	res := resTmp.(*time.Time)
 	fc.Result = res
 	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Version_settings(ctx context.Context, field graphql.CollectedField, obj *model.Version) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Version",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Settings, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Settings)
+	fc.Result = res
+	return ec.marshalNSettings2ᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐSettings(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _WebhookTrigger_condition(ctx context.Context, field graphql.CollectedField, obj *model.WebhookTrigger) (ret graphql.Marshaler) {
@@ -7691,6 +7854,38 @@ func (ec *executionContext) _SecretFile(ctx context.Context, sel ast.SelectionSe
 	return out
 }
 
+var settingsImplementors = []string{"Settings"}
+
+func (ec *executionContext) _Settings(ctx context.Context, sel ast.SelectionSet, obj *model.Settings) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, settingsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Settings")
+		case "sshUser":
+			out.Values[i] = ec._Settings_sshUser(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "buildTimeout":
+			out.Values[i] = ec._Settings_buildTimeout(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var taskImplementors = []string{"Task"}
 
 func (ec *executionContext) _Task(ctx context.Context, sel ast.SelectionSet, obj *model.Task) graphql.Marshaler {
@@ -7863,6 +8058,11 @@ func (ec *executionContext) _Version(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "deprecationDate":
 			out.Values[i] = ec._Version_deprecationDate(ctx, field, obj)
+		case "settings":
+			out.Values[i] = ec._Version_settings(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -8493,6 +8693,16 @@ func (ec *executionContext) marshalNSecretCursor2ᚖgitᚗsrᚗhtᚋאsircmpwn�
 		return graphql.Null
 	}
 	return ec._SecretCursor(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSettings2ᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐSettings(ctx context.Context, sel ast.SelectionSet, v *model.Settings) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Settings(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {

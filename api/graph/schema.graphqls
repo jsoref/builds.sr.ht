@@ -44,6 +44,15 @@ type Version {
   deprecation.
   """
   deprecationDate: Time
+
+  # Config settings
+  settings: Settings!
+}
+
+# Instance specific settings
+type Settings {
+  sshUser: String!
+  buildTimeout: String!
 }
 
 interface Entity {

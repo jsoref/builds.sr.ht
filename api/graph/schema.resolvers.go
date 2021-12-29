@@ -570,11 +570,21 @@ func (r *pGPKeyResolver) PrivateKey(ctx context.Context, obj *model.PGPKey) (str
 }
 
 func (r *queryResolver) Version(ctx context.Context) (*model.Version, error) {
+	conf := config.ForContext(ctx)
+	buildTimeout, _ := conf.Get("builds.sr.ht::worker", "timeout")
+	sshUser, _ := conf.Get("git.sr.ht::dispatch", "/usr/bin/buildsrht-keys")
+	sshUser = strings.Split(sshUser, ":")[0]
+
 	return &model.Version{
 		Major:           0,
 		Minor:           0,
 		Patch:           0,
 		DeprecationDate: nil,
+
+		Settings: &model.Settings{
+			SSHUser:      sshUser,
+			BuildTimeout: buildTimeout,
+		},
 	}, nil
 }
 

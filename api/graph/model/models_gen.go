@@ -21,19 +21,37 @@ type EmailTriggerInput struct {
 	InReplyTo *string `json:"inReplyTo"`
 }
 
+// A cursor for enumerating a list of jobs
+//
+// If there are additional results available, the cursor object may be passed
+// back into the same endpoint to retrieve another page. If the cursor is null,
+// there are no remaining results to return.
 type JobCursor struct {
 	Results []*Job        `json:"results"`
 	Cursor  *model.Cursor `json:"cursor"`
 }
 
 type Log struct {
+	// The most recently written 128 KiB of the build log.
 	Last128KiB string `json:"last128KiB"`
-	FullURL    string `json:"fullURL"`
+	// The URL at which the full build log can be downloaded with a GET request
+	// (text/plain).
+	FullURL string `json:"fullURL"`
 }
 
+// A cursor for enumerating a list of secrets
+//
+// If there are additional results available, the cursor object may be passed
+// back into the same endpoint to retrieve another page. If the cursor is null,
+// there are no remaining results to return.
 type SecretCursor struct {
 	Results []Secret      `json:"results"`
 	Cursor  *model.Cursor `json:"cursor"`
+}
+
+type Settings struct {
+	SSHUser      string `json:"sshUser"`
+	BuildTimeout string `json:"buildTimeout"`
 }
 
 type TriggerInput struct {
@@ -44,10 +62,14 @@ type TriggerInput struct {
 }
 
 type Version struct {
-	Major           int        `json:"major"`
-	Minor           int        `json:"minor"`
-	Patch           int        `json:"patch"`
+	Major int `json:"major"`
+	Minor int `json:"minor"`
+	Patch int `json:"patch"`
+	// If this API version is scheduled for deprecation, this is the date on which
+	// it will stop working; or null if this API version is not scheduled for
+	// deprecation.
 	DeprecationDate *time.Time `json:"deprecationDate"`
+	Settings        *Settings  `json:"settings"`
 }
 
 type WebhookTriggerInput struct {
