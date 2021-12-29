@@ -28,16 +28,15 @@
  (sudoers-file (plain-file "sudoers" "\
 root ALL=(ALL) ALL
 %wheel ALL=(ALL) NOPASSWD: ALL\n"))
- (services (cons* (static-networking-service
-                   "eth0" "10.0.2.15"
-                   #:netmask "255.255.255.0"
-                   #:gateway "10.0.2.2"
-                   #:name-servers '(;; OpenNIC
-                                    "185.121.177.177"
-                                    "169.239.202.202"
-                                    ;; Google
-                                    "8.8.8.8"
-                                    "8.8.4.4"))
+ (services (cons* (service static-networking-service-type
+			   (list (static-networking
+			    (inherit %qemu-static-networking)
+			    (name-servers '(;; OpenNIC
+					    "185.121.177.177"
+					    "169.239.202.202"
+					    ;; Google
+					    "8.8.8.8"
+					    "8.8.4.4")))))
                   (service openssh-service-type
                            (openssh-configuration
 			    (openssh openssh-sans-x)
