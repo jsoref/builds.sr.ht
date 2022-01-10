@@ -1172,7 +1172,7 @@ type Job {
   status: JobStatus!
   manifest: String!
   note: String
-  tags: [String]!
+  tags: [String!]!
 
   "Name of the build image"
   image: String!
@@ -1185,14 +1185,14 @@ type Job {
 
   owner: Entity! @access(scope: PROFILE, kind: RO)
   group: JobGroup
-  tasks: [Task]!
-  artifacts: [Artifact]!
+  tasks: [Task!]!
+  artifacts: [Artifact!]!
 
   "The job's top-level log file, not associated with any tasks"
   log: Log @access(scope: LOGS, kind: RO)
 
   "List of secrets available to this job, or null if they were disabled"
-  secrets: [Secret] @access(scope: SECRETS, kind: RO)
+  secrets: [Secret!] @access(scope: SECRETS, kind: RO)
 }
 
 type Log {
@@ -1233,8 +1233,8 @@ type JobGroup {
   created: Time!
   note: String
   owner: Entity! @access(scope: PROFILE, kind: RO)
-  jobs: [Job]!
-  triggers: [Trigger]!
+  jobs: [Job!]!
+  triggers: [Trigger!]!
 }
 
 enum TaskStatus {
@@ -2385,7 +2385,7 @@ func (ec *executionContext) _Job_tags(ctx context.Context, field graphql.Collect
 	}
 	res := resTmp.([]string)
 	fc.Result = res
-	return ec.marshalNString2ᚕstring(ctx, field.Selections, res)
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Job_image(ctx context.Context, field graphql.CollectedField, obj *model.Job) (ret graphql.Marshaler) {
@@ -2582,7 +2582,7 @@ func (ec *executionContext) _Job_tasks(ctx context.Context, field graphql.Collec
 	}
 	res := resTmp.([]*model.Task)
 	fc.Result = res
-	return ec.marshalNTask2ᚕᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐTask(ctx, field.Selections, res)
+	return ec.marshalNTask2ᚕᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐTaskᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Job_artifacts(ctx context.Context, field graphql.CollectedField, obj *model.Job) (ret graphql.Marshaler) {
@@ -2617,7 +2617,7 @@ func (ec *executionContext) _Job_artifacts(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.([]*model.Artifact)
 	fc.Result = res
-	return ec.marshalNArtifact2ᚕᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐArtifact(ctx, field.Selections, res)
+	return ec.marshalNArtifact2ᚕᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐArtifactᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Job_log(ctx context.Context, field graphql.CollectedField, obj *model.Job) (ret graphql.Marshaler) {
@@ -2737,7 +2737,7 @@ func (ec *executionContext) _Job_secrets(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.([]model.Secret)
 	fc.Result = res
-	return ec.marshalOSecret2ᚕgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐSecret(ctx, field.Selections, res)
+	return ec.marshalOSecret2ᚕgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐSecretᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _JobCursor_results(ctx context.Context, field graphql.CollectedField, obj *model.JobCursor) (ret graphql.Marshaler) {
@@ -3004,7 +3004,7 @@ func (ec *executionContext) _JobGroup_jobs(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.([]*model.Job)
 	fc.Result = res
-	return ec.marshalNJob2ᚕᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐJob(ctx, field.Selections, res)
+	return ec.marshalNJob2ᚕᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐJobᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _JobGroup_triggers(ctx context.Context, field graphql.CollectedField, obj *model.JobGroup) (ret graphql.Marshaler) {
@@ -3039,7 +3039,7 @@ func (ec *executionContext) _JobGroup_triggers(ctx context.Context, field graphq
 	}
 	res := resTmp.([]model.Trigger)
 	fc.Result = res
-	return ec.marshalNTrigger2ᚕgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐTrigger(ctx, field.Selections, res)
+	return ec.marshalNTrigger2ᚕgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐTriggerᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Log_last128KiB(ctx context.Context, field graphql.CollectedField, obj *model.Log) (ret graphql.Marshaler) {
@@ -8371,7 +8371,7 @@ func (ec *executionContext) marshalNAccessScope2gitᚗsrᚗhtᚋאsircmpwnᚋbui
 	return v
 }
 
-func (ec *executionContext) marshalNArtifact2ᚕᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐArtifact(ctx context.Context, sel ast.SelectionSet, v []*model.Artifact) graphql.Marshaler {
+func (ec *executionContext) marshalNArtifact2ᚕᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐArtifactᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Artifact) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -8395,7 +8395,7 @@ func (ec *executionContext) marshalNArtifact2ᚕᚖgitᚗsrᚗhtᚋאsircmpwnᚋ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOArtifact2ᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐArtifact(ctx, sel, v[i])
+			ret[i] = ec.marshalNArtifact2ᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐArtifact(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -8406,6 +8406,16 @@ func (ec *executionContext) marshalNArtifact2ᚕᚖgitᚗsrᚗhtᚋאsircmpwnᚋ
 	}
 	wg.Wait()
 	return ret
+}
+
+func (ec *executionContext) marshalNArtifact2ᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐArtifact(ctx context.Context, sel ast.SelectionSet, v *model.Artifact) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Artifact(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNBinary2string(ctx context.Context, v interface{}) (string, error) {
@@ -8510,43 +8520,6 @@ func (ec *executionContext) marshalNInt2ᚕintᚄ(ctx context.Context, sel ast.S
 
 func (ec *executionContext) marshalNJob2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐJob(ctx context.Context, sel ast.SelectionSet, v model.Job) graphql.Marshaler {
 	return ec._Job(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNJob2ᚕᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐJob(ctx context.Context, sel ast.SelectionSet, v []*model.Job) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOJob2ᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐJob(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-	return ret
 }
 
 func (ec *executionContext) marshalNJob2ᚕᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐJobᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Job) graphql.Marshaler {
@@ -8720,7 +8693,7 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) unmarshalNString2ᚕstring(ctx context.Context, v interface{}) ([]string, error) {
+func (ec *executionContext) unmarshalNString2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
 	var vSlice []interface{}
 	if v != nil {
 		if tmp1, ok := v.([]interface{}); ok {
@@ -8733,7 +8706,7 @@ func (ec *executionContext) unmarshalNString2ᚕstring(ctx context.Context, v in
 	res := make([]string, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalOString2string(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -8741,16 +8714,16 @@ func (ec *executionContext) unmarshalNString2ᚕstring(ctx context.Context, v in
 	return res, nil
 }
 
-func (ec *executionContext) marshalNString2ᚕstring(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	for i := range v {
-		ret[i] = ec.marshalOString2string(ctx, sel, v[i])
+		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
 	}
 
 	return ret
 }
 
-func (ec *executionContext) marshalNTask2ᚕᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐTask(ctx context.Context, sel ast.SelectionSet, v []*model.Task) graphql.Marshaler {
+func (ec *executionContext) marshalNTask2ᚕᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐTaskᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Task) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -8774,7 +8747,7 @@ func (ec *executionContext) marshalNTask2ᚕᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuil
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOTask2ᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐTask(ctx, sel, v[i])
+			ret[i] = ec.marshalNTask2ᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐTask(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -8785,6 +8758,16 @@ func (ec *executionContext) marshalNTask2ᚕᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuil
 	}
 	wg.Wait()
 	return ret
+}
+
+func (ec *executionContext) marshalNTask2ᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐTask(ctx context.Context, sel ast.SelectionSet, v *model.Task) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Task(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNTaskStatus2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐTaskStatus(ctx context.Context, v interface{}) (model.TaskStatus, error) {
@@ -8812,7 +8795,17 @@ func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalNTrigger2ᚕgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐTrigger(ctx context.Context, sel ast.SelectionSet, v []model.Trigger) graphql.Marshaler {
+func (ec *executionContext) marshalNTrigger2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐTrigger(ctx context.Context, sel ast.SelectionSet, v model.Trigger) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Trigger(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNTrigger2ᚕgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐTriggerᚄ(ctx context.Context, sel ast.SelectionSet, v []model.Trigger) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -8836,7 +8829,7 @@ func (ec *executionContext) marshalNTrigger2ᚕgitᚗsrᚗhtᚋאsircmpwnᚋbuil
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOTrigger2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐTrigger(ctx, sel, v[i])
+			ret[i] = ec.marshalNTrigger2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐTrigger(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -9207,14 +9200,7 @@ func (ec *executionContext) marshalOLog2ᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuilds�
 	return ec._Log(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSecret2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐSecret(ctx context.Context, sel ast.SelectionSet, v model.Secret) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Secret(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOSecret2ᚕgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐSecret(ctx context.Context, sel ast.SelectionSet, v []model.Secret) graphql.Marshaler {
+func (ec *executionContext) marshalOSecret2ᚕgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐSecretᚄ(ctx context.Context, sel ast.SelectionSet, v []model.Secret) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -9241,7 +9227,7 @@ func (ec *executionContext) marshalOSecret2ᚕgitᚗsrᚗhtᚋאsircmpwnᚋbuild
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOSecret2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐSecret(ctx, sel, v[i])
+			ret[i] = ec.marshalNSecret2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐSecret(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -9314,13 +9300,6 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return graphql.MarshalString(*v)
 }
 
-func (ec *executionContext) marshalOTask2ᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐTask(ctx context.Context, sel ast.SelectionSet, v *model.Task) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Task(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalOTime2ᚖtimeᚐTime(ctx context.Context, v interface{}) (*time.Time, error) {
 	if v == nil {
 		return nil, nil
@@ -9334,13 +9313,6 @@ func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel
 		return graphql.Null
 	}
 	return graphql.MarshalTime(*v)
-}
-
-func (ec *executionContext) marshalOTrigger2gitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐTrigger(ctx context.Context, sel ast.SelectionSet, v model.Trigger) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Trigger(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOTriggerInput2ᚕᚖgitᚗsrᚗhtᚋאsircmpwnᚋbuildsᚗsrᚗhtᚋapiᚋgraphᚋmodelᚐTriggerInputᚄ(ctx context.Context, v interface{}) ([]*model.TriggerInput, error) {
