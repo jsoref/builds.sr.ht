@@ -98,7 +98,7 @@ type Job {
   status: JobStatus!
   manifest: String!
   note: String
-  tags: [String]!
+  tags: [String!]!
 
   "Name of the build image"
   image: String!
@@ -111,14 +111,14 @@ type Job {
 
   owner: Entity! @access(scope: PROFILE, kind: RO)
   group: JobGroup
-  tasks: [Task]!
-  artifacts: [Artifact]!
+  tasks: [Task!]!
+  artifacts: [Artifact!]!
 
   "The job's top-level log file, not associated with any tasks"
   log: Log @access(scope: LOGS, kind: RO)
 
   "List of secrets available to this job, or null if they were disabled"
-  secrets: [Secret] @access(scope: SECRETS, kind: RO)
+  secrets: [Secret!] @access(scope: SECRETS, kind: RO)
 }
 
 type Log {
@@ -159,8 +159,8 @@ type JobGroup {
   created: Time!
   note: String
   owner: Entity! @access(scope: PROFILE, kind: RO)
-  jobs: [Job]!
-  triggers: [Trigger]!
+  jobs: [Job!]!
+  triggers: [Trigger!]!
 }
 
 enum TaskStatus {
