@@ -71,7 +71,7 @@ dnf -y \
 	--enablerepo=fedora \
 	--enablerepo=updates install \
 	--setopt=install_weak_deps=False \
-	basesystem systemd systemd-udev passwd dnf fedora-release $conditional_packages
+	basesystem systemd systemd-udev passwd dnf dnf-plugins-core fedora-release $conditional_packages
 
 mount --bind /dev /mnt/dev
 mount --bind /dev/pts /mnt/dev/pts
