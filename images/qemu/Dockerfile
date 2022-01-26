@@ -45,21 +45,10 @@ RUN cd qemu-4.1.0 && ./configure \
 RUN cd qemu-4.1.0 && make && make install
 
 FROM scratch
-COPY --from=0 /bin/qemu-system-x86_64 /bin/
-COPY --from=0 /bin/qemu-system-i386 /bin/
-COPY --from=0 /bin/qemu-system-aarch64 /bin/
-COPY --from=0 /bin/qemu-system-arm /bin/
-COPY --from=0 /bin/qemu-system-ppc64 /bin/
-COPY --from=0 /bin/qemu-system-s390x /bin/
-COPY --from=0 /bin/qemu-system-mips /bin/
-COPY --from=0 /bin/qemu-system-mipsel /bin/
-COPY --from=0 /bin/qemu-system-mips64el /bin/
+COPY --from=0 /bin/qemu-system-* /bin/
 COPY --from=0 /share/qemu/ /share/qemu/
-# It is safe and recommended to update the libnss_dns version if you
-# don't have this version on your system.
-# Please send a patch in as well! :)
-COPY --from=0 /lib/x86_64-linux-gnu/libnss_dns-2.31.so /lib/x86_64-linux-gnu/
-COPY --from=0 /lib/x86_64-linux-gnu/libnss_dns.so.2 /lib/x86_64-linux-gnu/
+
+COPY --from=0 /lib/x86_64-linux-gnu/libnss_dns*.so* /lib/x86_64-linux-gnu/
 COPY --from=0 /etc/nsswitch.conf /etc/
 
 CMD ["/bin/qemu-system-x86_64"]
