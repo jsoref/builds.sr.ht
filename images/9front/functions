@@ -18,5 +18,5 @@ guest_ssh() {
 	# Parameters: -p $port user@localhost
 	port=$2
 	shift 3
-	PASS=password DIALSRV=$port drawterm -a none -u glenda -h 127.0.0.1 -c "$*"
+	PASS=password drawterm -a none -u glenda -h "tcp!127.0.0.1!$port" -c "$*"
 }
