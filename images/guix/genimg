@@ -69,7 +69,7 @@ sudo qemu-nbd --disconnect /dev/nbd0
 # Boot guix vm
 qemu-system-$arch \
     -pidfile /tmp/qemu.id \
-    -m 1024 \
+    -m 2048 \
     -smp cpus=2 \
     -net nic,model=virtio -net user,hostfwd=tcp:127.0.0.1:8022-:22 \
     -display none \
