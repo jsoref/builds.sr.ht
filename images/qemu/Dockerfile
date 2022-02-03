@@ -3,8 +3,8 @@ FROM debian:sid
 RUN apt-get -y update --fix-missing && apt-get -y upgrade && apt-get install -y \
     build-essential pkg-config curl xz-utils
 
-RUN curl -O https://download.qemu.org/qemu-4.1.0.tar.xz \
-    && tar xvf qemu-4.1.0.tar.xz
+RUN curl -O https://download.qemu.org/qemu-6.2.0.tar.xz \
+    && tar xvf qemu-6.2.0.tar.xz
 
 RUN apt-get install -y \
     libaio-dev \
@@ -15,10 +15,17 @@ RUN apt-get install -y \
     vde2 \
     zlib1g-dev \
     libpixman-1-dev \
-    libglib2.0-dev
+    libglib2.0-dev \
+    ninja-build
 
-RUN cd qemu-4.1.0 && ./configure \
+RUN cd qemu-6.2.0 && ./configure \
     --prefix=/ \
+    --bindir=/bin \
+    --datadir=/share \
+    --includedir=/include \
+    --libdir=/lib \
+    --libexecdir=/libexec \
+    --mandir=/share/man \
     --static \
     --python=/usr/bin/python3 \
     --audio-drv-list="" \
@@ -29,7 +36,6 @@ RUN cd qemu-4.1.0 && ./configure \
     --disable-vte \
     --disable-gtk \
     --disable-sdl \
-    --disable-bluez \
     --disable-spice \
     --disable-vnc \
     --disable-curses \
@@ -42,7 +48,7 @@ RUN cd qemu-4.1.0 && ./configure \
     --disable-werror \
     --target-list="x86_64-softmmu,i386-softmmu,aarch64-softmmu,arm-softmmu,ppc64-softmmu,s390x-softmmu,riscv64-softmmu,mips-softmmu,mipsel-softmmu,mips64el-softmmu"
 
-RUN cd qemu-4.1.0 && make && make install
+RUN cd qemu-6.2.0 && make && make install
 
 FROM scratch
 COPY --from=0 /bin/qemu-system-* /bin/
