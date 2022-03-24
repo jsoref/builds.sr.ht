@@ -19,4 +19,4 @@ vmlinux
 api/api
 worker/worker
 api/graph/api/generated.go
-api/loaders/*_gen.go
+*_gen.go
