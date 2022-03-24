@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
@@ -16,6 +17,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"text/template"
 	"time"
 
 	"git.sr.ht/~sircmpwn/core-go/auth"
@@ -38,6 +40,16 @@ var (
 		Buckets: []float64{1, 2, 3, 5, 10, 30, 60, 90, 120, 300},
 	}, []string{"image", "arch"})
 )
+
+var hutConfigTemplate = template.Must(template.New("hutConfig").Parse(`instance {{ printf "%q" .Name }} {
+	access-token {{ printf "%q" .Token }}
+	{{- range $service, $origin := .Services }}
+	{{ $service }} {
+		origin {{ printf "%q" $origin }}
+	}
+	{{- end }}
+}
+`))
 
 func (ctx *JobContext) Boot(r *goredis.Client) func() {
 	port, err := r.Incr(ctx.Context, "builds.sr.ht.ssh-port").Result()
@@ -164,6 +176,19 @@ func shquote(v string) string {
 	return "'" + strings.ReplaceAll(v, "'", "'\"'\"'") + "'"
 }
 
+func (ctx *JobContext) oauth2Token() *auth.OAuth2Token {
+	if !ctx.Job.Secrets || ctx.Manifest.OAuth == "" {
+		return nil
+	}
+	return &auth.OAuth2Token{
+		Version:  auth.TokenVersion,
+		Expires:  auth.ToTimestamp(ctx.Deadline),
+		Grants:   ctx.Manifest.OAuth,
+		ClientID: "",
+		Username: ctx.Job.Username,
+	}
+}
+
 func (ctx *JobContext) SendEnv() error {
 	ctx.Log.Println("Sending build environment")
 	envpath := path.Join(ctx.ImageConfig.Homedir, ".buildenv")
@@ -180,14 +205,7 @@ complete-build() {
 	ctx.Manifest.Environment["JOB_URL"] = fmt.Sprintf(
 		"%s/~%s/job/%d", origin, ctx.Job.Username, ctx.Job.Id)
 
-	if ctx.Job.Secrets && ctx.Manifest.OAuth != "" {
-		ot := auth.OAuth2Token{
-			Version:  auth.TokenVersion,
-			Expires:  auth.ToTimestamp(ctx.Deadline),
-			Grants:   ctx.Manifest.OAuth,
-			ClientID: "",
-			Username: ctx.Job.Username,
-		}
+	if ot := ctx.oauth2Token(); ot != nil {
 		ctx.Manifest.Environment["OAUTH2_TOKEN"] = ot.Encode()
 	}
 
@@ -309,6 +327,54 @@ func (ctx *JobContext) SendSecrets() error {
 			return fmt.Errorf("Unknown secret type %s", secret.SecretType)
 		}
 	}
+	return nil
+}
+
+func (ctx *JobContext) SendHutConfig() error {
+	ot := ctx.oauth2Token()
+	if ot == nil {
+		return nil
+	}
+
+	instanceName, _ := config.Get("sr.ht", "site-name")
+	data := struct {
+		Name, Token string
+		Services    map[string]string
+	}{
+		Name:     instanceName,
+		Token:    ot.Encode(),
+		Services: map[string]string{},
+	}
+	for name, section := range config {
+		if !strings.HasSuffix(name, ".sr.ht") || strings.Contains(name, "::") {
+			continue
+		}
+		origin, ok := section["api-origin"]
+		if !ok {
+			origin, ok = section["origin"]
+		}
+		if !ok {
+			continue
+		}
+		data.Services[strings.TrimSuffix(name, ".sr.ht")] = origin
+	}
+
+	var buf bytes.Buffer
+	if err := hutConfigTemplate.Execute(&buf, data); err != nil {
+		return errors.Wrap(err, "hutConfigTemplate.Execute")
+	}
+
+	configPath := "/home/build/.config/hut/config"
+	if err := ctx.SSH("mkdir", "-p", path.Dir(configPath)).Run(); err != nil {
+		return errors.Wrap(err, "mkdir -p $(dirname)")
+	}
+	if err := ctx.Tee(configPath, buf.Bytes()); err != nil {
+		return errors.Wrap(err, "tee")
+	}
+	if err := ctx.SSH("chmod", "0600", configPath).Run(); err != nil {
+		return errors.Wrap(err, "chmod")
+	}
+
 	return nil
 }
 

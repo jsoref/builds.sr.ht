@@ -191,6 +191,7 @@ func (wctx *WorkerContext) RunBuild(
 		ctx.SendTasks,
 		ctx.SendEnv,
 		ctx.SendSecrets,
+		ctx.SendHutConfig,
 		ctx.ConfigureRepos,
 		ctx.InstallPackages,
 		ctx.CloneRepos,
