@@ -1,3 +1,15 @@
-SRHT_PATH?=/usr/lib/python3.8/site-packages/srht
+SRHT_PATH?=/usr/lib/python3.9/site-packages/srht
 MODULE=buildsrht/
 include ${SRHT_PATH}/Makefile
+
+all: api worker
+
+api:
+	cd api && go generate ./loaders
+	cd api && go generate ./graph
+	cd api && go build
+
+worker:
+	cd worker && go build
+
+.PHONY: all api worker

@@ -17,3 +17,6 @@ vmlinuz
 vmlinux
 *.img
 api/api
+worker/worker
+api/graph/api/generated.go
+api/loaders/*_gen.go
