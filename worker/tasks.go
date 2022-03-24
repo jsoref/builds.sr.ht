@@ -336,7 +336,10 @@ func (ctx *JobContext) SendHutConfig() error {
 		return nil
 	}
 
-	instanceName, _ := config.Get("sr.ht", "site-name")
+	instanceName, ok := config.Get("sr.ht", "site-name")
+	if !ok || instanceName == "" {
+		instanceName = "default"
+	}
 	data := struct {
 		Name, Token string
 		Services    map[string]string
