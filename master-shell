@@ -45,7 +45,7 @@ if cmd[0] == "submit":
         fail(str(ex))
     job = Job(user, _manifest)
     job.image = manifest.image
-    job.note = [y for x, y in opts if x == "-n"] or None
+    job.note = " ".join([y for x, y in opts if x == "-n"]) or None
     db.session.add(job)
     db.session.flush()
     for task in manifest.tasks:
