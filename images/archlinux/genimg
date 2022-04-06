@@ -132,7 +132,7 @@ cat > "$root"/home/build/.gitconfig << EOF
   name = builds.sr.ht
   email = builds@sr.ht
 EOF
-chown build:build "$root"/home/build/.gitconfig
+run_root chown build:build /home/build/.gitconfig
 
 run_root pacman --noconfirm -Rs go
 paccache -rk0 -c "$root/var/cache/pacman/pkg"
