@@ -31,7 +31,7 @@ mount /dev/nbd0p2 "$root"
 mkdir -p "$root"/boot
 mount /dev/nbd0p1 "$root"/boot
 
-pacstrap root base base-devel git mercurial openssh mkinitcpio linux syslinux pacutils
+pacstrap -G root base base-devel git mercurial openssh mkinitcpio linux syslinux pacutils
 
 run_root() {
     local cmd="$@"
@@ -65,6 +65,9 @@ reflector --protocol https --latest 30 --sort rate --save $root/etc/pacman.d/mir
 
 mkdir -p $root/etc/pacman.d/hooks/
 ln -s /dev/null $root/etc/pacman.d/hooks/90-linux.hook
+
+run_root pacman-key --init
+run_root pacman-key --populate archlinux
 
 sed -i 's/#en_US.UTF-8/en_US.UTF-8/' $root/etc/locale.gen
 run_root locale-gen
