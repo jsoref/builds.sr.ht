@@ -40,8 +40,7 @@ run_root() {
 
 run_normal() {
     local cmd="$@"
-    chroot --userspec=$SUDO_UID:$SUDO_GID \
-        $root \
+    chroot $root sudo -u build -g build \
         /bin/bash -c "cd /home/build && $cmd"
 }
 
