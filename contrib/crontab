@@ -27,3 +27,4 @@
 0 18 3 * * chronic /usr/local/bin/submit_image_build -n "Monthly scheduled build image refresh" alpine/oldest
 0 18 4 * * chronic /usr/local/bin/submit_image_build -n "Monthly scheduled build image refresh" fedora/34
 0 18 5 * * chronic /usr/local/bin/submit_image_build -n "Monthly scheduled build image refresh" -a amd64 debian/oldstable
+0 18 6 * * chronic /usr/local/bin/submit_image_build -n "Monthly scheduled build image refresh" -a amd64 ubuntu/oldoldlts
