@@ -171,7 +171,7 @@ _wait_boot() {
 	port=$1
 	attempts=0
 	echo "Waiting for VM to come up..."
-	while ! guest_ssh -p "$port" build@localhost true 2>&1 >/dev/null
+	while ! guest_ssh -p "$port" build@localhost echo Hello world 2>&1 >/dev/null
 	do
 		sleep 5
 		attempts=$((attempts + 1))
