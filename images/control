@@ -13,7 +13,7 @@ shift 2
 
 if [ ! -d $self/$base ]
 then
-	printf "Unknown base image '%s'\n" "$base" >&2
+	printf "Not a directory '%s'\n" "$base" >&2
 	exit 1
 fi
 
@@ -211,7 +211,7 @@ cmd_cleanup() {
 
 if ! [ -e "$self/$base/functions" ]
 then
-	printf "Unknown base image '%s'\n" "$base" >&2
+	printf "Missing base image functions '%s'\n" "$base" >&2
 	exit 1
 fi
 
