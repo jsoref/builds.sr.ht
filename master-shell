@@ -31,7 +31,7 @@ if len(cmd) == 0:
 
 if cmd[0] == "submit":
     try:
-        opts, args = getopt(cmd[1:], "n:")
+        opts, args = getopt(cmd[1:], "n:t:")
     except GetoptError as ex:
         fail(str(ex))
 
@@ -46,6 +46,7 @@ if cmd[0] == "submit":
     job = Job(user, _manifest)
     job.image = manifest.image
     job.note = " ".join([y for x, y in opts if x == "-n"]) or None
+    job.tags = "/".join([y for x, y in opts if x == "-t"]) or None
     db.session.add(job)
     db.session.flush()
     for task in manifest.tasks:
