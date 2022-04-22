@@ -7,6 +7,7 @@ packages:
   - binfmt-support
   - rsync
   - extlinux
+  - fdisk
 sources:
   - https://git.sr.ht/~sircmpwn/builds.sr.ht
 environment:
