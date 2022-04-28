@@ -129,7 +129,7 @@ func fetchJobsByID(ctx context.Context) func(ids []int) ([]*model.Job, []error) 
 				rows *sql.Rows
 			)
 			query := database.
-				Select(ctx, (&model.Job{})).
+				Select(ctx, (&model.Job{}).As("job")).
 				From(`job`).
 				Where(sq.Expr(`job.id = ANY(?)`, pq.Array(ids)))
 			if rows, err = query.RunWith(tx).QueryContext(ctx); err != nil {
