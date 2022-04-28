@@ -1,21 +1,21 @@
 from ansi2html import Ansi2HTMLConverter
-from datetime import datetime, timedelta
-from flask import Blueprint, render_template, request, abort, redirect
-from flask import Response, url_for
-from srht.cache import get_cache, set_cache
-from srht.config import cfg
-from srht.database import db
-from srht.redis import redis
-from srht.flask import paginate_query, session
-from srht.oauth import current_user, loginrequired, UserType
-from srht.validation import Validation
-from buildsrht.types import Job, JobStatus, Task, TaskStatus, User
 from buildsrht.manifest import Manifest
 from buildsrht.rss import generate_feed
 from buildsrht.runner import queue_build, requires_payment
 from buildsrht.search import apply_search
+from buildsrht.types import Job, JobStatus, Task, TaskStatus, User
+from datetime import datetime, timedelta
+from flask import Blueprint, render_template, request, abort, redirect
+from flask import Response, url_for
+from markupsafe import Markup, escape
 from prometheus_client import Counter
-from jinja2 import Markup, escape
+from srht.cache import get_cache, set_cache
+from srht.config import cfg
+from srht.database import db
+from srht.flask import paginate_query, session
+from srht.oauth import current_user, loginrequired, UserType
+from srht.redis import redis
+from srht.validation import Validation
 import sqlalchemy as sa
 import hashlib
 import requests
