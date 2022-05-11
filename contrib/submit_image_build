@@ -57,7 +57,7 @@ r = requests.post(url, json={
     "variables": {
         "manifest": manifest.to_yaml(),
         "note": note,
-        "tags": [image] + ([release] if release else [])
+        "tags": ["refresh", image] + ([release] if release else [])
     },
 }, headers={
     "Authorization": f"Bearer {token}"
