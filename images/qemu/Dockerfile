@@ -1,10 +1,10 @@
-FROM debian:sid
+FROM debian:unstable
 
 RUN apt-get -y update --fix-missing && apt-get -y upgrade && apt-get install -y \
     build-essential pkg-config curl xz-utils
 
-RUN curl -O https://download.qemu.org/qemu-6.2.0.tar.xz \
-    && tar xvf qemu-6.2.0.tar.xz
+RUN curl -O https://download.qemu.org/qemu-7.0.0.tar.xz \
+    && tar xvf qemu-7.0.0.tar.xz
 
 RUN apt-get install -y \
     libaio-dev \
@@ -18,7 +18,7 @@ RUN apt-get install -y \
     libglib2.0-dev \
     ninja-build
 
-RUN cd qemu-6.2.0 && ./configure \
+RUN cd qemu-7.0.0 && ./configure \
     --prefix=/ \
     --bindir=/bin \
     --datadir=/share \
@@ -48,7 +48,7 @@ RUN cd qemu-6.2.0 && ./configure \
     --disable-werror \
     --target-list="x86_64-softmmu,i386-softmmu,aarch64-softmmu,arm-softmmu,ppc64-softmmu,s390x-softmmu,riscv64-softmmu,mips-softmmu,mipsel-softmmu,mips64el-softmmu"
 
-RUN cd qemu-6.2.0 && make && make install
+RUN cd qemu-7.0.0 && make && make install
 
 FROM scratch
 COPY --from=0 /bin/qemu-system-* /bin/
