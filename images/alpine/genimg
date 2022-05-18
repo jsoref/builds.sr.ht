@@ -82,15 +82,16 @@ iface eth0 inet static
 	gateway 10.0.2.2
 EOF
 run_root setup-dns -d example.org 8.8.8.8 8.8.4.4
-run_root setup-timezone -z UTC
 if [ "$release" = "edge" ]
 then
+	run_root setup-timezone UTC
 	cat >/mnt/etc/apk/repositories <<EOF
 http://dl-cdn.alpinelinux.org/alpine/$release/main
 http://dl-cdn.alpinelinux.org/alpine/$release/community
 http://dl-cdn.alpinelinux.org/alpine/$release/testing
 EOF
 else
+	run_root setup-timezone -z UTC
 	cat >/mnt/etc/apk/repositories <<EOF
 http://dl-cdn.alpinelinux.org/alpine/$release/main
 http://dl-cdn.alpinelinux.org/alpine/$release/community
