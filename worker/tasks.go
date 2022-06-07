@@ -423,7 +423,7 @@ func (ctx *JobContext) CloneGitRepo(srcurl, repo_name, ref string) error {
 	git = ctx.SSH("GIT_SSH_COMMAND='ssh -o " +
 		"UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'",
 		"sh", "-euxc",
-		fmt.Sprintf("'cd %s && git submodule update --init'", repo_name))
+		fmt.Sprintf("'cd %s && git submodule update --init --recursive'", repo_name))
 	git.Stdout = ctx.LogFile
 	git.Stderr = ctx.LogFile
 	if err := git.Run(); err != nil {
