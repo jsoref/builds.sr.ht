@@ -6,6 +6,7 @@ import (
 
 	"git.sr.ht/~sircmpwn/core-go/config"
 	"git.sr.ht/~sircmpwn/core-go/server"
+	"git.sr.ht/~sircmpwn/core-go/webhooks"
 	"github.com/99designs/gqlgen/graphql"
 
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/graph"
@@ -18,6 +19,7 @@ func main() {
 	appConfig := config.LoadConfig(":5102")
 
 	gqlConfig := api.Config{Resolvers: &graph.Resolver{}}
+	gqlConfig.Directives.Private = server.Private
 	gqlConfig.Directives.Access = func(ctx context.Context, obj interface{},
 		next graphql.Resolver, scope model.AccessScope,
 		kind model.AccessKind) (interface{}, error) {
@@ -34,9 +36,12 @@ func main() {
 		scopes[i] = s.String()
 	}
 
+	webhookQueue := webhooks.NewQueue(schema)
+
 	server.NewServer("builds.sr.ht", appConfig).
 		WithDefaultMiddleware().
-		WithMiddleware(loaders.Middleware).
+		WithMiddleware(loaders.Middleware, webhooks.Middleware(webhookQueue)).
 		WithSchema(schema, scopes).
+		WithQueues(webhookQueue.Queue).
 		Run()
 }
