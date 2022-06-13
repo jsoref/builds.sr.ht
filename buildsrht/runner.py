@@ -4,6 +4,7 @@ from datetime import datetime
 from srht.config import cfg
 from srht.database import db
 from srht.email import send_email
+from srht.graphql import exec_gql
 from srht.oauth import UserType
 from srht.metrics import RedisQueueCollector
 from prometheus_client import Counter
@@ -22,20 +23,15 @@ runner = Celery('builds', broker=builds_broker, config_source={
 builds_queue_metrics_collector = RedisQueueCollector(builds_broker, "buildsrht_builds", "Number of builds currently in queue")
 builds_submitted = Counter("buildsrht_builds_submited", "Number of builds submitted")
 
-def queue_build(job, manifest):
-    from buildsrht.types import JobStatus
-    job.status = JobStatus.queued
-    db.session.commit()
-    # crypto mining attempt
-    # pretend to accept it and let the admins know
-    sample = json.dumps(manifest.to_dict())
-    if "xuirig" in sample or "miner" in sample or "selci" in sample:
-        send_email(f"User {job.owner.canonical_name} attempted to submit cryptocurrency mining job #{job.id}",
-                cfg("sr.ht", "owner-email"),
-                "Cryptocurrency mining attempt on builds.sr.ht")
-    else:
-        builds_submitted.inc()
-        run_build.delay(job.id, manifest.to_dict())
+def submit_build(user, manifest, note=None, tags=[]):
+    resp = exec_gql("builds.sr.ht", """
+        mutation SubmitBuild($manifest: String!, $tags: [String!], $note: String) {
+            submit(manifest: $manifest, tags: $tags, note: $note) {
+                id
+            }
+        }
+    """, user=user, manifest=manifest, note=note, tags=tags)
+    return resp["submit"]["id"]
 
 def requires_payment(user):
     if allow_free:

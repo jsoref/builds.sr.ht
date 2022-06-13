@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from buildsrht.manifest import Manifest
-from buildsrht.runner import queue_build
+from buildsrht.runner import submit_build
 from buildsrht.types import Job, Task, User
 from getopt import getopt, GetoptError
 from srht.config import cfg, get_origin
@@ -43,18 +43,10 @@ if cmd[0] == "submit":
         manifest = Manifest(yaml.safe_load(_manifest))
     except Exception as ex:
         fail(str(ex))
-    job = Job(user, _manifest)
-    job.image = manifest.image
-    job.note = " ".join([y for x, y in opts if x == "-n"]) or None
-    job.tags = "/".join([y for x, y in opts if x == "-t"]) or None
-    db.session.add(job)
-    db.session.flush()
-    for task in manifest.tasks:
-        t = Task(job, task.name)
-        db.session.add(t)
-        db.session.flush() # assigns IDs for ordering purposes
-    queue_build(job, manifest) # commits the session
-    url = f"{get_origin('builds.sr.ht', external=True)}/~{username}/job/{job.id}"
+    note = " ".join([y for x, y in opts if x == "-n"]) or None
+    tags = [y for x, y in opts if x == "-t"] or None
+    job_id = submit_build(user, _manifest, note=note, tags=tags)
+    url = f"{get_origin('builds.sr.ht', external=True)}/~{username}/job/{job_id}"
     print(url)
 else:
     fail(f"Unknown command {cmd[0]}")

@@ -3,9 +3,10 @@ from srht.api import paginated_response
 from srht.config import cfg
 from srht.database import db
 from srht.flask import csrf_bypass
+from srht.graphql import exec_gql
 from srht.validation import Validation
 from srht.oauth import oauth, current_token
-from buildsrht.runner import queue_build, requires_payment
+from buildsrht.runner import requires_payment
 from buildsrht.types import Artifact, Job, JobStatus, Task, JobGroup
 from buildsrht.types import Trigger, TriggerType, TriggerCondition
 from buildsrht.manifest import Manifest
@@ -40,53 +41,67 @@ def jobs_POST():
             "Manifest must be less than {} bytes".format(max_len),
             field="manifest")
     note = valid.optional("note", cls=str)
-    read = valid.optional("access:read", ["*"], list)
-    write = valid.optional("access:write", [current_token.user.username], list)
-    secrets = valid.optional("secrets", cls=bool, default=True)
+    secrets = valid.optional("secrets", cls=bool)
     tags = valid.optional("tags", [], list)
     valid.expect(not valid.ok or all(re.match(r"^[A-Za-z0-9_.-]+$", tag) for tag in tags),
         "Invalid tag name, tags must use lowercase alphanumeric characters, underscores, dashes, or dots",
         field="tags")
-    triggers = valid.optional("triggers", list(), list)
-    execute = valid.optional("execute", True, bool)
+    execute = valid.optional("execute", cls=bool)
     if not valid.ok:
         return valid.response
-    try:
-        manifest = Manifest(yaml.safe_load(_manifest))
-    except Exception as ex:
-        valid.error(str(ex))
+
+    resp = exec_gql("builds.sr.ht", """
+        mutation SubmitBuild(
+            $manifest: String!,
+            $note: String,
+            $tags: [String!],
+            $secrets: Boolean,
+            $execute: Boolean,
+        ) {
+            submit(
+                manifest: $manifest,
+                note: $note,
+                tags: $tags,
+                secrets: $secrets,
+                execute: $execute,
+            ) {
+                id
+                log {
+                    fullURL
+                }
+                tasks {
+                    name
+                    status
+                    log {
+                        fullURL
+                    }
+                }
+                note
+                runner
+                tags
+                owner {
+                    canonical_name: canonicalName
+                    ... on User {
+                        name: username
+                    }
+                }
+            }
+        }
+    """, user=current_token.user, valid=valid, manifest=_manifest, note=note, tags=tags, secrets=secrets, execute=execute)
+
+    if not valid.ok:
         return valid.response
-    # TODO: access controls
-    job = Job(current_token.user, _manifest)
-    job.image = manifest.image
-    job.note = note
-    if tags:
-        job.tags = "/".join(tags)
-    job.secrets = secrets
-    db.session.add(job)
-    db.session.flush()
-    for task in manifest.tasks:
-        t = Task(job, task.name)
-        db.session.add(t)
-        db.session.flush() # assigns IDs for ordering purposes
-    for index, trigger in enumerate(triggers):
-        _valid = Validation(trigger)
-        action = _valid.require("action", TriggerType)
-        condition = _valid.require("condition", TriggerCondition)
-        if not _valid.ok:
-            _valid.copy(valid, "triggers[{}]".format(index))
-            return valid.response
-        # TODO: Validate details based on trigger type
-        t = Trigger(job)
-        t.trigger_type = action
-        t.condition = condition
-        t.details = json.dumps(trigger)
-        db.session.add(t)
-    if execute:
-        queue_build(job, manifest) # commits the session
-    else:
-        db.session.commit()
-    return job.to_dict()
+
+    resp = resp["submit"]
+    if resp["log"]:
+        resp["setup_log"] = resp["log"]["fullURL"]
+    del resp["log"]
+    resp["tags"] = "/".join(resp["tags"])
+    for task in resp["tasks"]:
+        task["status"] = task["status"].lower()
+        if task["log"]:
+            task["log"] = task["log"]["fullURL"]
+    return resp
 
 @api.route("/api/jobs/<int:job_id>")
 @oauth("jobs:read")
@@ -134,7 +149,11 @@ def jobs_by_id_start_POST(job_id):
                 { "reason": "This job is already {}".format(reason_map.get(job.status)) }
             ]
         }, 400
-    queue_build(job, Manifest(yaml.safe_load(job.manifest)))
+    exec_gql("builds.sr.ht", """
+        mutation StartJob($jobId: Int!) {
+            start(jobID: $jobId) { id }
+        }
+    """, user=current_token.user, jobId=job.id)
     return { }
 
 @api.route("/api/jobs/<int:job_id>/cancel", methods=["POST"])
@@ -151,7 +170,6 @@ def jobs_by_id_cancel_POST(job_id):
 @api.route("/api/job-group", methods=["POST"])
 @oauth("jobs:write")
 def job_group_POST():
-    # TODO: implement starting the job group right away
     valid = Validation(request)
     jobs = valid.require("jobs")
     valid.expect(not jobs or isinstance(jobs, list) and all(isinstance(j, int) for j in jobs),
@@ -165,49 +183,45 @@ def job_group_POST():
     if not valid.ok:
         return valid.response
 
-    job_group = JobGroup()
-    job_group.note = note
-    job_group.owner_id = current_token.user_id
-    db.session.add(job_group)
-    db.session.flush()
+    triggers = [{
+        "type": trigger["action"].upper(),
+        "condition": trigger["condition"].upper(),
+        "email": {
+            "to": trigger["to"],
+            "cc": trigger.get("cc"),
+            "inReplyTo": trigger.get("in_reply_to"),
+        } if trigger["action"] == "email" else None,
+        "webhook": {
+            "url": trigger["url"],
+        } if trigger["action"] == "webhook" else None,
+    } for trigger in triggers]
 
-    for job_id in jobs:
-        job = Job.query.filter(Job.id == job_id).one_or_none()
-        valid.expect(job, f"Job ID {job_id} not found")
-        if not job:
-            continue
-        valid.expect(job.status == JobStatus.pending,
-                f"Job ID {job.id} has already been started; submit jobs with execute=false to create groups")
-        valid.expect(job.owner_id == current_token.user_id,
-                f"Job ID {job_id} is not owned by you")
-        valid.expect(not job.job_group_id,
-                f"Job ID {job_id} is already assigned to a job group")
-        job.job_group_id = job_group.id
-        job_group.jobs.append(job)
-
-    for index, trigger in enumerate(triggers):
-        _valid = Validation(trigger)
-        action = _valid.require("action", TriggerType)
-        condition = _valid.require("condition", TriggerCondition)
-        if not _valid.ok:
-            _valid.copy(valid, "triggers[{}]".format(index))
-            return valid.response
-        t = Trigger(job_group)
-        t.trigger_type = action
-        t.condition = condition
-        t.details = json.dumps(trigger)
-        db.session.add(t)
+    resp = exec_gql("builds.sr.ht", """
+        mutation CreateJobGroup($jobIds: [Int!]!, $triggers: [TriggerInput!], $execute: Boolean, $note: String) {
+            createGroup(jobIds: $jobIds, triggers: $triggers, execute: $execute, note: $note) {
+                id
+                note
+                owner {
+                    canonical_name: canonicalName
+                    ... on User {
+                        name: username
+                    }
+                }
+                jobs {
+                    id
+                    status
+                }
+            }
+        }
+    """, user=current_token.user, valid=valid, jobIds=jobs, triggers=triggers, execute=execute, note=note)
 
     if not valid.ok:
         return valid.response
 
-    db.session.commit()
-    if execute:
-        for job in job_group.jobs:
-            queue_build(job, Manifest(yaml.safe_load(job.manifest)))
-        db.session.commit()
-
-    return job_group.to_dict()
+    resp = resp["createGroup"]
+    for job in resp["jobs"]:
+        job["status"] = job["status"].lower()
+    return resp
 
 @api.route("/api/job-group/<int:job_group_id>")
 @oauth("jobs:read")

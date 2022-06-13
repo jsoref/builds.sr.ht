@@ -1,7 +1,7 @@
 from ansi2html import Ansi2HTMLConverter
 from buildsrht.manifest import Manifest
 from buildsrht.rss import generate_feed
-from buildsrht.runner import queue_build, requires_payment
+from buildsrht.runner import submit_build, requires_payment
 from buildsrht.search import apply_search
 from buildsrht.types import Job, JobStatus, Task, TaskStatus, User
 from datetime import datetime, timedelta
@@ -249,17 +249,8 @@ def submit_POST():
     except Exception as ex:
         valid.error(str(ex), field="manifest")
         return render_template("submit.html", **valid.kwargs)
-    job = Job(current_user, _manifest)
-    job.image = manifest.image
-    job.note = note
-    db.session.add(job)
-    db.session.flush()
-    for task in manifest.tasks:
-        t = Task(job, task.name)
-        db.session.add(t)
-        db.session.flush() # assigns IDs for ordering purposes
-    queue_build(job, manifest) # commits the session
-    return redirect("/~" + current_user.username + "/job/" + str(job.id))
+    job_id = submit_build(current_user, _manifest, note=note)
+    return redirect("/~" + current_user.username + "/job/" + str(job_id))
 
 @jobs.route("/cancel/<int:job_id>", methods=["POST"])
 @loginrequired
