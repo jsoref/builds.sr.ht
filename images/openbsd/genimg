@@ -211,9 +211,7 @@ sync
 
 # root fs done, install bootloader
 mount /dev/vnd0a /mnt
-# For some reason we need chroot here or the resulting image won't boot. Fortunately, it seems to work even
-# when cross-building
-chroot /mnt installboot -v vnd0
+installboot -vr /mnt vnd0
 umount /mnt
 vnconfig -u vnd0
 
