@@ -3,7 +3,7 @@ module git.sr.ht/~sircmpwn/builds.sr.ht/api
 go 1.16
 
 require (
-	git.sr.ht/~sircmpwn/core-go v0.0.0-20220321082727-3f80f677f56d
+	git.sr.ht/~sircmpwn/core-go v0.0.0-20220530120843-d0bf1153ada4
 	github.com/99designs/gqlgen v0.17.2
 	github.com/Masterminds/squirrel v1.4.0
 	github.com/agnivade/levenshtein v1.1.1 // indirect
