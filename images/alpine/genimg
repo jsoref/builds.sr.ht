@@ -104,7 +104,7 @@ run_root rc-update add ntpd default
 run_root rc-update add sshd default
 run_root rc-update add crond default
 run_root rc-update add haveged default
-for i in hwclock modules sysctl hostname bootmisc networking syslog swap urandom
+for i in hwclock modules sysctl hostname bootmisc networking syslog swap
 do
 	run_root rc-update add $i boot
 done
