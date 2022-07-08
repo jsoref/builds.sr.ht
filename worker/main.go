@@ -28,12 +28,15 @@ var (
 )
 
 func main() {
+	var configPath string
 	flag.IntVar(&workers, "workers", runtime.NumCPU(),
 		"configure number of workers")
+	flag.StringVar(&configPath, "config", "../config.ini",
+		"path to config.ini file")
 	flag.Parse()
 
 	var err error
-	for _, path := range []string{"../config.ini", "/etc/sr.ht/config.ini"} {
+	for _, path := range []string{configPath, "/etc/sr.ht/config.ini"} {
 		config, err = ini.LoadFile(path)
 		if err == nil {
 			break
