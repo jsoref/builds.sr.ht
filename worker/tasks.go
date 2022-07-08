@@ -16,7 +16,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"syscall"
 	"text/template"
 	"time"
 
@@ -194,7 +193,8 @@ func (ctx *JobContext) SendEnv() error {
 	envpath := path.Join(ctx.ImageConfig.Homedir, ".buildenv")
 	env := `#!/bin/sh
 complete-build() {
-	exit 255
+	echo 1 > ~/.complete-build
+	exit 0
 }
 `
 	if ctx.Manifest.Environment == nil {
@@ -585,35 +585,38 @@ func (ctx *JobContext) RunTasks() error {
 		go io.Copy(logfd, tty)
 
 		if err = ssh.Wait(); err != nil {
-			exiterr, ok := err.(*exec.ExitError)
-			if !ok {
-				goto fail
-			}
-			status, ok := exiterr.Sys().(syscall.WaitStatus)
-			if !ok {
-				goto fail
-			}
-			if status.ExitStatus() == 255 {
-				ctx.Job.SetTaskStatus(name, "success")
-				for i++; i < len(ctx.Manifest.Tasks); i++ {
-					for name, _ = range ctx.Manifest.Tasks[i] {
-						break
-					}
-					ctx.Job.SetTaskStatus(name, "skipped")
-				}
-				break
-			}
 			err = errors.Wrap(err, "Running task on guest")
 			goto fail
 		}
 
 		ctx.Job.SetTaskStatus(name, "success")
+
+		if ctx.isMarkedAsCompleted() {
+			for i++; i < len(ctx.Manifest.Tasks); i++ {
+				for name, _ = range ctx.Manifest.Tasks[i] {
+					break
+				}
+				ctx.Job.SetTaskStatus(name, "skipped")
+			}
+			break
+		}
+
 		continue
 	fail:
 		ctx.Job.SetTaskStatus(name, "failed")
 		return err
 	}
 	return nil
+}
+
+func (ctx *JobContext) isMarkedAsCompleted() bool {
+	rc, err := ctx.Download(".complete-build")
+	if err != nil {
+		return false
+	}
+	b, _ := ioutil.ReadAll(rc)
+	rc.Close()
+	return strings.TrimSpace(string(b)) == "1"
 }
 
 func (ctx *JobContext) UploadArtifacts() error {
