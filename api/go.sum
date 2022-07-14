@@ -31,8 +31,8 @@ cloud.google.com/go/storage v1.6.0/go.mod h1:N7U0C8pVQ/+NIKOBQyamJIeKQKkZ+mxpohl
 cloud.google.com/go/storage v1.8.0/go.mod h1:Wv1Oy7z6Yz3DshWRJFhqM/UCfaWIRTdp0RXyy7KQOVs=
 cloud.google.com/go/storage v1.10.0/go.mod h1:FLPqc6j+Ki4BU591ie1oL6qBQGu2Bl/tZ9ullr3+Kg0=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
-git.sr.ht/~sircmpwn/core-go v0.0.0-20220530120843-d0bf1153ada4 h1:pyGHngvO7qIANeI5pmqzfVc+nLKSTTuwq2OA66nxEGw=
-git.sr.ht/~sircmpwn/core-go v0.0.0-20220530120843-d0bf1153ada4/go.mod h1:uUqzeO5OLl/nRZfPk0igIAweRZiVwUmu/OGYfjS9fWc=
+git.sr.ht/~sircmpwn/core-go v0.0.0-20221025082458-3e69641ef307 h1:KYkDsSLoJZ+LshT7ab/8PMhWyq8X+43+FkT1hR3ee1c=
+git.sr.ht/~sircmpwn/core-go v0.0.0-20221025082458-3e69641ef307/go.mod h1:uUqzeO5OLl/nRZfPk0igIAweRZiVwUmu/OGYfjS9fWc=
 git.sr.ht/~sircmpwn/dowork v0.0.0-20210820133136-d3970e97def3 h1:9WCv5cK67s2SiY/R4DWT/OchEsFnfYDz3lbevKxZ4QI=
 git.sr.ht/~sircmpwn/dowork v0.0.0-20210820133136-d3970e97def3/go.mod h1:8neHEO3503w/rNtttnR0JFpQgM/GFhaafVwvkPsFIDw=
 git.sr.ht/~sircmpwn/getopt v0.0.0-20191230200459-23622cc906b3 h1:4wDp4BKF7NQqoh73VXpZsB/t1OEhDpz/zEpmdQfbjDk=
