@@ -133,7 +133,15 @@ if [ "${openbsd_bootstrap}" = "NO" ]; then
 
   if [ "$run_syspatch" = "YES" ]
   then
+    set +e
     chroot /mnt ksh -x /usr/sbin/syspatch
+    syspatch_status=$?
+    set -e
+    # Per man syspatch(8)
+    # The syspatch utility exits 0 on success, and >0 if an error occurs.  In
+    # particular, 2 indicates that applying patches was requested but no
+    # additional patch was installed.
+    test $syspatch_status -eq 0 -o $syspatch_status -eq 2
   fi
 
   chroot /mnt /usr/sbin/pkg_add $pkg_add_params -u
