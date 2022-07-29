@@ -6,7 +6,7 @@ sources:
   - https://git.sr.ht/~sircmpwn/builds.sr.ht
 environment:
   arch: amd64
-  release: "7.0"
+  release: latest
   # genimg automatically generates a "bootstrap image" if building using a different version, but it
   # can also be forced.
   # openbsd_bootstrap: YES
