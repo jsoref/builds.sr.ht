@@ -105,8 +105,10 @@ run_root systemctl enable systemd-networkd.service
 run_root ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 run_root systemctl enable systemd-timesyncd.service
 
-run_root dnf -y install @development-tools git mercurial openssh-server sudo
-run_root dnf -y install kernel grub2
+run_root dnf -y \
+	--releasever="$release" \
+  install \
+  @development-tools git mercurial openssh-server sudo kernel grub2
 
 # Add support for virtio block devices at boot time.
 cat > /mnt/etc/dracut.conf.d/virtio-blk.conf <<EOF
