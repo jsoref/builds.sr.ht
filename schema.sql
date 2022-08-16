@@ -137,7 +137,7 @@ CREATE TABLE gql_user_wh_delivery (
 	date timestamp without time zone NOT NULL,
 	event webhook_event NOT NULL,
 	subscription_id integer NOT NULL
-		REFERENCES gql_user_wh_sub(id),
+		REFERENCES gql_user_wh_sub(id) ON DELETE CASCADE,
 	request_body character varying NOT NULL,
 	response_body character varying,
 	response_headers character varying,
