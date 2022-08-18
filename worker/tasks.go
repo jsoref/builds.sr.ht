@@ -151,7 +151,7 @@ func (ctx *JobContext) SendTasks() error {
 			break
 		}
 		taskpath := path.Join(taskdir, name)
-		script = ctx.ImageConfig.Preamble+script+"\n"
+		script = ctx.ImageConfig.Preamble + script + "\n"
 		if err := ctx.Tee(taskpath, []byte(script)); err != nil {
 			return err
 		}
@@ -399,7 +399,7 @@ func (ctx *JobContext) ConfigureRepos() error {
 }
 
 func (ctx *JobContext) CloneGitRepo(srcurl, repo_name, ref string) error {
-	git := ctx.SSH("GIT_SSH_COMMAND='ssh -o " +
+	git := ctx.SSH("GIT_SSH_COMMAND='ssh -o "+
 		"UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'",
 		"git", "clone", srcurl, repo_name)
 	git.Stdout = ctx.LogFile
@@ -420,7 +420,7 @@ func (ctx *JobContext) CloneGitRepo(srcurl, repo_name, ref string) error {
 			return errors.Wrap(err, "git checkout")
 		}
 	}
-	git = ctx.SSH("GIT_SSH_COMMAND='ssh -o " +
+	git = ctx.SSH("GIT_SSH_COMMAND='ssh -o "+
 		"UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'",
 		"sh", "-euxc",
 		fmt.Sprintf("'cd %s && git submodule update --init --recursive'", repo_name))
@@ -507,8 +507,8 @@ func (ctx *JobContext) CloneRepos() error {
 			}
 		case "hg":
 			hg := ctx.SSH("hg", "clone",
-				"-e", "'ssh -o UserKnownHostsFile=/dev/null " +
-				"-o StrictHostKeyChecking=no'", srcurl, repo_name)
+				"-e", "'ssh -o UserKnownHostsFile=/dev/null "+
+					"-o StrictHostKeyChecking=no'", srcurl, repo_name)
 			hg.Stdout = ctx.LogFile
 			hg.Stderr = ctx.LogFile
 			if err := hg.Run(); err != nil {
@@ -639,20 +639,16 @@ func (ctx *JobContext) UploadArtifacts() error {
 	)
 	err := errors.New("Build artifacts were requested, but S3 " +
 		"is not configured for this build runner.")
-	if upstream, ok = config.Get("objects", "s3-upstream");
-		!ok || upstream == "" {
+	if upstream, ok = config.Get("objects", "s3-upstream"); !ok || upstream == "" {
 		return err
 	}
-	if accessKey, ok = config.Get("objects", "s3-access-key");
-		!ok || accessKey == "" {
+	if accessKey, ok = config.Get("objects", "s3-access-key"); !ok || accessKey == "" {
 		return err
 	}
-	if secretKey, ok = config.Get("objects", "s3-secret-key");
-		!ok || secretKey == "" {
+	if secretKey, ok = config.Get("objects", "s3-secret-key"); !ok || secretKey == "" {
 		return err
 	}
-	if bucket, ok = config.Get("builds.sr.ht::worker", "s3-bucket");
-		!ok || bucket == "" {
+	if bucket, ok = config.Get("builds.sr.ht::worker", "s3-bucket"); !ok || bucket == "" {
 		return err
 	}
 	if prefix, ok = config.Get("builds.sr.ht::worker", "s3-prefix"); !ok {
@@ -676,7 +672,7 @@ func (ctx *JobContext) UploadArtifacts() error {
 	}
 	for _, src := range ctx.Manifest.Artifacts {
 		ctx.Log.Printf("Uploading %s", src)
-		name := path.Join(prefix, "~" + ctx.Job.Username,
+		name := path.Join(prefix, "~"+ctx.Job.Username,
 			strconv.Itoa(ctx.Job.Id),
 			hex.EncodeToString(random),
 			filepath.Base(src))

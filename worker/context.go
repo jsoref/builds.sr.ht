@@ -267,25 +267,25 @@ func (ctx *JobContext) Control(
 func (ctx *JobContext) SSH(args ...string) *exec.Cmd {
 	sport := strconv.Itoa(ctx.Port)
 	switch ctx.ImageConfig.LoginCmd {
-		case "drawterm":
-			return exec.CommandContext(ctx.Context,
-				"env", fmt.Sprintf("DIALSRV=%s", sport),
-				"PASS=password", "drawterm",
-				"-a", "none",
-				"-u", "glenda",
-				"-h", "127.0.0.1",
-				"-Gc", strings.Join(args, " "))
-		case "ssh":
-			return exec.CommandContext(ctx.Context, "ssh",
-				append([]string{"-q",
-					"-p", sport,
-					"-o", "UserKnownHostsFile=/dev/null",
-					"-o", "StrictHostKeyChecking=no",
-					"-o", "LogLevel=quiet",
-					"build@localhost",
-				}, args...)...)
-		default:
-			panic(errors.New("Unknown login command"))
+	case "drawterm":
+		return exec.CommandContext(ctx.Context,
+			"env", fmt.Sprintf("DIALSRV=%s", sport),
+			"PASS=password", "drawterm",
+			"-a", "none",
+			"-u", "glenda",
+			"-h", "127.0.0.1",
+			"-Gc", strings.Join(args, " "))
+	case "ssh":
+		return exec.CommandContext(ctx.Context, "ssh",
+			append([]string{"-q",
+				"-p", sport,
+				"-o", "UserKnownHostsFile=/dev/null",
+				"-o", "StrictHostKeyChecking=no",
+				"-o", "LogLevel=quiet",
+				"build@localhost",
+			}, args...)...)
+	default:
+		panic(errors.New("Unknown login command"))
 	}
 }
 

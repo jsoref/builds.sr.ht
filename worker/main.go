@@ -10,12 +10,12 @@ import (
 	"runtime"
 	"sync"
 
+	"git.sr.ht/~sircmpwn/core-go/crypto"
 	goredis "github.com/go-redis/redis/v8"
 	"github.com/vaughan0/go-ini"
-	"git.sr.ht/~sircmpwn/core-go/crypto"
 
-	_ "github.com/lib/pq"
 	celery "github.com/gocelery/gocelery"
+	_ "github.com/lib/pq"
 )
 
 var (

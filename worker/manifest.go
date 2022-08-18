@@ -36,7 +36,7 @@ func LoadImageConfig(image string) *ImageConfig {
 		LoginCmd:   "ssh",
 		GitVariant: "git",
 		Homedir:    "/home/build",
-		Preamble:   `#!/usr/bin/env bash
+		Preamble: `#!/usr/bin/env bash
 . ~/.buildenv
 set -xe
 

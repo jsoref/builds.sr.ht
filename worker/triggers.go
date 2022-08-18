@@ -18,12 +18,12 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"git.sr.ht/~sircmpwn/core-go/crypto"
 	"github.com/martinlindhe/base36"
+	ms "github.com/mitchellh/mapstructure"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	"git.sr.ht/~sircmpwn/core-go/crypto"
 	gomail "gopkg.in/mail.v2"
-	ms "github.com/mitchellh/mapstructure"
 )
 
 var (
@@ -64,10 +64,10 @@ type JobStatus struct {
 }
 
 type JobGroupStatus struct {
-	Id       int          `json:"id"`
-	Note     *string      `json:"note"`
-	Owner    JobOwner     `json:"owner"`
-	Jobs     []JobStatus  `json:"jobs"`
+	Id    int         `json:"id"`
+	Note  *string     `json:"note"`
+	Owner JobOwner    `json:"owner"`
+	Jobs  []JobStatus `json:"jobs"`
 }
 
 type EmailTrigger struct {
@@ -98,8 +98,8 @@ func (ctx *JobContext) ProcessTriggers() {
 		var trigger Trigger
 		ms.Decode(def, &trigger)
 		failures := map[string]interface{}{
-			"failed": nil,
-			"timeout": nil,
+			"failed":    nil,
+			"timeout":   nil,
 			"cancelled": nil,
 		}
 		process := trigger.Condition == "always"
@@ -211,7 +211,7 @@ func (ctx *JobContext) processEmail(def map[string]interface{}) {
 		Tasks    string
 	}
 	tmpl, err := template.New("email").Parse(
-`{{if .Job.Tags}}{{.Job.Tags}}{{else}}Job{{end}} #{{.Job.Id}}: {{.Status}} in {{.Duration}}
+		`{{if .Job.Tags}}{{.Job.Tags}}{{else}}Job{{end}} #{{.Job.Id}}: {{.Status}} in {{.Duration}}
 
 {{if .Job.Note}}{{.Job.Note}}
 
@@ -253,9 +253,9 @@ func (ctx *JobContext) processWebhook(def map[string]interface{}) {
 			*ctx.Job.Runner, ctx.Job.Id),
 		Note:   ctx.Job.Note,
 		Runner: ctx.Job.Runner,
-		Owner: JobOwner {
+		Owner: JobOwner{
 			CName: "~" + ctx.Job.Username,
-			Name: ctx.Job.Username,
+			Name:  ctx.Job.Username,
 		},
 	}
 
@@ -270,7 +270,7 @@ func (ctx *JobContext) processWebhook(def map[string]interface{}) {
 			return
 		}
 		task := TaskStatus{
-			Name: name,
+			Name:   name,
 			Status: taskStatus,
 			Log: fmt.Sprintf("http://%s/logs/%d/%s/log",
 				*ctx.Job.Runner, ctx.Job.Id, name),
@@ -293,7 +293,7 @@ func (ctx *JobContext) processWebhook(def map[string]interface{}) {
 	nonce, sig := crypto.SignWebhook(data)
 
 	ctx.Log.Println("Sending webhook...")
-	client := &http.Client{Timeout: time.Second*10}
+	client := &http.Client{Timeout: time.Second * 10}
 	req, err := http.NewRequest("POST", trigger.Url, bytes.NewReader(data))
 	req.Header.Add("X-Payload-Nonce", nonce)
 	req.Header.Add("X-Payload-Signature", sig)
@@ -362,8 +362,8 @@ func (ctx *JobContext) processJobGroupTriggers(groupId int) {
 			return
 		}
 		failures := map[string]interface{}{
-			"failed": nil,
-			"timeout": nil,
+			"failed":    nil,
+			"timeout":   nil,
 			"cancelled": nil,
 		}
 		process := trigger.Condition == "always"
@@ -374,7 +374,7 @@ func (ctx *JobContext) processJobGroupTriggers(groupId int) {
 			process = process || trigger.Condition == "success"
 		}
 		triggers := map[string]func(*JobGroup, string, map[string]interface{}){
-			"email":   ctx.processGroupEmail,
+			"email": ctx.processGroupEmail,
 			//"webhook": ctx.processGroupWebhook, TODO
 		}
 		if process {
@@ -487,14 +487,14 @@ func (ctx *JobContext) processGroupEmail(group *JobGroup, status string,
 		origin := ctx.Conf("builds.sr.ht", "origin")
 		url := fmt.Sprintf("%s/~%s/job/%d", origin, job.Username, job.Id)
 		if job.Tags != nil {
-			jobsBuf.WriteString(fmt.Sprintf("%c #%d %-" +
-				strconv.FormatInt(int64(maxStatus), 10) + "s %-" +
-				strconv.FormatInt(int64(maxTags), 10) + "s %s\n",
+			jobsBuf.WriteString(fmt.Sprintf("%c #%d %-"+
+				strconv.FormatInt(int64(maxStatus), 10)+"s %-"+
+				strconv.FormatInt(int64(maxTags), 10)+"s %s\n",
 				statusChar, job.Id, strings.ToUpper(job.Status), *job.Tags, url))
 		} else {
-			jobsBuf.WriteString(fmt.Sprintf("%c #%d %-" +
-				strconv.FormatInt(int64(maxStatus), 10) + "s %-" +
-				strconv.FormatInt(int64(maxTags), 10) + "s %s\n",
+			jobsBuf.WriteString(fmt.Sprintf("%c #%d %-"+
+				strconv.FormatInt(int64(maxStatus), 10)+"s %-"+
+				strconv.FormatInt(int64(maxTags), 10)+"s %s\n",
 				statusChar, job.Id, strings.ToUpper(job.Status), job.Image, url))
 		}
 	}
@@ -508,7 +508,7 @@ func (ctx *JobContext) processGroupEmail(group *JobGroup, status string,
 	}
 	// TODO: Use job group tags here
 	tmpl, err := template.New("group-email").Parse(
-`{{if .Tag}}{{.Tag}}{{else}}Job group{{end}}: {{.Status}} in {{.Duration}}
+		`{{if .Tag}}{{.Tag}}{{else}}Job group{{end}}: {{.Status}} in {{.Duration}}
 
 {{if .Group.Note}}{{.Group.Note}}{{end}}
 
