@@ -59,13 +59,19 @@ mount ${NBD_DEVICE}p3 /mnt
 mkdir /mnt/boot
 mount ${NBD_DEVICE}p1 /mnt/boot
 
+ln -sr /etc/pki/rpm-gpg/RPM-GPG-KEY-{rockyofficial,Rocky-$(rpm -E %rhel)}
+curl -o /etc/pki/rpm-gpg/RPM-GPG-KEY-Rocky-9 https://dl.rockylinux.org/pub/rocky/RPM-GPG-KEY-Rocky-9
+sed \
+   -e 's|gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rockyofficial|gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-Rocky-$releasever|' \
+   -i /etc/yum.repos.d/Rocky-*.repo
+dnf update
 dnf -y -q \
 	--releasever="$release" \
 	--installroot=/mnt \
 	--disablerepo='*' \
 	--enablerepo=appstream \
 	--enablerepo=baseos\
-        --enablerepo=extras \
+	--enablerepo=extras \
 	--setopt=install_weak_deps=False install\
 	bash basesystem systemd passwd dnf rocky-release NetworkManager
 
@@ -85,6 +91,15 @@ echo 'nameserver 8.8.8.8' >/mnt/etc/resolv.conf
 echo 'nameserver 8.8.4.4' >>/mnt/etc/resolv.conf
 
 run_root systemd-machine-id-setup
+
+# Rebuild package DB for RL9
+if [[ $release = "9" ]]
+then
+run_root rpmdb --rebuilddb --define '"_db_backend sqlite"'
+fi
+
+# Enable EPEL
+run_root dnf -y -q install https://dl.fedoraproject.org/pub/epel/epel-release-latest-$release.noarch.rpm 
 
 # Delay installing systemd-udev becuase it accesses /dev/urandom.
 run_root dnf -y -q install git mercurial openssh-server sudo systemd-udev chrony
