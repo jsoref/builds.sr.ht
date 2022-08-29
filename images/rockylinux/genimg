@@ -64,7 +64,6 @@ curl -o /etc/pki/rpm-gpg/RPM-GPG-KEY-Rocky-9 https://dl.rockylinux.org/pub/rocky
 sed \
    -e 's|gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rockyofficial|gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-Rocky-$releasever|' \
    -i /etc/yum.repos.d/Rocky-*.repo
-dnf update
 dnf -y -q \
 	--releasever="$release" \
 	--installroot=/mnt \
