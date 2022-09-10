@@ -35,8 +35,7 @@
     enableIPv6 = false;
     nameservers = [
       # OpenNIC anycast
-      "185.121.177.177"
-      "169.239.202.202"
+      "134.195.4.2" # https://servers.opennicproject.org/edit.php?srv=ns4.any.dns.opennic.glue
       # Google as a fallback :(
       "8.8.8.8"
     ];

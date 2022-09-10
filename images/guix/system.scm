@@ -32,8 +32,7 @@ root ALL=(ALL) ALL
 			   (list (static-networking
 			    (inherit %qemu-static-networking)
 			    (name-servers '(;; OpenNIC
-					    "185.121.177.177"
-					    "169.239.202.202"
+					    "134.195.4.2" ;; https://servers.opennicproject.org/edit.php?srv=ns4.any.dns.opennic.glue
 					    ;; Google
 					    "8.8.8.8"
 					    "8.8.4.4")))))
