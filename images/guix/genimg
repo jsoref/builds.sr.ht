@@ -86,10 +86,5 @@ guest_ssh build@localhost tee .gitconfig <<EOF
     email = builds@sr.ht
 EOF
 
-# Provide guest the cache of host guix to reuse guix channel checkout
-# and authentication
-guest_ssh build@localhost mkdir -p .cache
-guest_scp -qpr ~/.cache/guix build@localhost:.cache
-
 # Update guest guix
 guest_ssh build@localhost guix pull -v0
