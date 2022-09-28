@@ -89,10 +89,16 @@ a[href^="mailto:"] {
   font-family: monospace;
 }
 
-.to-top {
+.to-bottom {
   position: -webkit-sticky; /* for safari */
   position: sticky;
   top: 0;
+}
+
+.to-top {
+  position: -webkit-sticky; /* for safari */
+  position: sticky;
+  top: 1.5em;
 }
 
 @media(prefers-color-scheme: dark) {
