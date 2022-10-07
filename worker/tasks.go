@@ -405,7 +405,7 @@ func (ctx *JobContext) CloneGitRepo(srcurl, repo_name, ref string) error {
 	git.Stdout = ctx.LogFile
 	git.Stderr = ctx.LogFile
 	if err := git.Run(); err != nil {
-		ctx.Log.Println("Failed to clone repository. " +
+		ctx.Log.Println("Failed to clone git repository. " +
 			"If this a private repository, make sure you've " +
 			"added a suitable SSH key.")
 		ctx.Log.Println("https://man.sr.ht/builds.sr.ht/private-repos.md")
@@ -443,7 +443,7 @@ func (ctx *JobContext) CloneGit9Repo(srcurl, repo_name, ref string) error {
 	git.Stdout = ctx.LogFile
 	git.Stderr = ctx.LogFile
 	if err := git.Run(); err != nil {
-		ctx.Log.Println("Failed to clone repository.")
+		ctx.Log.Println("Failed to clone git repository.")
 		return errors.Wrap(err, "git clone")
 	}
 	if ref != "" {
@@ -512,7 +512,7 @@ func (ctx *JobContext) CloneRepos() error {
 			hg.Stdout = ctx.LogFile
 			hg.Stderr = ctx.LogFile
 			if err := hg.Run(); err != nil {
-				ctx.Log.Println("Failed to clone repository. " +
+				ctx.Log.Println("Failed to clone mercurial repository. " +
 					"If this a private repository, make sure you've " +
 					"added a suitable SSH key.")
 				ctx.Log.Println("https://man.sr.ht/builds.sr.ht/private-repos.md")
