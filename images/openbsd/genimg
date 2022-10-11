@@ -113,8 +113,12 @@ echo "$openbsd_installurl" > /mnt/etc/installurl
 ln -sf /usr/share/zoneinfo/UTC /mnt/etc/localtime
 
 cat >>/mnt/etc/rc.conf.local <<EOF
+dhcpleased_flags=NO
 library_aslr=NO
 pf=NO
+pflogd_flags=NO
+resolvd_flags=NO
+slaacd_flags=NO
 sndiod_flags=NO
 EOF
 
