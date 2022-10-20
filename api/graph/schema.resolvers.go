@@ -30,10 +30,12 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+// Owner is the resolver for the owner field.
 func (r *jobResolver) Owner(ctx context.Context, obj *model.Job) (model.Entity, error) {
 	return loaders.ForContext(ctx).UsersByID.Load(obj.OwnerID)
 }
 
+// Group is the resolver for the group field.
 func (r *jobResolver) Group(ctx context.Context, obj *model.Job) (*model.JobGroup, error) {
 	if obj.JobGroupID == nil {
 		return nil, nil
@@ -41,6 +43,7 @@ func (r *jobResolver) Group(ctx context.Context, obj *model.Job) (*model.JobGrou
 	return loaders.ForContext(ctx).JobGroupsByID.Load(*obj.JobGroupID)
 }
 
+// Tasks is the resolver for the tasks field.
 func (r *jobResolver) Tasks(ctx context.Context, obj *model.Job) ([]*model.Task, error) {
 	var tasks []*model.Task
 
@@ -77,6 +80,7 @@ func (r *jobResolver) Tasks(ctx context.Context, obj *model.Job) ([]*model.Task,
 	return tasks, nil
 }
 
+// Artifacts is the resolver for the artifacts field.
 func (r *jobResolver) Artifacts(ctx context.Context, obj *model.Job) ([]*model.Artifact, error) {
 	var artifacts []*model.Artifact
 	if err := database.WithTx(ctx, &sql.TxOptions{
@@ -108,6 +112,7 @@ func (r *jobResolver) Artifacts(ctx context.Context, obj *model.Job) ([]*model.A
 	return artifacts, nil
 }
 
+// Log is the resolver for the log field.
 func (r *jobResolver) Log(ctx context.Context, obj *model.Job) (*model.Log, error) {
 	if obj.Runner == nil {
 		return nil, nil
@@ -116,6 +121,7 @@ func (r *jobResolver) Log(ctx context.Context, obj *model.Job) (*model.Log, erro
 	return FetchLogs(ctx, url)
 }
 
+// Secrets is the resolver for the secrets field.
 func (r *jobResolver) Secrets(ctx context.Context, obj *model.Job) ([]model.Secret, error) {
 	var secrets []model.Secret
 
@@ -170,10 +176,12 @@ func (r *jobResolver) Secrets(ctx context.Context, obj *model.Job) ([]model.Secr
 	return secrets, nil
 }
 
+// Owner is the resolver for the owner field.
 func (r *jobGroupResolver) Owner(ctx context.Context, obj *model.JobGroup) (model.Entity, error) {
 	return loaders.ForContext(ctx).UsersByID.Load(obj.OwnerID)
 }
 
+// Jobs is the resolver for the jobs field.
 func (r *jobGroupResolver) Jobs(ctx context.Context, obj *model.JobGroup) ([]*model.Job, error) {
 	var jobs []*model.Job
 	if err := database.WithTx(ctx, &sql.TxOptions{
@@ -207,6 +215,7 @@ func (r *jobGroupResolver) Jobs(ctx context.Context, obj *model.JobGroup) ([]*mo
 	return jobs, nil
 }
 
+// Triggers is the resolver for the triggers field.
 func (r *jobGroupResolver) Triggers(ctx context.Context, obj *model.JobGroup) ([]model.Trigger, error) {
 	var triggers []model.Trigger
 	if err := database.WithTx(ctx, &sql.TxOptions{
@@ -240,6 +249,7 @@ func (r *jobGroupResolver) Triggers(ctx context.Context, obj *model.JobGroup) ([
 	return triggers, nil
 }
 
+// Submit is the resolver for the submit field.
 func (r *mutationResolver) Submit(ctx context.Context, manifest string, tags []string, note *string, secrets *bool, execute *bool) (*model.Job, error) {
 	man, err := LoadManifest(manifest)
 	if err != nil {
@@ -323,6 +333,7 @@ func (r *mutationResolver) Submit(ctx context.Context, manifest string, tags []s
 	return &job, nil
 }
 
+// Start is the resolver for the start field.
 func (r *mutationResolver) Start(ctx context.Context, jobID int) (*model.Job, error) {
 	var job model.Job
 
@@ -364,6 +375,7 @@ func (r *mutationResolver) Start(ctx context.Context, jobID int) (*model.Job, er
 	return &job, nil
 }
 
+// Cancel is the resolver for the cancel field.
 func (r *mutationResolver) Cancel(ctx context.Context, jobID int) (*model.Job, error) {
 	job := (&model.Job{}).As(`j`)
 
@@ -405,6 +417,7 @@ func (r *mutationResolver) Cancel(ctx context.Context, jobID int) (*model.Job, e
 	return job, nil
 }
 
+// CreateGroup is the resolver for the createGroup field.
 func (r *mutationResolver) CreateGroup(ctx context.Context, jobIds []int, triggers []*model.TriggerInput, execute *bool, note *string) (*model.JobGroup, error) {
 	var group model.JobGroup
 
@@ -529,6 +542,7 @@ func (r *mutationResolver) CreateGroup(ctx context.Context, jobIds []int, trigge
 	return &group, nil
 }
 
+// StartGroup is the resolver for the startGroup field.
 func (r *mutationResolver) StartGroup(ctx context.Context, groupID int) (*model.JobGroup, error) {
 	var group model.JobGroup
 
@@ -554,22 +568,27 @@ func (r *mutationResolver) StartGroup(ctx context.Context, groupID int) (*model.
 	return &group, nil
 }
 
+// Claim is the resolver for the claim field.
 func (r *mutationResolver) Claim(ctx context.Context, jobID int) (*model.Job, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
+// UpdateJob is the resolver for the updateJob field.
 func (r *mutationResolver) UpdateJob(ctx context.Context, jobID int, status model.JobStatus) (*model.Job, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
+// UpdateTask is the resolver for the updateTask field.
 func (r *mutationResolver) UpdateTask(ctx context.Context, taskID int, status model.TaskStatus) (*model.Job, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
+// CreateArtifact is the resolver for the createArtifact field.
 func (r *mutationResolver) CreateArtifact(ctx context.Context, jobID int, path string, contents string) (*model.Artifact, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
+// CreateUserWebhook is the resolver for the createUserWebhook field.
 func (r *mutationResolver) CreateUserWebhook(ctx context.Context, config model.UserWebhookInput) (model.WebhookSubscription, error) {
 	schema := server.ForContext(ctx).Schema
 	if err := corewebhooks.Validate(schema, config.Query); err != nil {
@@ -643,6 +662,7 @@ func (r *mutationResolver) CreateUserWebhook(ctx context.Context, config model.U
 	return &sub, nil
 }
 
+// DeleteUserWebhook is the resolver for the deleteUserWebhook field.
 func (r *mutationResolver) DeleteUserWebhook(ctx context.Context, id int) (model.WebhookSubscription, error) {
 	var sub model.UserWebhookSubscription
 
@@ -673,12 +693,14 @@ func (r *mutationResolver) DeleteUserWebhook(ctx context.Context, id int) (model
 	return &sub, nil
 }
 
+// PrivateKey is the resolver for the privateKey field.
 func (r *pGPKeyResolver) PrivateKey(ctx context.Context, obj *model.PGPKey) (string, error) {
 	// TODO: This is simple to implement, but I'm not going to rig it up until
 	// we need it
 	panic(fmt.Errorf("not implemented"))
 }
 
+// Version is the resolver for the version field.
 func (r *queryResolver) Version(ctx context.Context) (*model.Version, error) {
 	conf := config.ForContext(ctx)
 	buildTimeout, _ := conf.Get("builds.sr.ht::worker", "timeout")
@@ -698,6 +720,7 @@ func (r *queryResolver) Version(ctx context.Context) (*model.Version, error) {
 	}, nil
 }
 
+// Me is the resolver for the me field.
 func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 	user := auth.ForContext(ctx)
 	return &model.User{
@@ -712,14 +735,17 @@ func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 	}, nil
 }
 
+// UserByID is the resolver for the userByID field.
 func (r *queryResolver) UserByID(ctx context.Context, id int) (*model.User, error) {
 	return loaders.ForContext(ctx).UsersByID.Load(id)
 }
 
+// UserByName is the resolver for the userByName field.
 func (r *queryResolver) UserByName(ctx context.Context, username string) (*model.User, error) {
 	return loaders.ForContext(ctx).UsersByName.Load(username)
 }
 
+// Jobs is the resolver for the jobs field.
 func (r *queryResolver) Jobs(ctx context.Context, cursor *coremodel.Cursor) (*model.JobCursor, error) {
 	if cursor == nil {
 		cursor = coremodel.NewCursor(nil)
@@ -744,10 +770,12 @@ func (r *queryResolver) Jobs(ctx context.Context, cursor *coremodel.Cursor) (*mo
 	return &model.JobCursor{jobs, cursor}, nil
 }
 
+// Job is the resolver for the job field.
 func (r *queryResolver) Job(ctx context.Context, id int) (*model.Job, error) {
 	return loaders.ForContext(ctx).JobsByID.Load(id)
 }
 
+// Secrets is the resolver for the secrets field.
 func (r *queryResolver) Secrets(ctx context.Context, cursor *coremodel.Cursor) (*model.SecretCursor, error) {
 	if cursor == nil {
 		cursor = coremodel.NewCursor(nil)
@@ -772,6 +800,7 @@ func (r *queryResolver) Secrets(ctx context.Context, cursor *coremodel.Cursor) (
 	return &model.SecretCursor{secrets, cursor}, nil
 }
 
+// UserWebhooks is the resolver for the userWebhooks field.
 func (r *queryResolver) UserWebhooks(ctx context.Context, cursor *coremodel.Cursor) (*model.WebhookSubscriptionCursor, error) {
 	if cursor == nil {
 		cursor = coremodel.NewCursor(nil)
@@ -801,6 +830,7 @@ func (r *queryResolver) UserWebhooks(ctx context.Context, cursor *coremodel.Curs
 	return &model.WebhookSubscriptionCursor{subs, cursor}, nil
 }
 
+// UserWebhook is the resolver for the userWebhook field.
 func (r *queryResolver) UserWebhook(ctx context.Context, id int) (model.WebhookSubscription, error) {
 	var sub model.UserWebhookSubscription
 
@@ -833,6 +863,7 @@ func (r *queryResolver) UserWebhook(ctx context.Context, id int) (model.WebhookS
 	return &sub, nil
 }
 
+// Webhook is the resolver for the webhook field.
 func (r *queryResolver) Webhook(ctx context.Context) (model.WebhookPayload, error) {
 	raw, err := corewebhooks.Payload(ctx)
 	if err != nil {
@@ -845,18 +876,21 @@ func (r *queryResolver) Webhook(ctx context.Context) (model.WebhookPayload, erro
 	return payload, nil
 }
 
+// PrivateKey is the resolver for the privateKey field.
 func (r *sSHKeyResolver) PrivateKey(ctx context.Context, obj *model.SSHKey) (string, error) {
 	// TODO: This is simple to implement, but I'm not going to rig it up until
 	// we need it
 	panic(fmt.Errorf("not implemented"))
 }
 
+// Data is the resolver for the data field.
 func (r *secretFileResolver) Data(ctx context.Context, obj *model.SecretFile) (string, error) {
 	// TODO: This is simple to implement, but I'm not going to rig it up until
 	// we need it
 	panic(fmt.Errorf("not implemented"))
 }
 
+// Log is the resolver for the log field.
 func (r *taskResolver) Log(ctx context.Context, obj *model.Task) (*model.Log, error) {
 	if obj.Runner == nil {
 		return nil, nil
@@ -865,10 +899,12 @@ func (r *taskResolver) Log(ctx context.Context, obj *model.Task) (*model.Log, er
 	return FetchLogs(ctx, url)
 }
 
+// Job is the resolver for the job field.
 func (r *taskResolver) Job(ctx context.Context, obj *model.Task) (*model.Job, error) {
 	return loaders.ForContext(ctx).JobsByID.Load(obj.JobID)
 }
 
+// Jobs is the resolver for the jobs field.
 func (r *userResolver) Jobs(ctx context.Context, obj *model.User, cursor *coremodel.Cursor) (*model.JobCursor, error) {
 	if cursor == nil {
 		cursor = coremodel.NewCursor(nil)
@@ -893,6 +929,7 @@ func (r *userResolver) Jobs(ctx context.Context, obj *model.User, cursor *coremo
 	return &model.JobCursor{jobs, cursor}, nil
 }
 
+// Client is the resolver for the client field.
 func (r *userWebhookSubscriptionResolver) Client(ctx context.Context, obj *model.UserWebhookSubscription) (*model.OAuthClient, error) {
 	if obj.ClientID == nil {
 		return nil, nil
@@ -902,6 +939,7 @@ func (r *userWebhookSubscriptionResolver) Client(ctx context.Context, obj *model
 	}, nil
 }
 
+// Deliveries is the resolver for the deliveries field.
 func (r *userWebhookSubscriptionResolver) Deliveries(ctx context.Context, obj *model.UserWebhookSubscription, cursor *coremodel.Cursor) (*model.WebhookDeliveryCursor, error) {
 	if cursor == nil {
 		cursor = coremodel.NewCursor(nil)
@@ -928,6 +966,7 @@ func (r *userWebhookSubscriptionResolver) Deliveries(ctx context.Context, obj *m
 	return &model.WebhookDeliveryCursor{deliveries, cursor}, nil
 }
 
+// Sample is the resolver for the sample field.
 func (r *userWebhookSubscriptionResolver) Sample(ctx context.Context, obj *model.UserWebhookSubscription, event model.WebhookEvent) (string, error) {
 	payloadUUID := uuid.New()
 	webhook := corewebhooks.WebhookContext{
@@ -982,6 +1021,7 @@ func (r *userWebhookSubscriptionResolver) Sample(ctx context.Context, obj *model
 	return string(bytes), nil
 }
 
+// Subscription is the resolver for the subscription field.
 func (r *webhookDeliveryResolver) Subscription(ctx context.Context, obj *model.WebhookDelivery) (model.WebhookSubscription, error) {
 	if obj.Name == "" {
 		panic("WebhookDelivery without name")

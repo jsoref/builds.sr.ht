@@ -60,3 +60,5 @@ models:
   Filter:
     model:
       - git.sr.ht/~sircmpwn/core-go/model.Filter
+
+omit_getters: true
