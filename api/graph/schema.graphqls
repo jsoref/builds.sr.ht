@@ -14,6 +14,12 @@ access token, and are not available to clients using OAuth 2.0 access tokens.
 """
 directive @private on FIELD_DEFINITION
 
+"""
+This is used to decorate fields which are for internal use, and are not
+available to normal API users.
+"""
+directive @internal on FIELD_DEFINITION
+
 enum AccessScope {
   PROFILE @scopehelp(details: "profile information")
   JOBS    @scopehelp(details: "build jobs")
@@ -488,4 +494,9 @@ type Mutation {
   unexpected behavior with the third-party integration.
   """
   deleteUserWebhook(id: Int!): WebhookSubscription!
+
+  """
+  Deletes the authenticated user's account. Internal use only.
+  """
+  deleteUser: Int! @internal
 }

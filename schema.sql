@@ -29,7 +29,7 @@ CREATE TABLE "user" (
 
 CREATE TABLE secret (
 	id serial PRIMARY KEY,
-	user_id integer NOT NULL REFERENCES "user"(id),
+	user_id integer NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
 	created timestamp without time zone NOT NULL,
 	updated timestamp without time zone NOT NULL,
 	uuid uuid NOT NULL,
@@ -48,7 +48,7 @@ CREATE TABLE job_group (
 	id serial PRIMARY KEY,
 	created timestamp without time zone NOT NULL,
 	updated timestamp without time zone NOT NULL,
-	owner_id integer NOT NULL REFERENCES "user"(id),
+	owner_id integer NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
 	note character varying(4096)
 );
 
@@ -57,8 +57,8 @@ CREATE TABLE job (
 	created timestamp without time zone NOT NULL,
 	updated timestamp without time zone NOT NULL,
 	manifest character varying(16384) NOT NULL,
-	owner_id integer NOT NULL REFERENCES "user"(id),
-	job_group_id integer REFERENCES job_group(id),
+	owner_id integer NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+	job_group_id integer REFERENCES job_group(id) ON DELETE SET NULL,
 	note character varying(4096),
 	tags character varying,
 	runner character varying,
@@ -72,7 +72,7 @@ CREATE INDEX ix_job_owner_id ON job USING btree (owner_id);
 CREATE TABLE artifact (
 	id serial PRIMARY KEY,
 	created timestamp without time zone NOT NULL,
-	job_id integer NOT NULL REFERENCES job(id),
+	job_id integer NOT NULL REFERENCES job(id) ON DELETE CASCADE,
 	name character varying NOT NULL,
 	path character varying NOT NULL,
 	url character varying NOT NULL,
@@ -85,7 +85,7 @@ CREATE TABLE task (
 	updated timestamp without time zone NOT NULL,
 	name character varying(256) NOT NULL,
 	status character varying NOT NULL,
-	job_id integer NOT NULL REFERENCES job(id)
+	job_id integer NOT NULL REFERENCES job(id) ON DELETE CASCADE
 );
 
 CREATE INDEX ix_task_job_id ON task USING btree (job_id);
@@ -97,8 +97,8 @@ CREATE TABLE trigger (
 	details character varying(4096) NOT NULL,
 	condition character varying NOT NULL,
 	trigger_type character varying NOT NULL,
-	job_id integer REFERENCES job(id),
-	job_group_id integer REFERENCES job_group(id)
+	job_id integer REFERENCES job(id) ON DELETE CASCADE,
+	job_group_id integer REFERENCES job_group(id) ON DELETE CASCADE
 );
 
 -- GraphQL webhooks
@@ -114,7 +114,7 @@ CREATE TABLE gql_user_wh_sub (
 	client_id uuid,
 	expires timestamp without time zone,
 	node_id character varying,
-	user_id integer NOT NULL REFERENCES "user"(id),
+	user_id integer NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
 	CONSTRAINT gql_user_wh_sub_auth_method_check
 		CHECK ((auth_method = ANY (ARRAY['OAUTH2'::auth_method, 'INTERNAL'::public.auth_method]))),
 	CONSTRAINT gql_user_wh_sub_check
@@ -150,7 +150,7 @@ CREATE TABLE oauthtoken (
 	created timestamp without time zone NOT NULL,
 	updated timestamp without time zone NOT NULL,
 	expires timestamp without time zone NOT NULL,
-	user_id integer REFERENCES "user"(id),
+	user_id integer REFERENCES "user"(id) ON DELETE CASCADE,
 	token_hash character varying(128) NOT NULL,
 	token_partial character varying(8) NOT NULL,
 	scopes character varying(512) NOT NULL

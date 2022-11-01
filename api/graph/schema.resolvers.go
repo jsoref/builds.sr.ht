@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"git.sr.ht/~sircmpwn/builds.sr.ht/api/account"
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/graph/api"
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/graph/model"
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/loaders"
@@ -691,6 +692,13 @@ func (r *mutationResolver) DeleteUserWebhook(ctx context.Context, id int) (model
 	}
 
 	return &sub, nil
+}
+
+// DeleteUser is the resolver for the deleteUser field.
+func (r *mutationResolver) DeleteUser(ctx context.Context) (int, error) {
+	user := auth.ForContext(ctx)
+	account.Delete(ctx, user.UserID, user.Username)
+	return user.UserID, nil
 }
 
 // PrivateKey is the resolver for the privateKey field.
