@@ -3,7 +3,6 @@ from celery import Celery
 from datetime import datetime
 from srht.config import cfg
 from srht.database import db
-from srht.email import send_email
 from srht.graphql import exec_gql
 from srht.oauth import UserType
 from srht.metrics import RedisQueueCollector
