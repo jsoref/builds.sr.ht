@@ -405,7 +405,12 @@ func (r *mutationResolver) Cancel(ctx context.Context, jobID int) (*model.Job, e
 		if err != nil {
 			return err
 		}
-		if resp.StatusCode != 200 {
+
+		// If the job was found like this in the database, but the
+		// runner does not know about it, then something is wrong (e.g.
+		// the runner crashed and rebooted). Go ahead and set it to
+		// cancelled, so that it does not block anything.
+		if resp.StatusCode != 200 && resp.StatusCode != 404 {
 			return fmt.Errorf("Failed to cancel job")
 		}
 
