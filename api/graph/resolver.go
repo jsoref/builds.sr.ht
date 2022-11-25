@@ -66,7 +66,7 @@ func FetchLogs(ctx context.Context, url string) (*model.Log, error) {
 }
 
 // Starts a job group. Does not authenticate the user.
-func StartJobGroupUnsafe(ctx context.Context, tx *sql.Tx, id int) error {
+func StartJobGroupUnsafe(ctx context.Context, tx *sql.Tx, id, ownerID int) error {
 	var manifests []struct {
 		ID       int
 		Manifest *Manifest
@@ -74,9 +74,11 @@ func StartJobGroupUnsafe(ctx context.Context, tx *sql.Tx, id int) error {
 
 	rows, err := tx.QueryContext(ctx, `
 		UPDATE job SET status = 'queued'
-		WHERE job_group_id = $1
+		WHERE
+			job_group_id = $1 AND
+			owner_id = $2
 		RETURNING id, manifest;
-	`, id)
+	`, id, ownerID)
 	if err != nil {
 		return err
 	}

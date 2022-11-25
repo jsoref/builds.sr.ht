@@ -540,7 +540,7 @@ func (r *mutationResolver) CreateGroup(ctx context.Context, jobIds []int, trigge
 			return nil
 		}
 
-		return StartJobGroupUnsafe(ctx, tx, group.ID)
+		return StartJobGroupUnsafe(ctx, tx, group.ID, group.OwnerID)
 	}); err != nil {
 		return nil, err
 	}
@@ -566,7 +566,7 @@ func (r *mutationResolver) StartGroup(ctx context.Context, groupID int) (*model.
 			return err
 		}
 
-		return StartJobGroupUnsafe(ctx, tx, groupID)
+		return StartJobGroupUnsafe(ctx, tx, groupID, group.OwnerID)
 	}); err != nil {
 		return nil, err
 	}
