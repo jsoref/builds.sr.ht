@@ -37,7 +37,7 @@ def upgrade():
 
 
 def downgrade():
-    for (table, relation, col, do) in tables:
+    for (table, relation, col, do) in cascades:
         op.execute(f"""
         ALTER TABLE {table} DROP CONSTRAINT IF EXISTS {table}_{col}_fkey;
         ALTER TABLE {table} ADD CONSTRAINT {table}_{col}_fkey FOREIGN KEY ({col}) REFERENCES "{relation}"(id);
