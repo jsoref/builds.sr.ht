@@ -69,6 +69,8 @@ CREATE TABLE job (
 
 CREATE INDEX ix_job_owner_id ON job USING btree (owner_id);
 
+CREATE INDEX ix_job_job_group_id ON job USING btree (job_group_id);
+
 CREATE TABLE artifact (
 	id serial PRIMARY KEY,
 	created timestamp without time zone NOT NULL,
