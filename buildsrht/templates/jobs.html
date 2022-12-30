@@ -20,7 +20,6 @@
     >{{ crumb['name'] }}</a>{% if not loop.last %}/{% endif %}{% endfor %}
     </h3>
     {% endif %}
-    {% if len(jobs) != 0 %}
     <div class="event-list">
       <form>
         <input
@@ -75,7 +74,6 @@
       </div>
       {% endfor %}
     </div>
-    {% endif %}
     {{pagination()}}
   </div>
 </section>
