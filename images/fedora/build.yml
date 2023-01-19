@@ -10,8 +10,8 @@ environment:
   arch: x86_64
   release: "31"
   slaves:
-    - deploy@azusa.runners.sr.ht
-    - deploy@yui.runners.sr.ht
+#   - deploy@cirno1.sr.ht
+    - deploy@cirno2.sr.ht
 secrets:
   - fa00a8d3-7b63-42d5-8060-3bb31c3e3018
 triggers:
