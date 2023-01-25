@@ -20,10 +20,10 @@ RUN apt-get install -y \
 
 RUN cd qemu-7.0.0 && ./configure \
     --prefix=/ \
-    --bindir=/bin \
+    --bindir=/usr/bin \
     --datadir=/share \
     --includedir=/include \
-    --libdir=/lib \
+    --libdir=/usr/lib \
     --libexecdir=/libexec \
     --mandir=/share/man \
     --static \
@@ -51,10 +51,10 @@ RUN cd qemu-7.0.0 && ./configure \
 RUN cd qemu-7.0.0 && make && make install
 
 FROM scratch
-COPY --from=0 /bin/qemu-system-* /bin/
+COPY --from=0 /usr/bin/qemu-system-* /bin/
 COPY --from=0 /share/qemu/ /share/qemu/
 
-COPY --from=0 /lib/x86_64-linux-gnu/libnss_dns*.so* /lib/x86_64-linux-gnu/
+COPY --from=0 /usr/lib/x86_64-linux-gnu/libnss_dns*.so* /lib/x86_64-linux-gnu/
 COPY --from=0 /etc/nsswitch.conf /etc/
 
 CMD ["/bin/qemu-system-x86_64"]
