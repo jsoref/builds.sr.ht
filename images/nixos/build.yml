@@ -8,7 +8,7 @@ sources:
 secrets:
   - fa00a8d3-7b63-42d5-8060-3bb31c3e3018
 environment:
-  release: "22.05"
+  release: "22.11"
   arch: x86_64
   slaves:
 #   - deploy@cirno1.sr.ht
