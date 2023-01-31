@@ -327,17 +327,20 @@ func (ctx *JobContext) FileSize(path string) (int64, error) {
 	if len(parts) != 2 {
 		return 0, errors.New("Unexpected response from wc")
 	}
+	if err := wc.Wait(); err != nil {
+		return 0, err
+	}
 	return strconv.ParseInt(parts[0], 10, 64)
 }
 
-func (ctx *JobContext) Download(path string) (io.ReadCloser, error) {
+func (ctx *JobContext) Download(path string) (io.ReadCloser, *exec.Cmd, error) {
 	cat := ctx.SSH("cat", path)
 	pipe, err := cat.StdoutPipe()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if err := cat.Start(); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return pipe, nil
+	return pipe, cat, nil
 }
