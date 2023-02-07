@@ -5,6 +5,7 @@ require (
 	github.com/go-redis/redis/v8 v8.2.3
 	github.com/gocelery/gocelery v0.0.0-20201111034804-825d89059344
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
+	github.com/google/uuid v1.0.0
 	github.com/kr/pty v1.1.3
 	github.com/lib/pq v1.8.0
 	github.com/martinlindhe/base36 v1.1.0

@@ -82,10 +82,21 @@ class Manifest:
             if not isinstance(env, dict):
                 raise Exception("Expected environment to be a dictionary")
         if secrets:
-            if not isinstance(secrets, list) or not all([isinstance(s, str) for s in secrets]):
-                raise Exception("Expected secrets to be a UUID array")
-            # Will throw exception on invalid UUIDs as well
-            secrets = list(map(uuid.UUID, secrets))
+            if not isinstance(secrets, list) or not all(
+                [isinstance(s, str) for s in secrets]
+            ):
+                raise Exception("Expected secrets to be a UUID/String array")
+
+            def uuid_or_string(s):
+                try:
+                    uuid.UUID(s)
+                except ValueError:
+                    if len(s) >= 3 and len(s) <= 512:
+                        s
+                    else:
+                        raise Exception("Secret names must be between 3 and 512 chars")
+
+            secrets = list(map(uuid_or_string, secrets))
         if shell is not None and not isinstance(shell, bool):
             raise Exception("Expected shell to be a boolean")
         if artifacts is not None and (

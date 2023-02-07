@@ -262,7 +262,7 @@ func (ctx *JobContext) SendSecrets() error {
 	sshKeys := 0
 	for _, uuid := range ctx.Manifest.Secrets {
 		ctx.Log.Printf("Resolving secret %s\n", uuid)
-		secret, err := GetSecret(ctx.Db, uuid)
+		secret, err := GetSecret(ctx.Db, uuid, ctx.Job.OwnerId)
 		if err != nil {
 			return errors.Wrap(err, "GetSecret")
 		}

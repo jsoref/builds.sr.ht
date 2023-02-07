@@ -51,7 +51,7 @@ func LoadManifest(in string) (*Manifest, error) {
 
 	for _, sec := range manifest.Secrets {
 		_, err := uuid.Parse(sec)
-		if err != nil {
+		if err != nil && (len(sec) <= 3 || len(sec) >= 512) {
 			return nil, err
 		}
 	}
