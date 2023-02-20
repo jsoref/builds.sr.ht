@@ -50,7 +50,7 @@ then
 fi
 
 sfdisk --no-reread /dev/nbd0 <<EOF
-1M,100M,L,*
+1M,256M,L,*
 ,2048M,S
 ,,L
 EOF
