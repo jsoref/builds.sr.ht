@@ -109,7 +109,6 @@ EOF
 
 echo 'APT::Install-Recommends "False";' > /mnt/etc/apt/apt.conf.d/60recommends
 
-run_root apt-key update
 run_root apt-get update
 run_root apt-get -y install locales
 run_root apt-get -y install $kpkg
