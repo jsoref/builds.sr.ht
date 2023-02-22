@@ -8,7 +8,6 @@ require (
 	github.com/99designs/gqlgen v0.17.20
 	github.com/Masterminds/squirrel v1.4.0
 	github.com/gocelery/gocelery v0.0.0-20201111034804-825d89059344
-	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/uuid v1.0.0
 	github.com/lib/pq v1.10.7
 	github.com/prometheus/client_golang v1.14.0
