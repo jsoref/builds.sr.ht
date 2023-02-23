@@ -104,6 +104,11 @@ func (r *jobResolver) Artifacts(ctx context.Context, obj *model.Job) ([]*model.A
 			if err := rows.Scan(database.Scan(ctx, &artifact)...); err != nil {
 				panic(err)
 			}
+
+			if time.Now().UTC().After(artifact.Created.Add(90 * 24 * time.Hour)) {
+				artifact.URL = nil
+			}
+
 			artifacts = append(artifacts, &artifact)
 		}
 		return nil
