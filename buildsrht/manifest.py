@@ -89,12 +89,11 @@ class Manifest:
 
             def uuid_or_string(s):
                 try:
-                    uuid.UUID(s)
+                    return uuid.UUID(s)
                 except ValueError:
                     if len(s) >= 3 and len(s) <= 512:
-                        s
-                    else:
-                        raise Exception("Secret names must be between 3 and 512 chars")
+                        return s
+                    raise Exception("Secret names must be between 3 and 512 chars")
 
             secrets = list(map(uuid_or_string, secrets))
         if shell is not None and not isinstance(shell, bool):
