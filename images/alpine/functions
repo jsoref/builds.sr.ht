@@ -14,7 +14,7 @@ boot() {
 install() {
 	port=$1
 	shift 1
-	guest_ssh -p $port build@localhost sudo apk update
+	guest_ssh -p $port build@localhost sudo apk upgrade -U
 	guest_ssh -p $port build@localhost sudo apk add "$@"
 }
 
