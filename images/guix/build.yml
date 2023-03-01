@@ -16,7 +16,7 @@ triggers:
   - action: email
     condition: failure
     to: Drew DeVault <sir@cmpwn.com>
-    cc: Dhruvin Gandhi <contact@dhruvin.dev>
+    cc: jgart <jgart@dismail.de>
 tasks:
   - genimg: |
       cd builds.sr.ht/images/guix
