@@ -90,7 +90,7 @@ func (r *jobResolver) Artifacts(ctx context.Context, obj *model.Job) ([]*model.A
 	}, func(tx *sql.Tx) error {
 		artifact := (&model.Artifact{}).As(`a`)
 		rows, err := database.
-			Select(ctx, artifact).
+			SelectAll(artifact).
 			From(`artifact a`).
 			Where(`a.job_id = ?`, obj.ID).
 			RunWith(tx).
@@ -101,7 +101,7 @@ func (r *jobResolver) Artifacts(ctx context.Context, obj *model.Job) ([]*model.A
 		defer rows.Close()
 		for rows.Next() {
 			var artifact model.Artifact
-			if err := rows.Scan(database.Scan(ctx, &artifact)...); err != nil {
+			if err := rows.Scan(database.ScanAll(&artifact)...); err != nil {
 				panic(err)
 			}
 
