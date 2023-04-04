@@ -1,0 +1,38 @@
+#!/bin/rc
+rfork en
+latest=`{cat builds.sr.ht/images/9front/latest}
+hget http://git.9front.org/git/plan9front/plan9front/^$latest^/snap.tar.gz > 9front.tgz
+gunzip 9front.tgz
+tar xf 9front.tar
+mv 9front-* 9front
+cd 9front
+. ./sys/lib/rootstub
+. ./sys/lib/rootbind
+cd /sys/src/
+mk install
+cd /sys/src/9/pc64
+mk install
+cd /sys/lib/dist
+bind $home/9front/$cputype /$cputype
+bind $home/9front/rc /rc
+bind -b /rc/bin /bin
+bind -b /$cputype/bin /bin
+bind $home/9front /n/src9/
+#inherit configuration
+bind /lib/ndb/local /n/src9/lib/ndb/local
+bind /usr/glenda/lib/profile usr/glenda/lib/profile
+sed 's,echo ''bootfile.*,cat /n/9fat/plan9.ini >/env/plan9.ini,g' mkfile >mkfile.2
+mv mkfile.2 mkfile
+bind -a '#S' /dev
+9fs 9fat
+mk new.amd64.qcow2
+nvram=/dev/*/nvram
+@{rfork n
+	disk/qcowfs new.amd64.qcow2
+	disk/partfs /mnt/qcow/data
+	disk/fdisk -p /dev/sdXX/data >> /dev/sdXX/ctl
+	disk/prep -p /dev/sdXX/plan9 >> /dev/sdXX/ctl
+	cp $nvram /dev/sdXX/nvram
+}
+unmount /n/9fat
+rm /srv/dos

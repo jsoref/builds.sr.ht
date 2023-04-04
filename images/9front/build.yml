@@ -1,0 +1,18 @@
+image: 9front
+sources:
+  - https://git.sr.ht/~sircmpwn/builds.sr.ht
+environment:
+  arch: x86_64
+  release: "27a63ae22975171efbee5549d100f416ccb4066a"
+  slaves:
+#   - deploy@cirno1.sr.ht
+    - deploy@cirno2.sr.ht
+secrets:
+  - fa00a8d3-7b63-42d5-8060-3bb31c3e3018
+triggers:
+  - action: email
+    condition: failure
+    to: Drew DeVault <sir@cmpwn.com>
+tasks:
+  - genimg: |
+      ./builds.sr.ht/images/9front/genimg
