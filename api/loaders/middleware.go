@@ -65,7 +65,7 @@ func fetchUsersByID(ctx context.Context) func(ids []int) ([]*model.User, []error
 
 			return nil
 		}); err != nil {
-			panic(err)
+			return nil, []error{err}
 		}
 
 		return users, nil
@@ -110,7 +110,7 @@ func fetchUsersByName(ctx context.Context) func(names []string) ([]*model.User, 
 
 			return nil
 		}); err != nil {
-			panic(err)
+			return nil, []error{err}
 		}
 
 		return users, nil
@@ -155,7 +155,7 @@ func fetchJobsByID(ctx context.Context) func(ids []int) ([]*model.Job, []error) 
 
 			return nil
 		}); err != nil {
-			panic(err)
+			return nil, []error{err}
 		}
 
 		return jobs, nil
@@ -200,7 +200,7 @@ func fetchJobGroupsByID(ctx context.Context) func(ids []int) ([]*model.JobGroup,
 
 			return nil
 		}); err != nil {
-			panic(err)
+			return nil, []error{err}
 		}
 
 		return groups, nil
