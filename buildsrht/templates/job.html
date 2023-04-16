@@ -13,15 +13,46 @@
 {% endif %}
 {% endblock %}
 {% block body %} 
+<div class="header-tabbed">
+  <div class="container-fluid">
+    <h2>
+      <a href="{{ url_for("jobs.user", username=job.owner.username) }}">{{ job.owner }}</a>/<wbr
+     >#{{ job.id }}
+    </h2>
+    <ul class="nav nav-tabs">
+      {% if job.visibility.value != "PUBLIC" %}
+      <li
+        class="nav-item nav-text vis-{{job.visibility.value.lower()}}"
+        {% if job.visibility.value == "UNLISTED" %}
+        title="This job is only visible to those who know the URL."
+        {% elif job.visibility.value == "PRIVATE" %}
+        title="This job is only visible to those who were invited to view it."
+        {% endif %}
+      >
+        {% if job.visibility.value == "UNLISTED" %}
+        Unlisted
+        {% elif job.visibility.value == "PRIVATE" %}
+        Private
+        {% endif %}
+      </li>
+      {% endif %}
+      {% if current_user and current_user.id == job.owner_id %}
+      <li class="nav-item">
+        <a class="nav-link" href="{{url_for("settings.details_GET",
+          username=job.owner.username,
+          job_id=job.id)}}"
+        >settings</a>
+      </li>
+      {% endif %}
+    </ul>
+  </div>
+</div>
 <div class="container-fluid">
   <section class="row">
     <div class="col-lg-3 col-md-12">
       <h2>
-        #{{ job.id }}
-        <span class="pull-right">
-          {{icon(icon_map.get(job.status), cls=status_map.get(job.status, ""))}}
-          {{ job.status.value }}
-        </span>
+        {{icon(icon_map.get(job.status), cls=status_map.get(job.status, ""))}}
+        {{ job.status.value }}
       </h2>
       <dl>
         {% if job.note %}

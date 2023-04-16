@@ -7,7 +7,7 @@ class User(Base, ExternalUserMixin):
 class OAuthToken(Base, ExternalOAuthTokenMixin):
     pass
 
-from .job import Job, JobStatus
+from .job import Job, JobStatus, Visibility
 from .task import Task, TaskStatus
 from .job_group import JobGroup
 from .trigger import Trigger, TriggerType, TriggerCondition

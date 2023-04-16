@@ -103,6 +103,12 @@ enum JobStatus {
   CANCELLED
 }
 
+enum Visibility {
+  PUBLIC
+  UNLISTED
+  PRIVATE
+}
+
 type Job {
   id: Int!
   created: Time!
@@ -111,6 +117,7 @@ type Job {
   manifest: String!
   note: String
   tags: [String!]!
+  visibility: Visibility!
 
   "Name of the build image"
   image: String!
@@ -437,7 +444,7 @@ type Mutation {
   executed immediately if unspecified.
   """
   submit(manifest: String!, tags: [String!] note: String, secrets: Boolean,
-    execute: Boolean): Job! @access(scope: JOBS, kind: RW)
+    execute: Boolean, visibility: Visibility): Job! @access(scope: JOBS, kind: RW)
 
   "Queues a pending job."
   start(jobID: Int!): Job @access(scope: JOBS, kind: RW)

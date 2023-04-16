@@ -189,6 +189,7 @@ func (r *jobGroupResolver) Owner(ctx context.Context, obj *model.JobGroup) (mode
 
 // Jobs is the resolver for the jobs field.
 func (r *jobGroupResolver) Jobs(ctx context.Context, obj *model.JobGroup) ([]*model.Job, error) {
+	user := auth.ForContext(ctx)
 	var jobs []*model.Job
 	if err := database.WithTx(ctx, &sql.TxOptions{
 		Isolation: 0,
@@ -198,7 +199,13 @@ func (r *jobGroupResolver) Jobs(ctx context.Context, obj *model.JobGroup) ([]*mo
 		rows, err := database.
 			Select(ctx, job).
 			From(`job j`).
-			Where(`j.job_group_id = ?`, obj.ID).
+			Where(sq.And{
+				sq.Expr(`j.job_group_id = ?`, obj.ID),
+				sq.Or{
+					sq.Expr(`j.owner_id = ?`, user.UserID),
+					sq.Expr(`j.visibility = 'PUBLIC'`),
+				},
+			}).
 			RunWith(tx).
 			QueryContext(ctx)
 		if err != nil {
@@ -256,13 +263,18 @@ func (r *jobGroupResolver) Triggers(ctx context.Context, obj *model.JobGroup) ([
 }
 
 // Submit is the resolver for the submit field.
-func (r *mutationResolver) Submit(ctx context.Context, manifest string, tags []string, note *string, secrets *bool, execute *bool) (*model.Job, error) {
+func (r *mutationResolver) Submit(ctx context.Context, manifest string, tags []string, note *string, secrets *bool, execute *bool, visibility *model.Visibility) (*model.Job, error) {
 	man, err := LoadManifest(manifest)
 	if err != nil {
 		return nil, err
 	}
 	conf := config.ForContext(ctx)
 	user := auth.ForContext(ctx)
+
+	vis := model.VisibilityUnlisted
+	if visibility != nil {
+		vis = *visibility
+	}
 
 	allowFree, _ := conf.Get("builds.sr.ht", "allow-free")
 	if allowFree != "yes" {
@@ -288,19 +300,19 @@ func (r *mutationResolver) Submit(ctx context.Context, manifest string, tags []s
 		// TODO: Refactor tags into a pg array
 		row := tx.QueryRowContext(ctx, `INSERT INTO job (
 			created, updated,
-			manifest, owner_id, secrets, note, tags, image, status
+			manifest, owner_id, secrets, note, tags, image, status, visibility
 		) VALUES (
 			NOW() at time zone 'utc',
 			NOW() at time zone 'utc',
-			$1, $2, $3, $4, $5, $6, $7
+			$1, $2, $3, $4, $5, $6, $7, $8
 		) RETURNING
 			id, created, updated, manifest, note, image, runner, owner_id,
-			tags, status
-		`, manifest, user.UserID, sec, note, tags, man.Image, status)
+			tags, status, visibility
+		`, manifest, user.UserID, sec, note, tags, man.Image, status, vis)
 
 		if err := row.Scan(&job.ID, &job.Created, &job.Updated, &job.Manifest,
 			&job.Note, &job.Image, &job.Runner, &job.OwnerID, &job.RawTags,
-			&job.RawStatus); err != nil {
+			&job.RawStatus, &job.Visibility); err != nil {
 			return err
 		}
 
@@ -928,6 +940,7 @@ func (r *userResolver) Jobs(ctx context.Context, obj *model.User, cursor *coremo
 		cursor = coremodel.NewCursor(nil)
 	}
 
+	user := auth.ForContext(ctx)
 	var jobs []*model.Job
 	if err := database.WithTx(ctx, &sql.TxOptions{
 		Isolation: 0,
@@ -937,7 +950,13 @@ func (r *userResolver) Jobs(ctx context.Context, obj *model.User, cursor *coremo
 		query := database.
 			Select(ctx, job).
 			From(`job j`).
-			Where(`j.owner_id = ?`, obj.ID)
+			Where(sq.And{
+				sq.Expr(`j.owner_id = ?`, obj.ID),
+				sq.Or{
+					sq.Expr(`j.owner_id = ?`, user.UserID),
+					sq.Expr(`j.visibility = 'PUBLIC'`),
+				},
+			})
 		jobs, cursor = job.QueryWithCursor(ctx, tx, query, cursor)
 		return nil
 	}); err != nil {

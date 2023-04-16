@@ -3,7 +3,7 @@ from buildsrht.manifest import Manifest
 from buildsrht.rss import generate_feed
 from buildsrht.runner import submit_build, requires_payment
 from buildsrht.search import apply_search
-from buildsrht.types import Job, JobStatus, Task, TaskStatus, User
+from buildsrht.types import Job, JobStatus, Task, TaskStatus, User, Visibility
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, request, abort, redirect
 from flask import Response, url_for
@@ -34,6 +34,23 @@ metrics = type("metrics", tuple(), {
 })
 
 requests_session = requests.Session()
+
+def get_access(job, user=None):
+    user = user or current_user
+
+    # Anonymous
+    if not user:
+        if job.visibility == Visibility.PRIVATE:
+            return False
+        return True
+
+    # Owner
+    if user.id == job.owner_id:
+        return True
+
+    if job.visibility == Visibility.PRIVATE:
+        return False
+    return True
 
 def tags(tags):
     if not tags:
@@ -239,6 +256,7 @@ def submit_POST():
     valid.expect(not _manifest or len(_manifest) < max_len,
             "Manifest must be less than {} bytes".format(max_len),
             field="manifest")
+    visibility = valid.require("visibility")
     payment_required = requires_payment(current_user)
     valid.expect(not payment_required,
             "A paid account is required to submit new jobs")
@@ -249,7 +267,8 @@ def submit_POST():
     except Exception as ex:
         valid.error(str(ex), field="manifest")
         return render_template("submit.html", **valid.kwargs)
-    job_id = submit_build(current_user, _manifest, note=note)
+    job_id = submit_build(current_user, _manifest, note=note,
+            visibility=visibility)
     return redirect("/~" + current_user.username + "/job/" + str(job_id))
 
 @jobs.route("/cancel/<int:job_id>", methods=["POST"])
@@ -269,8 +288,8 @@ def user(username):
     if not user:
         abort(404)
     jobs = Job.query.filter(Job.owner_id == user.id)
-    if not current_user or current_user.id != user.id:
-        pass # TODO: access controls
+    if not current_user or user.id != current_user.id:
+        jobs = jobs.filter(Job.visibility == Visibility.PUBLIC)
     origin = cfg("builds.sr.ht", "origin")
     rss_feed = {
         "title": f"{user.username}'s jobs",
@@ -287,8 +306,8 @@ def user_rss(username):
     if not user:
         abort(404)
     jobs = Job.query.filter(Job.owner_id == user.id)
-    if not current_user or current_user.id != user.id:
-        pass  # TODO: access controls
+    if not current_user or user.id != current_user.id:
+        jobs = jobs.filter(Job.visibility == Visibility.PUBLIC)
     return jobs_feed(jobs, f"{user.username}'s jobs",
                      "jobs.user", username=username)
 
@@ -316,7 +335,7 @@ def tag(username, path):
     jobs = Job.query.filter(Job.owner_id == user.id)\
         .filter(Job.tags.ilike(path + "%"))
     if not current_user or current_user.id != user.id:
-        pass # TODO: access controls
+        jobs = jobs.filter(Job.visibility == Visibility.PUBLIC)
     origin = cfg("builds.sr.ht", "origin")
     rss_feed = {
         "title": "/".join([f"~{user.username}"] +
@@ -336,7 +355,7 @@ def tag_rss(username, path):
     jobs = Job.query.filter(Job.owner_id == user.id)\
         .filter(Job.tags.ilike(path + "%"))
     if not current_user or current_user.id != user.id:
-        pass  # TODO: access controls
+        jobs = jobs.filter(Job.visibility == Visibility.PUBLIC)
     base_title = "/".join([f"~{user.username}"] +
                           [t["name"] for t in tags(path)])
     return jobs_feed(jobs, base_title + " jobs",
@@ -405,6 +424,8 @@ def job_by_id(username, job_id):
     # TODO: maybe we want per-user job IDs
     job = Job.query.options(sa.orm.joinedload(Job.tasks)).get(job_id)
     if not job:
+        abort(404)
+    if not get_access(job):
         abort(404)
     logs = list()
     build_user = cfg("git.sr.ht::dispatch", "/usr/bin/buildsrht-keys", "builds:builds").split(":")[0]

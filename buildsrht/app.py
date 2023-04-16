@@ -28,10 +28,12 @@ class BuildApp(SrhtFlask):
         from buildsrht.blueprints.api import api
         from buildsrht.blueprints.jobs import jobs
         from buildsrht.blueprints.secrets import secrets
+        from buildsrht.blueprints.settings import settings
         from srht.graphql import gql_blueprint
 
         self.register_blueprint(admin)
         self.register_blueprint(api)
+        self.register_blueprint(settings)
         self.register_blueprint(jobs)
         self.register_blueprint(secrets)
         self.register_blueprint(gql_blueprint)

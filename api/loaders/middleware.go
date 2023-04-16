@@ -11,6 +11,7 @@ import (
 	"github.com/lib/pq"
 
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/graph/model"
+	"git.sr.ht/~sircmpwn/core-go/auth"
 	"git.sr.ht/~sircmpwn/core-go/database"
 )
 
@@ -118,6 +119,7 @@ func fetchUsersByName(ctx context.Context) func(names []string) ([]*model.User, 
 }
 
 func fetchJobsByID(ctx context.Context) func(ids []int) ([]*model.Job, []error) {
+	user := auth.ForContext(ctx)
 	return func(ids []int) ([]*model.Job, []error) {
 		jobs := make([]*model.Job, len(ids))
 		if err := database.WithTx(ctx, &sql.TxOptions{
@@ -131,7 +133,13 @@ func fetchJobsByID(ctx context.Context) func(ids []int) ([]*model.Job, []error) 
 			query := database.
 				Select(ctx, (&model.Job{}).As("job")).
 				From(`job`).
-				Where(sq.Expr(`job.id = ANY(?)`, pq.Array(ids)))
+				Where(sq.And{
+					sq.Expr(`job.id = ANY(?)`, pq.Array(ids)),
+					sq.Or{
+						sq.Expr(`job.owner_id = ?`, user.UserID),
+						sq.Expr(`job.visibility != 'PRIVATE'`),
+					},
+				})
 			if rows, err = query.RunWith(tx).QueryContext(ctx); err != nil {
 				return err
 			}

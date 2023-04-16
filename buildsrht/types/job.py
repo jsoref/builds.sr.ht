@@ -13,6 +13,11 @@ class JobStatus(Enum):
     timeout = 'timeout'
     cancelled = 'cancelled'
 
+class Visibility(Enum):
+    PUBLIC = 'PUBLIC'
+    UNLISTED = 'UNLISTED'
+    PRIVATE = 'PRIVATE'
+
 class Job(Base):
     __tablename__ = 'job'
     id = sa.Column(sa.Integer, primary_key=True)
@@ -32,6 +37,7 @@ class Job(Base):
             nullable=False,
             default=JobStatus.pending)
     image = sa.Column(sa.String(256))
+    visibility = sa.Column(sau.ChoiceType(Visibility), nullable=False)
 
     def __init__(self, owner, manifest):
         self.owner_id = owner.id

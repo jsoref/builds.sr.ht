@@ -70,6 +70,46 @@
         rows="{{note_rows}}"
       >{{note if note else ""}}</textarea>
     </div>
+    <fieldset class="form-group">
+      <legend>Visibility</legend>
+      <div class="form-check form-check-inline">
+        <label
+          class="form-check-label"
+          title="Publically visible and listed on your profile"
+        >
+          <input
+            class="form-check-input"
+            type="radio"
+            name="visibility"
+            value="PUBLIC"> Public
+        </label>
+      </div>
+      <div class="form-check form-check-inline">
+        <label
+            class="form-check-label"
+            title="Visible to anyone with the link, but not shown on your profile"
+          >
+          <input
+            class="form-check-input"
+            type="radio"
+            name="visibility"
+            value="UNLISTED"
+            checked> Unlisted
+        </label>
+      </div>
+      <div class="form-check form-check-inline">
+        <label
+          class="form-check-label"
+          title="Only visible to you and your collaborators"
+        >
+          <input
+            class="form-check-input"
+            type="radio"
+            name="visibility"
+            value="PRIVATE"> Private
+        </label>
+      </div>
+    </fieldset>
     <div class="form-group">
       <a
         class="pull-right"

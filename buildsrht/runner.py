@@ -22,14 +22,14 @@ runner = Celery('builds', broker=builds_broker, config_source={
 builds_queue_metrics_collector = RedisQueueCollector(builds_broker, "buildsrht_builds", "Number of builds currently in queue")
 builds_submitted = Counter("buildsrht_builds_submited", "Number of builds submitted")
 
-def submit_build(user, manifest, note=None, tags=[]):
+def submit_build(user, manifest, note=None, tags=[], visibility=None):
     resp = exec_gql("builds.sr.ht", """
-        mutation SubmitBuild($manifest: String!, $tags: [String!], $note: String) {
-            submit(manifest: $manifest, tags: $tags, note: $note) {
+        mutation SubmitBuild($manifest: String!, $tags: [String!], $note: String, $visibility: Visibility) {
+            submit(manifest: $manifest, tags: $tags, note: $note, visibility: $visibility) {
                 id
             }
         }
-    """, user=user, manifest=manifest, note=note, tags=tags)
+    """, user=user, manifest=manifest, note=note, tags=tags, visibility=visibility)
     return resp["submit"]["id"]
 
 def requires_payment(user):

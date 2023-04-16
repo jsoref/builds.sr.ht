@@ -10,6 +10,12 @@ CREATE TYPE webhook_event AS ENUM (
 	'JOB_CREATED'
 );
 
+CREATE TYPE visibility AS ENUM (
+	'PUBLIC',
+	'UNLISTED',
+	'PRIVATE'
+);
+
 CREATE TABLE "user" (
 	id serial PRIMARY KEY,
 	username character varying(256) UNIQUE,
@@ -64,7 +70,8 @@ CREATE TABLE job (
 	runner character varying,
 	status character varying NOT NULL,
 	secrets boolean DEFAULT true NOT NULL,
-	image character varying(128)
+	image character varying(128),
+	visibility visibility NOT NULL
 );
 
 CREATE INDEX ix_job_owner_id ON job USING btree (owner_id);
