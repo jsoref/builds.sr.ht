@@ -119,8 +119,8 @@ func fetchUsersByName(ctx context.Context) func(names []string) ([]*model.User, 
 }
 
 func fetchJobsByID(ctx context.Context) func(ids []int) ([]*model.Job, []error) {
-	user := auth.ForContext(ctx)
 	return func(ids []int) ([]*model.Job, []error) {
+		user := auth.ForContext(ctx)
 		jobs := make([]*model.Job, len(ids))
 		if err := database.WithTx(ctx, &sql.TxOptions{
 			Isolation: 0,
