@@ -295,6 +295,7 @@ func (ctx *JobContext) processWebhook(def map[string]interface{}) {
 	ctx.Log.Println("Sending webhook...")
 	client := &http.Client{Timeout: time.Second * 10}
 	req, err := http.NewRequest("POST", trigger.Url, bytes.NewReader(data))
+	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("X-Payload-Nonce", nonce)
 	req.Header.Add("X-Payload-Signature", sig)
 
