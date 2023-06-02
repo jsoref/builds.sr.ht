@@ -16,6 +16,9 @@ import (
 
 	celery "github.com/gocelery/gocelery"
 	_ "github.com/lib/pq"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 var (
@@ -25,6 +28,11 @@ var (
 
 	jobs      map[int]*JobContext
 	jobsMutex sync.Mutex
+
+	build_workers = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "buildsrht_build_workers",
+		Help: "The number of build workers configured",
+	})
 )
 
 func main() {
@@ -34,6 +42,8 @@ func main() {
 	flag.StringVar(&configPath, "config", "../config.ini",
 		"path to config.ini file")
 	flag.Parse()
+
+	build_workers.Set(float64(workers))
 
 	var err error
 	for _, path := range []string{configPath, "/etc/sr.ht/config.ini"} {

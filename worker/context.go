@@ -24,19 +24,15 @@ import (
 )
 
 var (
-	buildsStarted = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "buildsrht_builds_started_total",
-		Help: "The total number of builds which have been started",
+	buildsRunning = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "buildsrht_builds_running",
+		Help: "The number of builds currently running",
 	})
-	buildsFinished = promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: "buildsrht_builds_finished_total",
-		Help: "The total number of finished builds by status",
-	}, []string{"status"})
-	buildDuration = promauto.NewHistogram(prometheus.HistogramOpts{
-		Name:    "buildsrht_build_duration_seconds",
+	buildDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "buildsrht_build_duration",
 		Help:    "Duration of each build in seconds",
 		Buckets: []float64{10, 30, 60, 90, 120, 300, 600, 900, 1800},
-	})
+	}, []string{"status"})
 )
 
 type WorkerContext struct {
@@ -84,9 +80,16 @@ func (wctx *WorkerContext) RunBuild(
 	}
 	buildUser = strings.Split(buildUser, ":")[0]
 
-	timer := prometheus.NewTimer(buildDuration)
+	timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
+		if job != nil {
+			buildDuration.WithLabelValues(job.Status).Observe(v)
+		} else {
+			buildDuration.WithLabelValues("failed").Observe(v)
+		}
+	}))
 	defer timer.ObserveDuration()
-	buildsStarted.Inc()
+	buildsRunning.Inc()
+	defer buildsRunning.Dec()
 
 	var manifest Manifest
 	ms.Decode(_manifest, &manifest)
@@ -112,13 +115,10 @@ func (wctx *WorkerContext) RunBuild(
 			log.Printf("run_build panic: %v", err)
 			if job != nil && ctx != nil {
 				if ctx.Context.Err() == context.DeadlineExceeded {
-					buildsFinished.WithLabelValues("timeout").Inc()
 					job.SetStatus("timeout")
 				} else if ctx.Context.Err() == context.Canceled {
-					buildsFinished.WithLabelValues("cancelled").Inc()
 					job.SetStatus("cancelled")
 				} else {
-					buildsFinished.WithLabelValues("failed").Inc()
 					job.SetStatus("failed")
 				}
 				ctx.ProcessTriggers()
@@ -130,10 +130,7 @@ func (wctx *WorkerContext) RunBuild(
 					ctx.LogFile.Close()
 				}
 			} else if job != nil {
-				buildsFinished.WithLabelValues("failed").Inc()
 				job.SetStatus("failed")
-			} else {
-				buildsFinished.WithLabelValues("failed").Inc()
 			}
 		}
 		if cleanup != nil {
@@ -220,7 +217,6 @@ func (wctx *WorkerContext) RunBuild(
 	ctx.ProcessTriggers()
 	ctx.LogFile.Close()
 
-	buildsFinished.WithLabelValues("success").Inc()
 	return nil
 }
 
