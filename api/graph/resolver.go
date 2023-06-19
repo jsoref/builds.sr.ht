@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"git.sr.ht/~sircmpwn/core-go/config"
 	"github.com/99designs/gqlgen/graphql"
 
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/graph/model"
@@ -15,8 +16,22 @@ import (
 
 type Resolver struct{}
 
-func FetchLogs(ctx context.Context, url string) (*model.Log, error) {
-	log := &model.Log{FullURL: url}
+func FetchLogs(ctx context.Context, runner string, jobID int, taskName string) (*model.Log, error) {
+	conf := config.ForContext(ctx)
+	origin := config.GetOrigin(conf, "builds.sr.ht", true)
+
+	var (
+		externalURL string
+		internalURL string
+	)
+	if taskName == "" {
+		externalURL = fmt.Sprintf("%s/query/log/%d/log", origin, jobID)
+		internalURL = fmt.Sprintf("http://%s/logs/%d/log", runner, jobID)
+	} else {
+		externalURL = fmt.Sprintf("%s/query/log/%d/%s/log", origin, jobID, taskName)
+		internalURL = fmt.Sprintf("http://%s/logs/%d/%s/log", runner, jobID, taskName)
+	}
+	log := &model.Log{FullURL: externalURL}
 
 	// If the user hasn't requested the log body, stop here
 	if graphql.GetFieldContext(ctx) != nil {
@@ -32,10 +47,10 @@ func FetchLogs(ctx context.Context, url string) (*model.Log, error) {
 		}
 	}
 
-	// TODO: It might be possible/desirable to set up an API with the runners
-	// we can use to fetch logs in bulk, perhaps gzipped, and set up a loader
-	// for it.
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	// TODO: It might be possible/desirable to set up an API with the
+	// runners we can use to fetch logs in bulk, perhaps gzipped, and set
+	// up a loader for it.
+	req, err := http.NewRequestWithContext(ctx, "GET", internalURL, nil)
 	if err != nil {
 		return nil, err
 	}

@@ -124,8 +124,7 @@ func (r *jobResolver) Log(ctx context.Context, obj *model.Job) (*model.Log, erro
 	if obj.Runner == nil {
 		return nil, nil
 	}
-	url := fmt.Sprintf("http://%s/logs/%d/log", *obj.Runner, obj.ID)
-	return FetchLogs(ctx, url)
+	return FetchLogs(ctx, *obj.Runner, obj.ID, "")
 }
 
 // Secrets is the resolver for the secrets field.
@@ -926,8 +925,7 @@ func (r *taskResolver) Log(ctx context.Context, obj *model.Task) (*model.Log, er
 	if obj.Runner == nil {
 		return nil, nil
 	}
-	url := fmt.Sprintf("http://%s/logs/%d/%s/log", *obj.Runner, obj.JobID, obj.Name)
-	return FetchLogs(ctx, url)
+	return FetchLogs(ctx, *obj.Runner, obj.JobID, obj.Name)
 }
 
 // Job is the resolver for the job field.

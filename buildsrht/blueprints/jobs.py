@@ -10,7 +10,8 @@ from flask import Response, url_for
 from markupsafe import Markup, escape
 from prometheus_client import Counter
 from srht.cache import get_cache, set_cache
-from srht.config import cfg
+from srht.config import cfg, get_origin
+from srht.crypto import encrypt_request_authorization
 from srht.database import db
 from srht.flask import paginate_query, session
 from srht.oauth import current_user, loginrequired, UserType
@@ -448,14 +449,17 @@ def job_by_id(username, job_id):
         if not log:
             metrics.buildsrht_logcache_miss.inc()
             try:
-                r = requests_session.head(log_url)
+                r = requests_session.head(log_url,
+                  headers=encrypt_request_authorization())
                 cl = int(r.headers["Content-Length"])
                 if cl > log_max:
                     r = requests_session.get(log_url, headers={
                         "Range": f"bytes={cl-log_max}-{cl-1}",
+                        **encrypt_request_authorization(),
                     }, timeout=3)
                 else:
-                    r = requests_session.get(log_url, timeout=3)
+                    r = requests_session.get(log_url, timeout=3,
+                        headers=encrypt_request_authorization())
                 if r.status_code >= 200 and r.status_code <= 299:
                     log = {
                         "name": name,
@@ -477,13 +481,13 @@ def job_by_id(username, job_id):
                 set_cache(cachekey, timedelta(days=2), json.dumps(log))
         logs.append(log)
         return log["more"]
-    log_url = "http://{}/logs/{}/log".format(job.runner, job.id)
+    origin = get_origin("builds.sr.ht")
+    log_url = f"{origin}/query/log/{job.id}/log"
     if get_log(log_url, None, job.status):
         for task in sorted(job.tasks, key=lambda t: t.id):
             if task.status == TaskStatus.pending:
                 continue
-            log_url = "http://{}/logs/{}/{}/log".format(
-                    job.runner, job.id, task.name)
+            log_url = f"{origin}/query/log/{job.id}/{task.name}/log"
             if not get_log(log_url, task.name, task.status):
                 break
     min_artifact_date = datetime.utcnow() - timedelta(days=90)

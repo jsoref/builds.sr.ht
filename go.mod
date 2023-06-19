@@ -15,6 +15,7 @@ require (
 	github.com/emersion/go-sasl v0.0.0-20220912192320-0145f2c60ead // indirect
 	github.com/emersion/go-smtp v0.16.0 // indirect
 	github.com/fernet/fernet-go v0.0.0-20211208181803-9f70042a33ee // indirect
+	github.com/go-chi/chi v4.1.2+incompatible
 	github.com/go-redis/redis/v8 v8.11.5 // indirect
 	github.com/gocelery/gocelery v0.0.0-20201111034804-825d89059344
 	github.com/google/uuid v1.3.0

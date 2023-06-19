@@ -144,8 +144,8 @@ type Log {
   "The most recently written 128 KiB of the build log."
   last128KiB: String!
   """
-  The URL at which the full build log can be downloaded with a GET request
-  (text/plain).
+  The URL at which the full build log can be downloaded with an authenticated
+  GET request (text/plain).
   """
   fullURL: String!
 }

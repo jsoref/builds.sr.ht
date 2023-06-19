@@ -3,12 +3,17 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"strconv"
 
 	"git.sr.ht/~sircmpwn/core-go/config"
 	"git.sr.ht/~sircmpwn/core-go/server"
 	"git.sr.ht/~sircmpwn/core-go/webhooks"
 	work "git.sr.ht/~sircmpwn/dowork"
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/go-chi/chi"
 
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/account"
 	"git.sr.ht/~sircmpwn/builds.sr.ht/api/graph"
@@ -42,7 +47,7 @@ func main() {
 	accountQueue := work.NewQueue("account")
 	webhookQueue := webhooks.NewQueue(schema)
 
-	server.NewServer("builds.sr.ht", appConfig).
+	srv := server.NewServer("builds.sr.ht", appConfig).
 		WithDefaultMiddleware().
 		WithMiddleware(
 			loaders.Middleware,
@@ -53,6 +58,72 @@ func main() {
 		WithQueues(
 			accountQueue,
 			webhookQueue.Queue,
-		).
-		Run()
+		)
+
+	srv.Router().Head("/query/log/{job_id}/log", proxyLog)
+	srv.Router().Head("/query/log/{job_id}/{task_name}/log", proxyLog)
+	srv.Router().Get("/query/log/{job_id}/log", proxyLog)
+	srv.Router().Get("/query/log/{job_id}/{task_name}/log", proxyLog)
+	srv.Run()
+}
+
+func proxyLog(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	jobId, err := strconv.Atoi(chi.URLParam(r, "job_id"))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Invalid job ID\r\n"))
+		return
+	}
+	job, err := loaders.ForContext(ctx).JobsByID.Load(jobId)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("Unknown build job\r\n"))
+		return
+	}
+	if job.Runner == nil {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("This build job has not been started yet\r\n"))
+		return
+	}
+
+	var url string
+	taskName := chi.URLParam(r, "task_name")
+	if taskName == "" {
+		url = fmt.Sprintf("http://%s/logs/%d/log", *job.Runner, job.ID)
+	} else {
+		url = fmt.Sprintf("http://%s/logs/%d/%s/log",
+			*job.Runner, job.ID, taskName)
+	}
+	req, err := http.NewRequestWithContext(ctx, r.Method, url, nil)
+	if err != nil {
+		log.Printf("Error fetching logs: %s", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Internal server error\r\n"))
+		return
+	}
+
+	rrange := r.Header.Get("Range")
+	if rrange != "" {
+		req.Header.Add("Range", rrange)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		w.Write([]byte("Failed to retrieve build log\r\n"))
+		return
+	}
+	defer resp.Body.Close()
+	for key, val := range resp.Header {
+		for _, val := range val {
+			w.Header().Add(key, val)
+		}
+	}
+	w.WriteHeader(resp.StatusCode)
+
+	_, err = io.Copy(w, resp.Body)
+	if err != nil {
+		log.Printf("Error forwarding log: %s", err.Error())
+	}
 }
