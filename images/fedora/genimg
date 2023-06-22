@@ -110,6 +110,8 @@ run_root dnf -y \
   install \
   @development-tools git mercurial openssh-server sudo kernel grub2
 
+run_root dnf clean all
+
 # Add support for virtio block devices at boot time.
 cat > /mnt/etc/dracut.conf.d/virtio-blk.conf <<EOF
 add_drivers="virtio-blk"
