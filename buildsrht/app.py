@@ -24,6 +24,8 @@ class BuildApp(SrhtFlask):
         super().__init__("builds.sr.ht", __name__,
                 oauth_service=BuildOAuthService())
 
+        self.url_map.strict_slashes = False
+
         from buildsrht.blueprints.admin import admin
         from buildsrht.blueprints.api import api
         from buildsrht.blueprints.jobs import jobs
