@@ -13,7 +13,7 @@ shift 2
 
 if [ ! -d $self/$base ]
 then
-	printf "Not a directory '%s'\n" "$base" >&2
+	printf "Image '%s' does not exist\n" "$base" >&2
 	exit 1
 fi
 
@@ -135,7 +135,7 @@ cmd_boot() {
 	fi
 	if [ ! -e "$self/$base/$arch/root.img.qcow2" ]
 	then
-		printf "Unknown base image '%s'\n" "$base" >&2
+		printf "Image '%s' is not available for arch '%s'\n" "$base" "$arch" >&2
 		exit 1
 	fi
 
