@@ -422,11 +422,15 @@ def logify(text, task, log_url):
 
 @jobs.route("/~<username>/job/<int:job_id>")
 def job_by_id(username, job_id):
-    # TODO: maybe we want per-user job IDs
+    user = User.query.filter(User.username == username).first()
+    if not user:
+        abort(404)
     job = Job.query.options(sa.orm.joinedload(Job.tasks)).get(job_id)
     if not job:
         abort(404)
     if not get_access(job):
+        abort(404)
+    if job.owner_id != user.id:
         abort(404)
     logs = list()
     build_user = cfg("git.sr.ht::dispatch", "/usr/bin/buildsrht-keys", "builds:builds").split(":")[0]
