@@ -11,7 +11,7 @@ sources:
   - https://git.sr.ht/~sircmpwn/builds.sr.ht
 environment:
   arch: amd64
-  release: stable
+  release: trixie
   slaves:
 #   - deploy@cirno1.sr.ht
     - deploy@cirno2.sr.ht
@@ -40,14 +40,10 @@ tasks:
       sudo ./genimg $arch
   - sanity-check: |
       cd builds.sr.ht
-      if [ -e /dev/kvm ] && [ "$(uname -m)" = "x86_64" ] && [ "$arch" = "amd64" ]
-      then
-          # Debian does not have a kvm group so we just gotta do it this way
-          sudo chown build:build /dev/kvm
-          MEMORY=1024 ./images/control debian/$release sanity-check
-      else
-          echo "KVM unavailable, skipping sanity check"
-      fi
+      # Nested KVM is often broken on Debian, run sanity check on softmmu
+      #sudo chown build:build /dev/kvm
+      sudo rm -f /dev/kvm
+      MEMORY=1024 ./images/control debian/$release sanity-check
   - deploy: |
       cd builds.sr.ht/images/debian/$release
       echo "StrictHostKeyChecking=no" >> ~/.ssh/config
