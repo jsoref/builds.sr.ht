@@ -285,12 +285,21 @@ func (r *mutationResolver) Submit(ctx context.Context, manifest string, tags []s
 		}
 	}
 
+	hasSecretsScope := user.Grants.Has("SECRETS", auth.RO)
+
+	var sec bool
+	if secrets != nil {
+		sec = *secrets
+	} else {
+		sec = len(man.Secrets) > 0 && hasSecretsScope
+	}
+
+	if sec && !hasSecretsScope {
+		return nil, fmt.Errorf("Missing SECRETS:RO grant")
+	}
+
 	var job model.Job
 	if err := database.WithTx(ctx, nil, func(tx *sql.Tx) error {
-		sec := true
-		if secrets != nil {
-			sec = *secrets
-		}
 		status := "pending"
 		if execute == nil || *execute {
 			status = "pending"

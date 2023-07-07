@@ -437,8 +437,10 @@ type Mutation {
   """
   Submits a new job to the queue.
 
-  'secrets' may be set to false to disable secrets for this build. Secrets
-  are enabled if unspecified.
+  'secrets' may be set to false to disable secrets for this build. If
+  unspecified, secrets are enabled if at least one is specified in the manifest
+  and the SECRETS:RO grant is available. Enabling secrets requires the
+  SECRETS:RO grant.
 
   'execute' may be set to false to defer queueing this job. Builds are
   executed immediately if unspecified.
