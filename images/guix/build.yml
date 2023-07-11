@@ -12,6 +12,7 @@ environment:
   slaves:
 #   - deploy@cirno1.sr.ht
     - deploy@cirno2.sr.ht
+    - deploy@patchouli2.sr.ht
 triggers:
   - action: email
     condition: failure
