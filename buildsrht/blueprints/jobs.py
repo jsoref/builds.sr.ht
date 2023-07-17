@@ -488,7 +488,7 @@ def job_by_id(username, job_id):
                 set_cache(cachekey, timedelta(days=2), json.dumps(log))
         logs.append(log)
         return log["more"]
-    origin = get_origin("builds.sr.ht")
+    origin = cfg("builds.sr.ht", "api-origin", default=get_origin("builds.sr.ht"))
     log_url = f"{origin}/query/log/{job.id}/log"
     if get_log(log_url, None, job.status):
         for task in sorted(job.tasks, key=lambda t: t.id):
