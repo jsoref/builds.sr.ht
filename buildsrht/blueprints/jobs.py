@@ -45,6 +45,9 @@ def get_access(job, user=None):
             return False
         return True
 
+    if user.user_type == UserType.admin:
+        return True
+
     # Owner
     if user.id == job.owner_id:
         return True
