@@ -277,7 +277,7 @@ type OAuthClient {
 }
 
 enum WebhookEvent {
-  JOB_CREATED @access(scope: JOBS, kind: RO)
+  JOB_CREATED
 }
 
 interface WebhookSubscription {
