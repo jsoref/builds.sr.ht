@@ -301,10 +301,6 @@ func (r *mutationResolver) Submit(ctx context.Context, manifest string, tags []s
 
 	var job model.Job
 	if err := database.WithTx(ctx, nil, func(tx *sql.Tx) error {
-		status := "pending"
-		if execute == nil || *execute {
-			status = "pending"
-		}
 		tags := strings.Join(tags, "/")
 
 		// TODO: Refactor tags into a pg array
@@ -314,11 +310,11 @@ func (r *mutationResolver) Submit(ctx context.Context, manifest string, tags []s
 		) VALUES (
 			NOW() at time zone 'utc',
 			NOW() at time zone 'utc',
-			$1, $2, $3, $4, $5, $6, $7, $8
+			$1, $2, $3, $4, $5, $6, 'pending', $7
 		) RETURNING
 			id, created, updated, manifest, note, image, runner, owner_id,
 			tags, status, visibility
-		`, manifest, user.UserID, sec, note, tags, man.Image, status, vis)
+		`, manifest, user.UserID, sec, note, tags, man.Image, vis)
 
 		if err := row.Scan(&job.ID, &job.Created, &job.Updated, &job.Manifest,
 			&job.Note, &job.Image, &job.Runner, &job.OwnerID, &job.RawTags,
