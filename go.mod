@@ -3,7 +3,7 @@ module git.sr.ht/~sircmpwn/builds.sr.ht
 go 1.16
 
 require (
-	git.sr.ht/~sircmpwn/core-go v0.0.0-20230411141100-89b1b48997a8
+	git.sr.ht/~sircmpwn/core-go v0.0.0-20230816134313-65b1657b30a1
 	git.sr.ht/~sircmpwn/dowork v0.0.0-20221010085743-46c4299d76a1
 	git.sr.ht/~sircmpwn/getopt v1.0.0 // indirect
 	git.sr.ht/~sircmpwn/go-bare v0.0.0-20210406120253-ab86bc2846d9 // indirect

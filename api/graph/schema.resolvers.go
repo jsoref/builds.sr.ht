@@ -285,17 +285,17 @@ func (r *mutationResolver) Submit(ctx context.Context, manifest string, tags []s
 		}
 	}
 
-	hasSecretsScope := user.Grants.Has("SECRETS", auth.RO)
+	secretsErr := user.Access("SECRETS", auth.RO)
 
 	var sec bool
 	if secrets != nil {
 		sec = *secrets
 	} else {
-		sec = len(man.Secrets) > 0 && hasSecretsScope
+		sec = len(man.Secrets) > 0 && secretsErr == nil
 	}
 
-	if sec && !hasSecretsScope {
-		return nil, fmt.Errorf("Missing SECRETS:RO grant")
+	if sec && secretsErr != nil {
+		return nil, secretsErr
 	}
 
 	var job model.Job
