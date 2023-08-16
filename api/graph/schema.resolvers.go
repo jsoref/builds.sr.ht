@@ -291,7 +291,7 @@ func (r *mutationResolver) Submit(ctx context.Context, manifest string, tags []s
 	if secrets != nil {
 		sec = *secrets
 	} else {
-		sec = len(man.Secrets) > 0 && secretsErr == nil
+		sec = (len(man.Secrets) > 0 || man.OAuth != "") && secretsErr == nil
 	}
 
 	if sec && secretsErr != nil {
