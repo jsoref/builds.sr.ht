@@ -46,7 +46,7 @@ if from_image:
 url = f"{url}/query"
 query = """
 mutation SubmitBuild($manifest: String!, $note: String!, $tags: [String!]!) {
-    submit(manifest: $manifest, note: $note, tags: $tags, visibility: PUBLIC) {
+    submit(manifest: $manifest, note: $note, tags: $tags, secrets: true, visibility: PUBLIC) {
         id
     }
 }
