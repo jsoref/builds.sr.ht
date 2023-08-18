@@ -182,7 +182,7 @@ func fetchJobGroupsByID(ctx context.Context) func(ids []int) ([]*model.JobGroup,
 				rows *sql.Rows
 			)
 			query := database.
-				Select(ctx, (&model.JobGroup{})).
+				Select(ctx, (&model.JobGroup{}).As("job_group")).
 				From(`job_group`).
 				Where(sq.Expr(`job_group.id = ANY(?)`, pq.Array(ids)))
 			if rows, err = query.RunWith(tx).QueryContext(ctx); err != nil {
