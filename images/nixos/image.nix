@@ -1,10 +1,16 @@
-{ pkgs ? import <nixpkgs> {} }:
+{ pkgs ? import <nixpkgs> { }
+, hostPlatform ? { system = builtins.currentSystem; }
+}:
 
 let
   makeDiskImage = import "${pkgs.path}/nixos/lib/make-disk-image.nix";
   evalConfig = import "${pkgs.path}/nixos/lib/eval-config.nix";
   config = (evalConfig {
-    modules = [ (import ./qemu-system-configuration.nix) ];
+    system = null; # Pass system parameters modularly
+    modules = [
+      (import ./qemu-system-configuration.nix)
+      ({ ... }: { nixpkgs.hostPlatform = hostPlatform; })
+    ];
   }).config;
 in
   makeDiskImage {
