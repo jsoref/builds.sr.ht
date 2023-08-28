@@ -32,6 +32,8 @@ type RawSecret struct {
 	Path       *string
 	Mode       *int
 
+	FromUserID int
+
 	alias  string
 	fields *database.ModelFields
 }
@@ -55,6 +57,8 @@ type PGPKey struct {
 	UUID       string    `json:"uuid"`
 	Name       *string   `json:"name"`
 	PrivateKey []byte    `json:"privateKey"`
+
+	FromUserID int
 }
 
 func (PGPKey) IsSecret() {}
@@ -65,6 +69,8 @@ type SSHKey struct {
 	UUID       string    `json:"uuid"`
 	Name       *string   `json:"name"`
 	PrivateKey []byte    `json:"privateKey"`
+
+	FromUserID int
 }
 
 func (SSHKey) IsSecret() {}
@@ -77,6 +83,8 @@ type SecretFile struct {
 	Path    string    `json:"path"`
 	Mode    int       `json:"mode"`
 	Data    []byte    `json:"data"`
+
+	FromUserID int
 }
 
 func (SecretFile) IsSecret() {}
@@ -90,6 +98,7 @@ func (s *RawSecret) ToSecret() Secret {
 			UUID:       s.UUID,
 			Name:       s.Name,
 			PrivateKey: s.Secret,
+			FromUserID: s.FromUserID,
 		}
 	case SECRET_SSHKEY:
 		return &SSHKey{
@@ -98,16 +107,18 @@ func (s *RawSecret) ToSecret() Secret {
 			UUID:       s.UUID,
 			Name:       s.Name,
 			PrivateKey: s.Secret,
+			FromUserID: s.FromUserID,
 		}
 	case SECRET_FILE:
 		return &SecretFile{
-			ID:      s.ID,
-			Created: s.Created,
-			UUID:    s.UUID,
-			Name:    s.Name,
-			Path:    *s.Path,
-			Mode:    *s.Mode,
-			Data:    s.Secret,
+			ID:         s.ID,
+			Created:    s.Created,
+			UUID:       s.UUID,
+			Name:       s.Name,
+			Path:       *s.Path,
+			Mode:       *s.Mode,
+			Data:       s.Secret,
+			FromUserID: s.FromUserID,
 		}
 	default:
 		panic("Database invariant broken: unknown secret type")
@@ -126,6 +137,7 @@ func (s *RawSecret) Fields() *database.ModelFields {
 
 			// Always fetch:
 			{"id", "", &s.ID},
+			{"from_user_id", "", &s.FromUserID},
 			{"secret_type", "", &s.SecretType},
 			{"secret", "", &s.Secret},
 			{"path", "", &s.Path},

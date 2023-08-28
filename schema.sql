@@ -40,12 +40,14 @@ CREATE TABLE secret (
 	updated timestamp without time zone NOT NULL,
 	uuid uuid NOT NULL,
 	name character varying(512),
+	from_user_id integer REFERENCES "user"(id) ON DELETE SET NULL,
 	-- Key secrets:
 	secret_type character varying NOT NULL,
 	secret bytea NOT NULL,
 	-- File secrets:
 	path character varying(512),
-	mode integer
+	mode integer,
+	CONSTRAINT secret_user_id_uuid_unique UNIQUE (user_id, uuid)
 );
 
 CREATE INDEX ix_user_username ON "user" USING btree (username);

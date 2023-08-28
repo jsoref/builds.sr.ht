@@ -232,6 +232,8 @@ interface Secret {
   created: Time!
   uuid: String!
   name: String
+  "Set when this secret was copied from another user account"
+  from_user: Entity
 }
 
 """
@@ -251,6 +253,7 @@ type SSHKey implements Secret {
   created: Time!
   uuid: String!
   name: String
+  from_user: Entity
   privateKey: Binary! @worker
 }
 
@@ -259,6 +262,7 @@ type PGPKey implements Secret {
   created: Time!
   uuid: String!
   name: String
+  from_user: Entity
   privateKey: Binary! @worker
 }
 
@@ -267,6 +271,7 @@ type SecretFile implements Secret {
   created: Time!
   uuid: String!
   name: String
+  from_user: Entity
   path: String!
   mode: Int!
   data: Binary! @worker
@@ -465,6 +470,9 @@ type Mutation {
 
   "Starts a pending job group."
   startGroup(groupId: Int!): JobGroup @access(scope: JOBS, kind: RW)
+
+  "Copies a secret to the target user account."
+  shareSecret(uuid: String!, user: String!): Secret! @access(scope: SECRETS, kind: RW)
 
   ###
   ### The following resolvers are for internal worker use

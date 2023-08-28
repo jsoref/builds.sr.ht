@@ -25,6 +25,7 @@ import (
 	"git.sr.ht/~sircmpwn/core-go/database"
 	coremodel "git.sr.ht/~sircmpwn/core-go/model"
 	"git.sr.ht/~sircmpwn/core-go/server"
+	"git.sr.ht/~sircmpwn/core-go/valid"
 	corewebhooks "git.sr.ht/~sircmpwn/core-go/webhooks"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -600,6 +601,88 @@ func (r *mutationResolver) StartGroup(ctx context.Context, groupID int) (*model.
 	return &group, nil
 }
 
+// ShareSecret is the resolver for the shareSecret field.
+func (r *mutationResolver) ShareSecret(ctx context.Context, uuid string, user string) (model.Secret, error) {
+	var sec model.Secret
+
+	valid := valid.New(ctx)
+	target, err := loaders.ForContext(ctx).UsersByName.Load(user)
+	if err != nil || target == nil {
+		valid.Error("No such user").WithField("user")
+	}
+	if !valid.Ok() {
+		return nil, nil
+	}
+
+	if err := database.WithTx(ctx, nil, func(tx *sql.Tx) error {
+		row := tx.QueryRowContext(ctx, `
+			INSERT INTO secret (
+				user_id,
+				created,
+				updated,
+				uuid,
+				name,
+				from_user_id,
+				secret_type,
+				secret,
+				path,
+				mode
+			)
+			SELECT
+				$3,
+				created,
+				updated,
+				uuid,
+				name,
+				$1,
+				secret_type,
+				secret,
+				path,
+				mode
+			FROM secret
+			WHERE
+				user_id = $1 AND uuid = $2
+			RETURNING
+				id,
+				created,
+				uuid,
+				name,
+				from_user_id,
+				secret_type,
+				secret bytea,
+				path,
+				mode;
+		`, auth.ForContext(ctx).UserID, uuid, target.ID)
+
+		var raw model.RawSecret
+		if err := row.Scan(
+			&raw.ID,
+			&raw.Created,
+			&raw.UUID,
+			&raw.Name,
+			&raw.FromUserID,
+			&raw.SecretType,
+			&raw.Secret,
+			&raw.Path,
+			&raw.Mode,
+		); err != nil {
+			return err
+		}
+		sec = raw.ToSecret()
+		return nil
+	}); err != nil {
+		if err == sql.ErrNoRows {
+			valid.Error("No such secret").WithField("uuid")
+		}
+		if !valid.Ok() {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return sec, nil
+}
+
 // Claim is the resolver for the claim field.
 func (r *mutationResolver) Claim(ctx context.Context, jobID int) (*model.Job, error) {
 	panic(fmt.Errorf("not implemented"))
@@ -730,6 +813,11 @@ func (r *mutationResolver) DeleteUser(ctx context.Context) (int, error) {
 	user := auth.ForContext(ctx)
 	account.Delete(ctx, user.UserID, user.Username)
 	return user.UserID, nil
+}
+
+// FromUser is the resolver for the from_user field.
+func (r *pGPKeyResolver) FromUser(ctx context.Context, obj *model.PGPKey) (model.Entity, error) {
+	return loaders.ForContext(ctx).UsersByID.Load(obj.FromUserID)
 }
 
 // PrivateKey is the resolver for the privateKey field.
@@ -915,11 +1003,21 @@ func (r *queryResolver) Webhook(ctx context.Context) (model.WebhookPayload, erro
 	return payload, nil
 }
 
+// FromUser is the resolver for the from_user field.
+func (r *sSHKeyResolver) FromUser(ctx context.Context, obj *model.SSHKey) (model.Entity, error) {
+	return loaders.ForContext(ctx).UsersByID.Load(obj.FromUserID)
+}
+
 // PrivateKey is the resolver for the privateKey field.
 func (r *sSHKeyResolver) PrivateKey(ctx context.Context, obj *model.SSHKey) (string, error) {
 	// TODO: This is simple to implement, but I'm not going to rig it up until
 	// we need it
 	panic(fmt.Errorf("not implemented"))
+}
+
+// FromUser is the resolver for the from_user field.
+func (r *secretFileResolver) FromUser(ctx context.Context, obj *model.SecretFile) (model.Entity, error) {
+	return loaders.ForContext(ctx).UsersByID.Load(obj.FromUserID)
 }
 
 // Data is the resolver for the data field.

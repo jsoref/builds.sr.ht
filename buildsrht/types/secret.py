@@ -23,7 +23,9 @@ class Secret(Base):
     __tablename__ = "secret"
     id = sa.Column(sa.Integer, primary_key=True)
     user_id = sa.Column(sa.Integer, sa.ForeignKey("user.id"), nullable=False)
-    user = sa.orm.relationship("User", backref="secrets")
+    user = sa.orm.relationship("User", backref="secrets", foreign_keys=[user_id])
+    from_user_id = sa.Column(sa.Integer, sa.ForeignKey("user.id"))
+    from_user = sa.orm.relationship("User", foreign_keys=[from_user_id])
     created = sa.Column(sa.DateTime, nullable=False)
     updated = sa.Column(sa.DateTime, nullable=False)
     uuid = sa.Column(sau.UUIDType, nullable=False)

@@ -89,16 +89,17 @@ func GetSecret(db *sql.DB, sec string, ownerId int) (*Secret, error) {
 	if err != nil {
 		return GetSecretByName(db, sec, ownerId)
 	}
-	return GetSecretById(db, sec)
+	return GetSecretById(db, sec, ownerId)
 }
 
-func GetSecretById(db *sql.DB, uuid string) (*Secret, error) {
+func GetSecretById(db *sql.DB, uuid string, ownerId int) (*Secret, error) {
 	row := db.QueryRow(`
 		SELECT
 			"id", "user_id", "created", "updated", "uuid",
 			"name", "secret_type", "secret", "path", "mode"
-		FROM "secret" WHERE "uuid" = $1;
-	`, uuid)
+		FROM secret
+    WHERE uuid = $1 AND user_id = $2;
+	`, uuid, ownerId)
 	var secret Secret
 	if err := row.Scan(
 		&secret.Id, &secret.UserId, &secret.Created, &secret.Updated,

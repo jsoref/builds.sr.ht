@@ -4,6 +4,7 @@ from cryptography.hazmat.primitives import serialization
 from flask import Blueprint, render_template, request, redirect, abort
 from srht.database import db
 from srht.flask import session
+from srht.graphql import exec_gql
 from srht.oauth import current_user, loginrequired
 from srht.validation import Validation
 
@@ -93,12 +94,11 @@ def secrets_POST():
 @secrets.route("/secret/delete/<uuid>")
 @loginrequired
 def secret_delete_GET(uuid):
-    secret = Secret.query.filter(Secret.uuid == uuid).first()
+    secret = (Secret.query
+        .filter(Secret.uuid == uuid)
+        .filter(Secret.user_id == current_user.id).first())
     if not secret:
         abort(404)
-    if secret.user_id != current_user.id:
-        abort(401)
-
     return render_template("secret_delete.html", secret=secret)
 
 
@@ -111,11 +111,11 @@ def secret_delete_POST():
     if not uuid:
         abort(404)
 
-    secret = Secret.query.filter(Secret.uuid == uuid).first()
+    secret = (Secret.query
+        .filter(Secret.uuid == uuid)
+        .filter(Secret.user_id == current_user.id).first())
     if not secret:
         abort(404)
-    if secret.user_id != current_user.id:
-        abort(401)
 
     name = secret.name
     db.session.delete(secret)
@@ -123,4 +123,43 @@ def secret_delete_POST():
 
     session["message"] = "Successfully removed secret {}{}.".format(uuid,
             " ({})".format(name) if name else "")
+    return redirect("/secrets")
+
+@secrets.route("/secret/share/<uuid>")
+@loginrequired
+def secret_share_GET(uuid):
+    secret = (Secret.query
+        .filter(Secret.uuid == uuid)
+        .filter(Secret.user_id == current_user.id).first())
+    if not secret:
+        abort(404)
+    return render_template("secret_share.html", secret=secret)
+
+@secrets.route("/secret/share/<uuid>", methods=["POST"])
+@loginrequired
+def secret_share_POST(uuid):
+    secret = (Secret.query
+        .filter(Secret.uuid == uuid)
+        .filter(Secret.user_id == current_user.id).first())
+    if not secret:
+        abort(404)
+
+    valid = Validation(request)
+    username = valid.require("username", friendly_name="Username")
+    if not valid.ok:
+        return render_template("secret_share.html",
+                   secret=secret, valid=valid)
+
+    resp = exec_gql("builds.sr.ht", """
+    mutation ShareSecret($uuid: String!, $target: String!) {
+        shareSecret(uuid: $uuid, user: $target) { id }
+    }
+    """, valid=valid, uuid=uuid, target=username)
+    if not valid.ok:
+        return render_template("secret_share.html",
+                   secret=secret, valid=valid)
+
+    session["message"] = "{} successfully shared with {}.".format(
+            secret.name if secret.name else secret.uuid,
+            username)
     return redirect("/secrets")
