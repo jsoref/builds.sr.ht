@@ -10,7 +10,7 @@ require (
 	github.com/99designs/gqlgen v0.17.29
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/ProtonMail/go-crypto v0.0.0-20230411080316-8b3893ee7fca // indirect
-	github.com/cloudflare/circl v1.3.2 // indirect
+	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/emersion/go-message v0.16.0 // indirect
 	github.com/emersion/go-sasl v0.0.0-20220912192320-0145f2c60ead // indirect
 	github.com/emersion/go-smtp v0.16.0 // indirect
@@ -26,7 +26,6 @@ require (
 	github.com/streadway/amqp v1.0.0 // indirect
 	github.com/urfave/cli/v2 v2.25.1 // indirect
 	github.com/vektah/dataloaden v0.3.0
-	github.com/vektah/gqlparser/v2 v2.5.1
 	golang.org/x/crypto v0.8.0 // indirect
 	golang.org/x/tools v0.8.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0
