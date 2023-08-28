@@ -608,7 +608,7 @@ func (r *mutationResolver) ShareSecret(ctx context.Context, uuid string, user st
 	valid := valid.New(ctx)
 	target, err := loaders.ForContext(ctx).UsersByName.Load(user)
 	if err != nil || target == nil {
-		valid.Error("No such user").WithField("user")
+		valid.Error("No such user").WithField("username")
 	}
 	if !valid.Ok() {
 		return nil, nil
