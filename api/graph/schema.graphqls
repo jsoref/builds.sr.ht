@@ -233,7 +233,7 @@ interface Secret {
   uuid: String!
   name: String
   "Set when this secret was copied from another user account"
-  from_user: Entity
+  fromUser: Entity
 }
 
 """
@@ -253,7 +253,7 @@ type SSHKey implements Secret {
   created: Time!
   uuid: String!
   name: String
-  from_user: Entity
+  fromUser: Entity
   privateKey: Binary! @worker
 }
 
@@ -262,7 +262,7 @@ type PGPKey implements Secret {
   created: Time!
   uuid: String!
   name: String
-  from_user: Entity
+  fromUser: Entity
   privateKey: Binary! @worker
 }
 
@@ -271,7 +271,7 @@ type SecretFile implements Secret {
   created: Time!
   uuid: String!
   name: String
-  from_user: Entity
+  fromUser: Entity
   path: String!
   mode: Int!
   data: Binary! @worker

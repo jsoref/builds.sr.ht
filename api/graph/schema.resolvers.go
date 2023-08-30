@@ -817,7 +817,10 @@ func (r *mutationResolver) DeleteUser(ctx context.Context) (int, error) {
 
 // FromUser is the resolver for the from_user field.
 func (r *pGPKeyResolver) FromUser(ctx context.Context, obj *model.PGPKey) (model.Entity, error) {
-	return loaders.ForContext(ctx).UsersByID.Load(obj.FromUserID)
+	if obj.FromUserID == nil {
+		return nil, nil
+	}
+	return loaders.ForContext(ctx).UsersByID.Load(*obj.FromUserID)
 }
 
 // PrivateKey is the resolver for the privateKey field.
@@ -1005,7 +1008,10 @@ func (r *queryResolver) Webhook(ctx context.Context) (model.WebhookPayload, erro
 
 // FromUser is the resolver for the from_user field.
 func (r *sSHKeyResolver) FromUser(ctx context.Context, obj *model.SSHKey) (model.Entity, error) {
-	return loaders.ForContext(ctx).UsersByID.Load(obj.FromUserID)
+	if obj.FromUserID == nil {
+		return nil, nil
+	}
+	return loaders.ForContext(ctx).UsersByID.Load(*obj.FromUserID)
 }
 
 // PrivateKey is the resolver for the privateKey field.
@@ -1017,7 +1023,10 @@ func (r *sSHKeyResolver) PrivateKey(ctx context.Context, obj *model.SSHKey) (str
 
 // FromUser is the resolver for the from_user field.
 func (r *secretFileResolver) FromUser(ctx context.Context, obj *model.SecretFile) (model.Entity, error) {
-	return loaders.ForContext(ctx).UsersByID.Load(obj.FromUserID)
+	if obj.FromUserID == nil {
+		return nil, nil
+	}
+	return loaders.ForContext(ctx).UsersByID.Load(*obj.FromUserID)
 }
 
 // Data is the resolver for the data field.

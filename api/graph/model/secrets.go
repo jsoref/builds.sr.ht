@@ -32,7 +32,7 @@ type RawSecret struct {
 	Path       *string
 	Mode       *int
 
-	FromUserID int
+	FromUserID *int
 
 	alias  string
 	fields *database.ModelFields
@@ -58,7 +58,7 @@ type PGPKey struct {
 	Name       *string   `json:"name"`
 	PrivateKey []byte    `json:"privateKey"`
 
-	FromUserID int
+	FromUserID *int
 }
 
 func (PGPKey) IsSecret() {}
@@ -70,7 +70,7 @@ type SSHKey struct {
 	Name       *string   `json:"name"`
 	PrivateKey []byte    `json:"privateKey"`
 
-	FromUserID int
+	FromUserID *int
 }
 
 func (SSHKey) IsSecret() {}
@@ -84,7 +84,7 @@ type SecretFile struct {
 	Mode    int       `json:"mode"`
 	Data    []byte    `json:"data"`
 
-	FromUserID int
+	FromUserID *int
 }
 
 func (SecretFile) IsSecret() {}
