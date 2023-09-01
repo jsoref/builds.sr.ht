@@ -12,7 +12,7 @@ import (
 
 var (
 	buildsSubmitted = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "buildsrht_builds_submited_total",
+		Name: "buildsrht_builds_submitted_total",
 		Help: "Number of builds submitted",
 	})
 )
