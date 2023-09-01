@@ -100,7 +100,7 @@ fi
 # Enable EPEL
 run_root dnf -y -q install https://dl.fedoraproject.org/pub/epel/epel-release-latest-$release.noarch.rpm 
 
-# Delay installing systemd-udev becuase it accesses /dev/urandom.
+# Delay installing systemd-udev because it accesses /dev/urandom.
 run_root dnf -y -q install git mercurial openssh-server sudo systemd-udev chrony
 run_root dnf -y -q groupinstall '"Development Tools"'
 run_root dnf -y -q install kernel grub2
