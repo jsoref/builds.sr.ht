@@ -72,7 +72,7 @@ signify -Cp /etc/signify/"$openbsd_public_key" \
 # Create image that will host the filesystem
 rm -f root.img
 create_image root.img "$image_size"
-vnconfig -c vnd0 root.img
+vnconfig vnd0 root.img
 fdisk -iy vnd0
 cat >/tmp/partitions <<EOF
 / 1G-* 100%
