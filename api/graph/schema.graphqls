@@ -40,7 +40,7 @@ directive @access(scope: AccessScope!, kind: AccessKind!) on FIELD_DEFINITION
 
 """
 This used to decorate private resolvers which are only accessible to build
-workers, and are used to faciliate the build process.
+workers, and are used to facilitate the build process.
 """
 directive @worker on FIELD_DEFINITION
 
