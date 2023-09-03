@@ -1,7 +1,7 @@
 image: archlinux
 packages:
   - arch-install-scripts
-  - qemu-headless
+  - qemu-base
   - procps-ng
   - rsync
   - reflector
