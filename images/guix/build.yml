@@ -17,7 +17,7 @@ triggers:
   - action: email
     condition: failure
     to: Drew DeVault <sir@cmpwn.com>
-    cc: jgart <jgart@dismail.de>
+    cc: unwox <me@unwox.com>
 tasks:
   - genimg: |
       cd builds.sr.ht/images/guix
