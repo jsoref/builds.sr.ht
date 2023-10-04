@@ -299,6 +299,13 @@ func (r *mutationResolver) Submit(ctx context.Context, manifest string, tags []s
 		return nil, secretsErr
 	}
 
+	if man.OAuth != "" {
+		_, err := auth.DecodeGrants(ctx, man.OAuth)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	var job model.Job
 	if err := database.WithTx(ctx, nil, func(tx *sql.Tx) error {
 		tags := strings.Join(tags, "/")
